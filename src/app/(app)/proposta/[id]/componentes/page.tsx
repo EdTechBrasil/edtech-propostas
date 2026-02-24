@@ -1,0 +1,96 @@
+import { createClient } from '@/lib/supabase/server'
+import { notFound, redirect } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { ComponentesCliente } from './componentes-cliente'
+import Link from 'next/link'
+
+export default async function ComponentesPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const supabase = await createClient()
+
+  const { data: proposta } = await supabase
+    .from('propostas')
+    .select('id, orcamento_alvo, limite_orcamento_max')
+    .eq('id', id)
+    .single<{ id: string; orcamento_alvo: number; limite_orcamento_max: number }>()
+
+  if (!proposta) notFound()
+
+  const { count: produtosCount } = await supabase
+    .from('proposta_produtos')
+    .select('id', { count: 'exact', head: true })
+    .eq('proposta_id', id)
+
+  if (!produtosCount || produtosCount === 0) redirect(`/proposta/${id}/produtos`)
+
+
+  const { data: produtosProposta } = await supabase
+    .from('proposta_produtos')
+    .select(`
+      id,
+      produto_id,
+      desconto_percent,
+      produto:produtos(nome),
+      componentes:proposta_componentes(
+        id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio,
+        componente:produto_componentes(nome, categoria, tipo_calculo)
+      ),
+      servicos:proposta_servicos(
+        id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio,
+        servico:produto_servicos(nome, tipo_calculo)
+      )
+    `)
+    .eq('proposta_id', id)
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">Componentes</h1>
+        <p className="text-slate-500 mt-1">Ajuste quantidades e valores de cada componente</p>
+      </div>
+
+      {(!produtosProposta || produtosProposta.length === 0) ? (
+        <div className="flex flex-col items-center justify-center h-48 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
+          <p className="text-sm">Nenhum produto selecionado</p>
+          <Link href={`/proposta/${id}/produtos`}>
+            <Button variant="link" size="sm">← Voltar para produtos</Button>
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {produtosProposta.map((pp: any) => (
+            <Card key={pp.id}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  {pp.produto?.nome}
+                  <Badge variant="secondary" className="text-xs font-normal">
+                    {(pp.componentes?.length ?? 0) + (pp.servicos?.length ?? 0)} itens
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ComponentesCliente
+                  propostaId={id}
+                  propostaProdutoId={pp.id}
+                  componentes={pp.componentes ?? []}
+                  servicos={pp.servicos ?? []}
+                />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <div className="flex justify-between mt-6">
+        <Link href={`/proposta/${id}/produtos`}>
+          <Button variant="outline">← Voltar</Button>
+        </Link>
+        <Link href={`/proposta/${id}/descontos`}>
+          <Button>Continuar →</Button>
+        </Link>
+      </div>
+    </div>
+  )
+}
