@@ -119,6 +119,9 @@ export interface Proposta {
   repasse_tipo: TipoRepasse
   repasse_valor: number
   publico_descricao: string | null
+  num_escolas: number
+  num_alunos: number
+  num_professores: number
   cliente_nome_instituicao: string | null
   cliente_cnpj: string | null
   cliente_responsavel: string | null

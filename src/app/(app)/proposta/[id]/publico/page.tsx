@@ -14,9 +14,9 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
 
   const { data: proposta } = await supabase
     .from('propostas')
-    .select('id, orcamento_alvo, limite_orcamento_max, publico_descricao')
+    .select('id, orcamento_alvo, limite_orcamento_max, publico_descricao, num_escolas, num_alunos, num_professores')
     .eq('id', id)
-    .single<{ id: string; orcamento_alvo: number; limite_orcamento_max: number; publico_descricao: string | null }>()
+    .single<{ id: string; orcamento_alvo: number; limite_orcamento_max: number; publico_descricao: string | null; num_escolas: number; num_alunos: number; num_professores: number }>()
 
   if (!proposta) notFound()
 
@@ -58,7 +58,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
                   type="number"
                   min="0"
                   placeholder="0"
-                  defaultValue={proposta.publico_descricao?.match(/Escolas: (\d+)/)?.[1] ?? ''}
+                  defaultValue={proposta.num_escolas || proposta.publico_descricao?.match(/Escolas: (\d+)/)?.[1] || ''}
                 />
               </div>
               <div className="space-y-2">
@@ -69,7 +69,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
                   type="number"
                   min="0"
                   placeholder="0"
-                  defaultValue={proposta.publico_descricao?.match(/Alunos: (\d+)/)?.[1] ?? ''}
+                  defaultValue={proposta.num_alunos || proposta.publico_descricao?.match(/Alunos: (\d+)/)?.[1] || ''}
                 />
               </div>
               <div className="space-y-2">
@@ -80,7 +80,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
                   type="number"
                   min="0"
                   placeholder="0"
-                  defaultValue={proposta.publico_descricao?.match(/Professores: (\d+)/)?.[1] ?? ''}
+                  defaultValue={proposta.num_professores || proposta.publico_descricao?.match(/Professores: (\d+)/)?.[1] || ''}
                 />
               </div>
             </div>

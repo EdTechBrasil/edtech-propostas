@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { ComponentesCliente } from './componentes-cliente'
 import Link from 'next/link'
 
@@ -12,9 +10,16 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
 
   const { data: proposta } = await supabase
     .from('propostas')
-    .select('id, orcamento_alvo, limite_orcamento_max')
+    .select('id, orcamento_alvo, limite_orcamento_max, num_professores, num_alunos, num_escolas')
     .eq('id', id)
-    .single<{ id: string; orcamento_alvo: number; limite_orcamento_max: number }>()
+    .single<{
+      id: string
+      orcamento_alvo: number
+      limite_orcamento_max: number
+      num_professores: number
+      num_alunos: number
+      num_escolas: number
+    }>()
 
   if (!proposta) notFound()
 
@@ -24,7 +29,6 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
     .eq('proposta_id', id)
 
   if (!produtosCount || produtosCount === 0) redirect(`/proposta/${id}/produtos`)
-
 
   const { data: produtosProposta } = await supabase
     .from('proposta_produtos')
@@ -59,28 +63,14 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
           </Link>
         </div>
       ) : (
-        <div className="space-y-6">
-          {produtosProposta.map((pp: any) => (
-            <Card key={pp.id}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  {pp.produto?.nome}
-                  <Badge variant="secondary" className="text-xs font-normal">
-                    {(pp.componentes?.length ?? 0) + (pp.servicos?.length ?? 0)} itens
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ComponentesCliente
-                  propostaId={id}
-                  propostaProdutoId={pp.id}
-                  componentes={pp.componentes ?? []}
-                  servicos={pp.servicos ?? []}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <ComponentesCliente
+          propostaId={id}
+          limiteOrcamento={proposta.limite_orcamento_max ?? 0}
+          numProfessores={proposta.num_professores ?? 0}
+          numAlunos={proposta.num_alunos ?? 0}
+          numEscolas={proposta.num_escolas ?? 0}
+          produtos={produtosProposta as any}
+        />
       )}
 
       <div className="flex justify-between mt-6">

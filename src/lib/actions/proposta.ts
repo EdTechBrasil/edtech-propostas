@@ -71,18 +71,18 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const escolas = formData.get('escolas') || '0'
-  const alunos = formData.get('alunos') || '0'
-  const professores = formData.get('professores') || '0'
+  const num_escolas = Number(formData.get('escolas') || 0)
+  const num_alunos = Number(formData.get('alunos') || 0)
+  const num_professores = Number(formData.get('professores') || 0)
   const distribuicao = formData.get('distribuicao') || ''
 
   const publico_descricao = distribuicao
     ? `Distribuição por série: ${distribuicao}`
-    : `Escolas: ${escolas} | Alunos: ${alunos} | Professores: ${professores}`
+    : `Escolas: ${num_escolas} | Alunos: ${num_alunos} | Professores: ${num_professores}`
 
   await supabase
     .from('propostas')
-    .update({ publico_descricao })
+    .update({ publico_descricao, num_escolas, num_alunos, num_professores })
     .eq('id', proposta_id)
 
   await registrarHistorico(proposta_id, user.id, 'MudancaOrcamento', publico_descricao)
@@ -107,6 +107,24 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
 
   if (existe) return { error: 'Produto já adicionado' }
 
+  // Busca público da proposta para auto-sugestão de quantidades
+  const { data: pubData } = await supabase
+    .from('propostas')
+    .select('num_professores, num_alunos, num_escolas')
+    .eq('id', proposta_id)
+    .single<{ num_professores: number; num_alunos: number; num_escolas: number }>()
+
+  const numProf = pubData?.num_professores ?? 0
+  const numAlun = pubData?.num_alunos ?? 0
+  const numEsc  = pubData?.num_escolas ?? 0
+
+  function qtdSugerida(tipoCalculo: string): number {
+    if (tipoCalculo === 'PorProfessor' && numProf > 0) return numProf
+    if (tipoCalculo === 'PorAluno'     && numAlun > 0) return numAlun
+    if (tipoCalculo === 'PorEscola'    && numEsc  > 0) return numEsc
+    return 1
+  }
+
   // Adiciona o produto
   const { data: pp, error } = await supabase
     .from('proposta_produtos')
@@ -116,7 +134,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
 
   if (error || !pp) return { error: 'Erro ao adicionar produto' }
 
-  // Adiciona componentes obrigatórios
+  // Adiciona componentes (todos, não apenas obrigatórios)
   const { data: componentes } = await supabase
     .from('produto_componentes')
     .select('*')
@@ -129,7 +147,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
         proposta_id,
         proposta_produto_id: pp.id,
         produto_componente_id: c.id,
-        quantidade: 1,
+        quantidade: qtdSugerida(c.tipo_calculo),
         valor_venda_unit: c.valor_venda_base,
         custo_interno_unit: c.custo_interno_base,
         desconto_percent: 0,
@@ -138,7 +156,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     )
   }
 
-  // Adiciona serviços obrigatórios
+  // Adiciona serviços (todos, não apenas obrigatórios)
   const { data: servicos } = await supabase
     .from('produto_servicos')
     .select('*')
@@ -151,7 +169,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
         proposta_id,
         proposta_produto_id: pp.id,
         produto_servico_id: s.id,
-        quantidade: 1,
+        quantidade: qtdSugerida(s.tipo_calculo),
         valor_venda_unit: s.valor_venda_base,
         custo_interno_unit: s.custo_interno_base,
         desconto_percent: 0,
@@ -372,7 +390,7 @@ export async function duplicarProposta(proposta_id: string) {
 
   const { data: original } = await supabase
     .from('propostas')
-    .select('orcamento_alvo, limite_orcamento_max, publico_descricao, repasse_tipo, repasse_valor, desconto_global_percent')
+    .select('orcamento_alvo, limite_orcamento_max, publico_descricao, num_escolas, num_alunos, num_professores, repasse_tipo, repasse_valor, desconto_global_percent')
     .eq('id', proposta_id)
     .single<any>()
 
@@ -385,6 +403,9 @@ export async function duplicarProposta(proposta_id: string) {
       orcamento_alvo: original.orcamento_alvo,
       limite_orcamento_max: original.limite_orcamento_max,
       publico_descricao: original.publico_descricao,
+      num_escolas: original.num_escolas,
+      num_alunos: original.num_alunos,
+      num_professores: original.num_professores,
       repasse_tipo: original.repasse_tipo,
       repasse_valor: original.repasse_valor,
       desconto_global_percent: original.desconto_global_percent,
