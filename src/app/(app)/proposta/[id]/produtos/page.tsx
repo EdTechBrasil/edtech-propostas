@@ -1,10 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { formatCurrency } from '@/utils/format'
 import { ProdutosCliente } from './produtos-cliente'
 import Link from 'next/link'
+
+function qtdSugerida(tipo: string, numEsc: number, numAlun: number, numProf: number): number {
+  if (tipo === 'PorProfessor' && numProf > 0) return numProf
+  if (tipo === 'PorAluno'     && numAlun > 0) return numAlun
+  if (tipo === 'PorEscola'    && numEsc  > 0) return numEsc
+  return 1
+}
 
 export default async function ProdutosPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -13,9 +18,16 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
   const [{ data: proposta }, { data: catalogo }, { data: selecionados }] = await Promise.all([
     supabase
       .from('propostas')
-      .select('id, orcamento_alvo, limite_orcamento_max')
+      .select('id, orcamento_alvo, limite_orcamento_max, num_escolas, num_alunos, num_professores')
       .eq('id', id)
-      .single<{ id: string; orcamento_alvo: number; limite_orcamento_max: number }>(),
+      .single<{
+        id: string
+        orcamento_alvo: number
+        limite_orcamento_max: number
+        num_escolas: number
+        num_alunos: number
+        num_professores: number
+      }>(),
     supabase
       .from('produtos')
       .select('id, nome, descricao')
@@ -29,6 +41,7 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
 
   if (!proposta) notFound()
 
+  // Valor atual (componentes já salvos)
   const { data: totalComp } = await supabase
     .from('proposta_componentes')
     .select('quantidade, valor_venda_unit')
@@ -39,11 +52,29 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
     0
   )
 
-  const percentualUsado = proposta.limite_orcamento_max > 0
-    ? Math.min((totalAtual / proposta.limite_orcamento_max) * 100, 100)
-    : 0
+  // Valor estimado por produto (para atualizar barra em tempo real)
+  const catalogoIds = (catalogo ?? []).map((p: any) => p.id)
+  const { data: componentes } = catalogoIds.length > 0
+    ? await supabase
+        .from('produto_componentes')
+        .select('produto_id, tipo_calculo, valor_venda_base')
+        .in('produto_id', catalogoIds)
+        .eq('ativo', true)
+    : { data: [] }
 
-  const idsSelecionados = new Set((selecionados ?? []).map((p: any) => p.produto_id))
+  const valorPorProduto: Record<string, number> = {}
+  for (const c of (componentes ?? []) as any[]) {
+    valorPorProduto[c.produto_id] = (valorPorProduto[c.produto_id] ?? 0) +
+      qtdSugerida(c.tipo_calculo, proposta.num_escolas ?? 0, proposta.num_alunos ?? 0, proposta.num_professores ?? 0) *
+      c.valor_venda_base
+  }
+
+  const catalogoComValor = (catalogo ?? []).map((p: any) => ({
+    ...p,
+    valor_total: valorPorProduto[p.id] ?? 0,
+  }))
+
+  const idsSelecionados = (selecionados ?? []).map((p: any) => p.produto_id)
 
   return (
     <div>
@@ -52,32 +83,11 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
         <p className="text-slate-500 mt-1">Selecione os produtos para compor a proposta</p>
       </div>
 
-      <Card className="mb-6">
-        <CardContent className="pt-4">
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-slate-500">Orçamento consumido</span>
-            <span className="font-semibold">
-              {formatCurrency(totalAtual)} / {formatCurrency(proposta.limite_orcamento_max)}
-            </span>
-          </div>
-          <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${
-                percentualUsado >= 100 ? 'bg-red-500' :
-                percentualUsado >= 80 ? 'bg-yellow-500' : 'bg-primary'
-              }`}
-              style={{ width: `${percentualUsado}%` }}
-            />
-          </div>
-          <p className="text-xs text-slate-400 mt-1">{percentualUsado.toFixed(1)}% do limite utilizado</p>
-        </CardContent>
-      </Card>
-
       <ProdutosCliente
         propostaId={id}
-        catalogo={catalogo ?? []}
+        catalogo={catalogoComValor}
         selecionados={(selecionados ?? []) as any}
-        idsSelecionados={[...idsSelecionados]}
+        idsSelecionados={idsSelecionados}
         limiteMax={proposta.limite_orcamento_max}
         totalAtual={totalAtual}
       />
