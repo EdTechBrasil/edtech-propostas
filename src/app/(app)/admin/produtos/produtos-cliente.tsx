@@ -26,9 +26,10 @@ import {
   atualizarServicoProduto,
   excluirServicoProduto,
   reordenarProdutos,
+  atualizarValorComponente,
+  atualizarValorServico,
 } from '@/lib/actions/admin'
 import { PackagePlus, ChevronDown, ChevronRight, Loader2, Plus, Pencil, Trash2 } from 'lucide-react'
-import { formatCurrency } from '@/utils/format'
 import { DragHandle } from '@/components/ui/drag-handle'
 import {
   DndContext,
@@ -76,6 +77,56 @@ type Produto = {
 
 const CATEGORIAS = ['LicencaAluno', 'LicencaProfessor', 'Kit', 'Livro', 'Tema', 'Pagina', 'Credito', 'ItemFixo', 'Plataforma']
 const TIPOS_CALCULO = ['Fixo', 'PorAluno', 'PorProfessor', 'PorEscola', 'PorSerie']
+
+// ── Célula de valor editável inline ──────────────────────────────────────────
+
+function ValorEditavel({
+  valor,
+  onSave,
+}: {
+  valor: number
+  onSave: (novoValor: number) => void
+}) {
+  const [editando, setEditando] = useState(false)
+  const [raw, setRaw] = useState(String(valor))
+
+  function handleBlur() {
+    const parsed = parseFloat(raw.replace(',', '.'))
+    if (!isNaN(parsed) && parsed !== valor) {
+      onSave(parsed)
+    }
+    setEditando(false)
+  }
+
+  if (editando) {
+    return (
+      <input
+        autoFocus
+        type="number"
+        min="0"
+        step="0.01"
+        value={raw}
+        onChange={e => setRaw(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+        className="w-24 text-right border border-primary rounded px-1.5 py-0.5 text-sm outline-none"
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      title="Clique para editar"
+      onClick={() => { setRaw(String(valor)); setEditando(true) }}
+      className={`text-right w-full hover:bg-primary/10 rounded px-1.5 py-0.5 transition-colors ${
+        valor === 0 ? 'text-red-400 font-medium' : 'text-slate-700'
+      }`}
+    >
+      {valor === 0 ? '— editar' : `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+    </button>
+  )
+}
 
 // ── Dialog reutilizável para componente (criar ou editar) ─────────────────────
 
@@ -424,8 +475,18 @@ function ProdutoCard({ produto }: { produto: Produto }) {
                         <td className="px-3 py-2 font-medium text-slate-800">{c.nome}</td>
                         <td className="px-3 py-2 text-slate-500">{c.categoria}</td>
                         <td className="px-3 py-2 text-slate-500">{c.tipo_calculo}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(c.valor_venda_base)}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(c.custo_interno_base)}</td>
+                        <td className="px-3 py-2 text-right">
+                          <ValorEditavel
+                            valor={c.valor_venda_base}
+                            onSave={v => startTransition(() => atualizarValorComponente(c.id, v, c.custo_interno_base))}
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <ValorEditavel
+                            valor={c.custo_interno_base}
+                            onSave={v => startTransition(() => atualizarValorComponente(c.id, c.valor_venda_base, v))}
+                          />
+                        </td>
                         <td className="px-3 py-2 text-center">
                           {c.obrigatorio
                             ? <span className="text-xs bg-slate-100 text-slate-600 rounded px-1.5 py-0.5">Sim</span>
@@ -484,8 +545,18 @@ function ProdutoCard({ produto }: { produto: Produto }) {
                       <tr key={s.id} className="hover:bg-slate-50">
                         <td className="px-3 py-2 font-medium text-slate-800">{s.nome}</td>
                         <td className="px-3 py-2 text-slate-500">{s.tipo_calculo}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(s.valor_venda_base)}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(s.custo_interno_base)}</td>
+                        <td className="px-3 py-2 text-right">
+                          <ValorEditavel
+                            valor={s.valor_venda_base}
+                            onSave={v => startTransition(() => atualizarValorServico(s.id, v, s.custo_interno_base))}
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <ValorEditavel
+                            valor={s.custo_interno_base}
+                            onSave={v => startTransition(() => atualizarValorServico(s.id, s.valor_venda_base, v))}
+                          />
+                        </td>
                         <td className="px-3 py-2 text-center">
                           {s.obrigatorio
                             ? <span className="text-xs bg-slate-100 text-slate-600 rounded px-1.5 py-0.5">Sim</span>

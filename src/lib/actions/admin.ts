@@ -245,6 +245,20 @@ export async function excluirServicoProduto(servico_id: string) {
   return { success: true }
 }
 
+// ── Edição rápida de valores ──────────────────────────────────────────────────
+
+export async function atualizarValorComponente(id: string, valor_venda_base: number, custo_interno_base: number) {
+  const adminClient = createAdminClient()
+  await adminClient.from('produto_componentes').update({ valor_venda_base, custo_interno_base }).eq('id', id)
+  revalidatePath('/admin/produtos')
+}
+
+export async function atualizarValorServico(id: string, valor_venda_base: number, custo_interno_base: number) {
+  const adminClient = createAdminClient()
+  await adminClient.from('produto_servicos').update({ valor_venda_base, custo_interno_base }).eq('id', id)
+  revalidatePath('/admin/produtos')
+}
+
 // ── Reordenar produtos (drag-and-drop) ────────────────────────────────────────
 
 export async function reordenarProdutos(updates: { id: string; ordem: number }[]) {
