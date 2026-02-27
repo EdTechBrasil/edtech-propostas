@@ -3,9 +3,8 @@ import { criarProposta } from '@/lib/actions/proposta'
 import { StepperNav } from '@/components/proposta/stepper-nav'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { formatCurrency } from '@/utils/format'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Info } from 'lucide-react'
 
 export default async function NovaProposta() {
@@ -39,13 +38,8 @@ export default async function NovaProposta() {
             <form action={criarProposta as any} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="orcamento_alvo">Orçamento alvo (R$) *</Label>
-                <Input
-                  id="orcamento_alvo"
+                <CurrencyInput
                   name="orcamento_alvo"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0,00"
                   className="text-lg"
                   required
                 />
