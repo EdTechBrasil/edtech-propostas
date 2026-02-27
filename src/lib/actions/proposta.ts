@@ -520,6 +520,18 @@ export async function cancelarProposta(proposta_id: string) {
   return { success: true }
 }
 
+// ── Reordenar propostas (drag-and-drop) ───────────────────────────────────────
+
+export async function reordenarPropostas(updates: { id: string; ordem: number }[]) {
+  const supabase = await createClient()
+  await Promise.all(
+    updates.map(({ id, ordem }) =>
+      supabase.from('propostas').update({ ordem }).eq('id', id)
+    )
+  )
+  revalidatePath('/dashboard')
+}
+
 // ── Gerar PDF: salva dados + muda status + redireciona ─────────────────────────
 
 export async function gerarPDFProposta(proposta_id: string, formData: FormData) {

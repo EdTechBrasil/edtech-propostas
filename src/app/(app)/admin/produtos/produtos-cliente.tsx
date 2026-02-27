@@ -25,9 +25,26 @@ import {
   criarServicoProduto,
   atualizarServicoProduto,
   excluirServicoProduto,
+  reordenarProdutos,
 } from '@/lib/actions/admin'
 import { PackagePlus, ChevronDown, ChevronRight, Loader2, Plus, Pencil, Trash2 } from 'lucide-react'
 import { formatCurrency } from '@/utils/format'
+import { DragHandle } from '@/components/ui/drag-handle'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 type Componente = {
   id: string
@@ -229,7 +246,7 @@ function ServicoDialog({
   )
 }
 
-// ── Card de produto ───────────────────────────────────────────────────────────
+// ── Card de produto (sortable) ────────────────────────────────────────────────
 
 function ProdutoCard({ produto }: { produto: Produto }) {
   const [expandido, setExpandido] = useState(false)
@@ -239,6 +256,23 @@ function ProdutoCard({ produto }: { produto: Produto }) {
   const [confirmarExcluirComp, setConfirmarExcluirComp] = useState<{ id: string; nome: string } | null>(null)
   const [confirmarExcluirServ, setConfirmarExcluirServ] = useState<{ id: string; nome: string } | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: produto.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 1 : 'auto',
+  }
 
   function handleToggle() {
     startTransition(async () => { await toggleAtivoProduto(produto.id, !produto.ativo) })
@@ -273,9 +307,19 @@ function ProdutoCard({ produto }: { produto: Produto }) {
   const totalItens = produto.componentes.length + produto.servicos.length
 
   return (
-    <div className={`rounded-xl border overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''} ${produto.ativo ? 'border-slate-200' : 'border-slate-100'}`}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-xl border overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''} ${produto.ativo ? 'border-slate-200' : 'border-slate-100'}`}
+    >
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 bg-white">
+      <div className="flex items-center gap-3 px-5 py-4 bg-white group">
+        <DragHandle
+          {...attributes}
+          {...listeners}
+          className="opacity-0 group-hover:opacity-100 flex-shrink-0"
+        />
+
         <button type="button" onClick={() => setExpandido(!expandido)} className="text-slate-400 hover:text-slate-600">
           {expandido ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
@@ -503,10 +547,11 @@ function ProdutoCard({ produto }: { produto: Produto }) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
-export function ProdutosAdminCliente({ produtos }: { produtos: Produto[] }) {
+export function ProdutosAdminCliente({ produtos: produtosIniciais }: { produtos: Produto[] }) {
   const [openNovo, setOpenNovo] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [erro, setErro] = useState('')
+  const [produtos, setProdutos] = useState(produtosIniciais)
 
   function handleCriar(formData: FormData) {
     setErro('')
@@ -518,6 +563,25 @@ export function ProdutosAdminCliente({ produtos }: { produtos: Produto[] }) {
         setOpenNovo(false)
       }
     })
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = produtos.findIndex(p => p.id === active.id)
+    const newIndex = produtos.findIndex(p => p.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const novaOrdem = arrayMove(produtos, oldIndex, newIndex)
+    setProdutos(novaOrdem)
+
+    const updates = novaOrdem.map((p, i) => ({ id: p.id, ordem: i + 1 }))
+    startTransition(() => { reordenarProdutos(updates) })
   }
 
   const ativos = produtos.filter(p => p.ativo).length
@@ -568,11 +632,22 @@ export function ProdutosAdminCliente({ produtos }: { produtos: Produto[] }) {
           <p className="text-sm mt-1">Crie o primeiro produto para começar</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {produtos.map((p) => (
-            <ProdutoCard key={p.id} produto={p} />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={produtos.map(p => p.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {produtos.map((p) => (
+                <ProdutoCard key={p.id} produto={p} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   )

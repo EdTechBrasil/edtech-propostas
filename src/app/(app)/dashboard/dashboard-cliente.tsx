@@ -5,12 +5,29 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/format'
-import { duplicarProposta, cancelarProposta } from '@/lib/actions/proposta'
+import { duplicarProposta, cancelarProposta, reordenarPropostas } from '@/lib/actions/proposta'
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { FilePlus, FileText, Clock, CheckCircle2, XCircle, PenLine, Eye, History, Copy, Loader2 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { DragHandle } from '@/components/ui/drag-handle'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 type Proposta = {
   id: string
@@ -69,6 +86,110 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
+// ── Linha sortable da tabela ──────────────────────────────────────────────────
+
+function SortablePropostaRow({
+  proposta: p,
+  podeVerGestor,
+}: {
+  proposta: Proposta
+  podeVerGestor: boolean
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: p.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 1 : 'auto',
+  }
+
+  return (
+    <tr ref={setNodeRef} style={style} className="hover:bg-slate-50 transition-colors group">
+      <td className="px-2 py-3 w-8">
+        <DragHandle
+          {...attributes}
+          {...listeners}
+          className="opacity-0 group-hover:opacity-100"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <p className="text-sm font-medium text-slate-900">
+          {p.cliente_nome_instituicao || <span className="text-slate-400 italic">Sem dados do cliente</span>}
+        </p>
+        <p className="text-xs text-slate-400 font-mono mt-0.5">{p.id.slice(0, 8)}…</p>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <span className="text-sm font-medium text-slate-700">
+          {formatCurrency(p.orcamento_alvo)}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-center">
+        <StatusBadge status={p.status} />
+      </td>
+      {podeVerGestor && (
+        <td className="px-4 py-3">
+          <span className="text-sm text-slate-600">{p.criador_nome}</span>
+        </td>
+      )}
+      <td className="px-4 py-3">
+        <span className="text-sm text-slate-500">
+          {p.criado_em.slice(0, 10).split('-').reverse().join('/')}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <TooltipProvider delayDuration={300}>
+          <div className="flex items-center justify-end gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={`/historico/${p.id}`}>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700">
+                    <History className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>Histórico</TooltipContent>
+            </Tooltip>
+
+            <DuplicarBtn propostaId={p.id} />
+
+            {p.status !== 'Pronta_pdf' && p.status !== 'Cancelada' && (
+              <CancelarBtn propostaId={p.id} />
+            )}
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={linkProposta(p.id, p.status)}>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700">
+                    {p.status === 'Pronta_pdf' ? (
+                      <Eye className="w-3.5 h-3.5" />
+                    ) : (
+                      <PenLine className="w-3.5 h-3.5" />
+                    )}
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                {p.status === 'Pronta_pdf' ? 'Ver proposta' : 'Editar'}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+      </td>
+    </tr>
+  )
+}
+
+// ── Componente principal ──────────────────────────────────────────────────────
+
 export function DashboardCliente({
   propostas,
   usuario,
@@ -77,20 +198,42 @@ export function DashboardCliente({
   usuario: { nome: string; perfil: string }
 }) {
   const [filtro, setFiltro] = useState('todos')
+  const [items, setItems] = useState(propostas)
+  const [, startTransition] = useTransition()
 
-  const filtradas = filtro === 'todos' ? propostas : propostas.filter(p => p.status === filtro)
+  const filtradas = filtro === 'todos' ? items : items.filter(p => p.status === filtro)
 
   // Contagens para os cards
   const stats: StatsCount = {
-    Rascunho: propostas.filter(p => p.status === 'Rascunho').length,
-    Em_revisao: propostas.filter(p => p.status === 'Em_revisao').length,
-    Aguardando_aprovacao: propostas.filter(p => p.status === 'Aguardando_aprovacao').length,
-    Aprovada_excecao: propostas.filter(p => p.status === 'Aprovada_excecao').length,
-    Pronta_pdf: propostas.filter(p => p.status === 'Pronta_pdf').length,
-    Cancelada: propostas.filter(p => p.status === 'Cancelada').length,
+    Rascunho: items.filter(p => p.status === 'Rascunho').length,
+    Em_revisao: items.filter(p => p.status === 'Em_revisao').length,
+    Aguardando_aprovacao: items.filter(p => p.status === 'Aguardando_aprovacao').length,
+    Aprovada_excecao: items.filter(p => p.status === 'Aprovada_excecao').length,
+    Pronta_pdf: items.filter(p => p.status === 'Pronta_pdf').length,
+    Cancelada: items.filter(p => p.status === 'Cancelada').length,
   }
 
   const podeVerGestor = usuario.perfil === 'Gestor' || usuario.perfil === 'ADM'
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    // Encontra os índices no array global `items`
+    const oldIndex = items.findIndex(p => p.id === active.id)
+    const newIndex = items.findIndex(p => p.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const novaOrdem = arrayMove(items, oldIndex, newIndex)
+    setItems(novaOrdem)
+
+    const updates = novaOrdem.map((p, i) => ({ id: p.id, ordem: i + 1 }))
+    startTransition(() => { reordenarPropostas(updates) })
+  }
 
   return (
     <div className="p-8">
@@ -99,7 +242,7 @@ export function DashboardCliente({
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Propostas</h1>
           <p className="text-slate-500 mt-1">
-            {usuario.nome} · {usuario.perfil} · {propostas.length} proposta{propostas.length !== 1 ? 's' : ''}
+            {usuario.nome} · {usuario.perfil} · {items.length} proposta{items.length !== 1 ? 's' : ''}
           </p>
         </div>
         <Link href="/proposta/nova">
@@ -173,7 +316,7 @@ export function DashboardCliente({
             {f.label}
             {f.value !== 'todos' && (
               <span className={`ml-1.5 text-xs ${filtro === f.value ? 'text-slate-300' : 'text-slate-400'}`}>
-                {propostas.filter(p => p.status === f.value).length}
+                {items.filter(p => p.status === f.value).length}
               </span>
             )}
           </button>
@@ -196,6 +339,7 @@ export function DashboardCliente({
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
+                <th className="w-8 px-2 py-3" />
                 <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
                   Cliente / Instituição
                 </th>
@@ -216,58 +360,26 @@ export function DashboardCliente({
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {filtradas.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-medium text-slate-900">
-                      {p.cliente_nome_instituicao || <span className="text-slate-400 italic">Sem dados do cliente</span>}
-                    </p>
-                    <p className="text-xs text-slate-400 font-mono mt-0.5">{p.id.slice(0, 8)}…</p>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-sm font-medium text-slate-700">
-                      {formatCurrency(p.orcamento_alvo)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <StatusBadge status={p.status} />
-                  </td>
-                  {podeVerGestor && (
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-slate-600">{p.criador_nome}</span>
-                    </td>
-                  )}
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-slate-500">
-                      {p.criado_em.slice(0, 10).split('-').reverse().join('/')}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Link href={`/historico/${p.id}`}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700" title="Ver histórico">
-                          <History className="w-3.5 h-3.5" />
-                        </Button>
-                      </Link>
-                      <DuplicarBtn propostaId={p.id} />
-                      {p.status !== 'Pronta_pdf' && p.status !== 'Cancelada' && (
-                        <CancelarBtn propostaId={p.id} />
-                      )}
-                      <Link href={linkProposta(p.id, p.status)}>
-                        <Button variant="ghost" size="sm" className="gap-1.5 h-8">
-                          {p.status === 'Pronta_pdf' ? (
-                            <><Eye className="w-3.5 h-3.5" /> Ver</>
-                          ) : (
-                            <><PenLine className="w-3.5 h-3.5" /> Editar</>
-                          )}
-                        </Button>
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={filtradas.map(p => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {filtradas.map((p) => (
+                    <SortablePropostaRow
+                      key={p.id}
+                      proposta={p}
+                      podeVerGestor={podeVerGestor}
+                    />
+                  ))}
+                </tbody>
+              </SortableContext>
+            </DndContext>
           </table>
         )}
       </div>
@@ -329,15 +441,21 @@ function CancelarBtn({ propostaId }: { propostaId: string }) {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
-        title="Cancelar proposta"
-        onClick={() => setOpen(true)}
-      >
-        <XCircle className="w-3.5 h-3.5" />
-      </Button>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
+              onClick={() => setOpen(true)}
+            >
+              <XCircle className="w-3.5 h-3.5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Cancelar</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -379,15 +497,21 @@ function DuplicarBtn({ propostaId }: { propostaId: string }) {
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700"
-      title="Duplicar proposta"
-      onClick={handleDuplicar}
-      disabled={isPending}
-    >
-      {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
-    </Button>
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700"
+            onClick={handleDuplicar}
+            disabled={isPending}
+          >
+            {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Duplicar</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

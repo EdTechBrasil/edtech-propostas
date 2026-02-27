@@ -27,6 +27,7 @@ export default async function DashboardPage() {
       cliente_nome_instituicao,
       criador:usuarios!criado_por_usuario_id(nome)
     `)
+    .order('ordem', { ascending: true, nullsFirst: false })
     .order('criado_em', { ascending: false })
 
   // Comercial vê apenas suas próprias propostas

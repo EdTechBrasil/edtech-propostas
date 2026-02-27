@@ -11,6 +11,7 @@ export default async function CatalogoProdutos() {
       componentes:produto_componentes(id, nome, categoria, tipo_calculo, valor_venda_base, custo_interno_base, obrigatorio),
       servicos:produto_servicos(id, nome, tipo_calculo, valor_venda_base, custo_interno_base, obrigatorio)
     `)
+    .order('ordem', { ascending: true, nullsFirst: false })
     .order('nome')
 
   return (

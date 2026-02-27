@@ -244,3 +244,15 @@ export async function excluirServicoProduto(servico_id: string) {
   revalidatePath('/admin/produtos')
   return { success: true }
 }
+
+// ── Reordenar produtos (drag-and-drop) ────────────────────────────────────────
+
+export async function reordenarProdutos(updates: { id: string; ordem: number }[]) {
+  const adminClient = createAdminClient()
+  await Promise.all(
+    updates.map(({ id, ordem }) =>
+      adminClient.from('produtos').update({ ordem }).eq('id', id)
+    )
+  )
+  revalidatePath('/admin/produtos')
+}
