@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { Loader2, BookOpen } from 'lucide-react'
+import { Loader2, BookOpen, Eye, EyeOff } from 'lucide-react'
 
 const MAX_TENTATIVAS = 5
 const BLOQUEIO_MS = 5 * 60 * 1000 // 5 minutos
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [tentativas, setTentativas] = useState(0)
   const [bloqueadoAte, setBloqueadoAte] = useState<number | null>(null)
+  const [mostrarSenha, setMostrarSenha] = useState(false)
 
   const estaBloqueado = bloqueadoAte !== null && Date.now() < bloqueadoAte
 
@@ -94,16 +95,27 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="senha">Senha</Label>
-                <Input
-                  id="senha"
-                  type="password"
-                  placeholder="••••••••"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  disabled={loading || estaBloqueado}
-                  required
-                  autoComplete="current-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="senha"
+                    type={mostrarSenha ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    disabled={loading || estaBloqueado}
+                    required
+                    autoComplete="current-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    tabIndex={-1}
+                  >
+                    {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {erro && (

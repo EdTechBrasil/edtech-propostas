@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, BookOpen } from 'lucide-react'
+import { Loader2, BookOpen, Eye, EyeOff } from 'lucide-react'
 
 export default function RedefinirSenhaPage() {
   const router = useRouter()
@@ -17,6 +17,8 @@ export default function RedefinirSenhaPage() {
   const [confirmar, setConfirmar] = useState('')
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
+  const [mostrarConfirmar, setMostrarConfirmar] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -69,30 +71,52 @@ export default function RedefinirSenhaPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="senha">Nova senha</Label>
-                <Input
-                  id="senha"
-                  type="password"
-                  placeholder="••••••••"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  disabled={loading}
-                  required
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="senha"
+                    type={mostrarSenha ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    disabled={loading}
+                    required
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    tabIndex={-1}
+                  >
+                    {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmar">Confirmar nova senha</Label>
-                <Input
-                  id="confirmar"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmar}
-                  onChange={(e) => setConfirmar(e.target.value)}
-                  disabled={loading}
-                  required
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="confirmar"
+                    type={mostrarConfirmar ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={confirmar}
+                    onChange={(e) => setConfirmar(e.target.value)}
+                    disabled={loading}
+                    required
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarConfirmar(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    tabIndex={-1}
+                  >
+                    {mostrarConfirmar ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {erro && (
