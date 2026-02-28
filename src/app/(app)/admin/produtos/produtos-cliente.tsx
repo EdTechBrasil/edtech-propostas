@@ -88,12 +88,18 @@ function ValorEditavel({
   onSave: (novoValor: number) => void
 }) {
   const [editando, setEditando] = useState(false)
+  const [valorLocal, setValorLocal] = useState(valor)
   const [raw, setRaw] = useState(String(valor))
 
   function handleBlur() {
     const parsed = parseFloat(raw.replace(',', '.'))
-    if (!isNaN(parsed) && parsed !== valor) {
-      onSave(parsed)
+    if (!isNaN(parsed)) {
+      if (parsed !== valorLocal) {
+        setValorLocal(parsed)
+        onSave(parsed)
+      }
+    } else {
+      setRaw(String(valorLocal))
     }
     setEditando(false)
   }
@@ -118,12 +124,12 @@ function ValorEditavel({
     <button
       type="button"
       title="Clique para editar"
-      onClick={() => { setRaw(String(valor)); setEditando(true) }}
+      onClick={() => { setRaw(String(valorLocal)); setEditando(true) }}
       className={`text-right w-full hover:bg-primary/10 rounded px-1.5 py-0.5 transition-colors ${
-        valor === 0 ? 'text-red-400 font-medium' : 'text-slate-700'
+        valorLocal === 0 ? 'text-red-400 font-medium' : 'text-slate-700'
       }`}
     >
-      {valor === 0 ? '— editar' : `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+      {valorLocal === 0 ? '— editar' : `R$ ${valorLocal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
     </button>
   )
 }

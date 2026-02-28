@@ -81,6 +81,8 @@ function ItemRow({
   onSave: () => void
 }) {
   const [pending, startTransition] = useTransition()
+  const [qtdFocused, setQtdFocused] = useState(false)
+  const [valorFocused, setValorFocused] = useState(false)
   const total = qtd * valor
   const margemItem = valor > 0 ? ((valor - custo) / valor) * 100 : null
   const margemCor =
@@ -111,8 +113,10 @@ function ItemRow({
               type="number"
               min="0"
               step="1"
-              value={qtd}
-              onChange={e => onQtdChange(Number(e.target.value))}
+              value={qtdFocused && qtd === 0 ? '' : qtd}
+              onChange={e => onQtdChange(e.target.value === '' ? 0 : Number(e.target.value))}
+              onFocus={e => { setQtdFocused(true); e.target.select() }}
+              onBlur={() => setQtdFocused(false)}
               className="h-8 text-sm text-center"
               title="Quantidade"
             />
@@ -123,8 +127,10 @@ function ItemRow({
               type="number"
               min="0"
               step="0.01"
-              value={valor}
-              onChange={e => onValorChange(Number(e.target.value))}
+              value={valorFocused && valor === 0 ? '' : valor}
+              onChange={e => onValorChange(e.target.value === '' ? 0 : Number(e.target.value))}
+              onFocus={e => { setValorFocused(true); e.target.select() }}
+              onBlur={() => setValorFocused(false)}
               className="h-8 text-sm text-right"
               title="Valor venda unitário"
             />
