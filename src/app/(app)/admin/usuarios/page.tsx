@@ -1,7 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requirePerfil } from '@/lib/auth'
 import { UsuariosCliente } from './usuarios-cliente'
 
 export default async function GestaoUsuarios() {
+  await requirePerfil('ADM')
+
   const adminClient = createAdminClient()
 
   const [{ data: authData }, { data: usuariosData }] = await Promise.all([

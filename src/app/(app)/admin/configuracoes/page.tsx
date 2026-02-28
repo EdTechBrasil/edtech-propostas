@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requirePerfil } from '@/lib/auth'
 import { salvarConfiguracaoFinanceira } from '@/lib/actions/admin'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,6 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Info } from 'lucide-react'
 
 export default async function ConfiguracoesFinanceiras() {
+  await requirePerfil('ADM')
+
   const adminClient = createAdminClient()
 
   const { data: config } = await adminClient

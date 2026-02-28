@@ -1,13 +1,16 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { assertPerfil } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 // ── Usuários ──────────────────────────────────────────────────────────────────
 
 export async function criarUsuario(formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
 
   const nome = formData.get('nome') as string
@@ -41,6 +44,9 @@ export async function criarUsuario(formData: FormData) {
 }
 
 export async function atualizarPerfilUsuario(usuario_id: string, perfil: string) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   const { error } = await adminClient.from('usuarios').update({ perfil }).eq('id', usuario_id)
   if (error) return { error: error.message }
@@ -49,6 +55,9 @@ export async function atualizarPerfilUsuario(usuario_id: string, perfil: string)
 }
 
 export async function toggleAtivoUsuario(usuario_id: string, ativo: boolean) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   const { error } = await adminClient.from('usuarios').update({ ativo }).eq('id', usuario_id)
   if (error) return { error: error.message }
@@ -59,9 +68,8 @@ export async function toggleAtivoUsuario(usuario_id: string, ativo: boolean) {
 // ── Configuração financeira ───────────────────────────────────────────────────
 
 export async function salvarConfiguracaoFinanceira(formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const err = await assertPerfil('ADM')
+  if (err) redirect('/dashboard')
 
   const margem_minima_percent = Number(formData.get('margem_minima_percent'))
   const margem_global_max_percent = Number(formData.get('margem_global_max_percent'))
@@ -93,6 +101,9 @@ export async function salvarConfiguracaoFinanceira(formData: FormData) {
 // ── Produtos ──────────────────────────────────────────────────────────────────
 
 export async function criarProduto(formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   const nome = formData.get('nome') as string
   const descricao = formData.get('descricao') as string
@@ -108,6 +119,9 @@ export async function criarProduto(formData: FormData) {
 }
 
 export async function atualizarProduto(produto_id: string, formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   const nome = formData.get('nome') as string
   const descricao = formData.get('descricao') as string
@@ -121,6 +135,9 @@ export async function atualizarProduto(produto_id: string, formData: FormData) {
 }
 
 export async function excluirProduto(produto_id: string) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
 
   // Verifica se está em uso em propostas não canceladas
@@ -149,6 +166,9 @@ export async function excluirProduto(produto_id: string) {
 }
 
 export async function toggleAtivoProduto(produto_id: string, ativo: boolean) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   await adminClient.from('produtos').update({ ativo }).eq('id', produto_id)
   revalidatePath('/admin/produtos')
@@ -158,6 +178,9 @@ export async function toggleAtivoProduto(produto_id: string, ativo: boolean) {
 // ── Componentes do produto ────────────────────────────────────────────────────
 
 export async function criarComponenteProduto(formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   const produto_id = formData.get('produto_id') as string
   const nome = formData.get('nome') as string
@@ -178,6 +201,9 @@ export async function criarComponenteProduto(formData: FormData) {
 }
 
 export async function atualizarComponenteProduto(componente_id: string, formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   const nome = formData.get('nome') as string
   const categoria = formData.get('categoria') as string
@@ -195,6 +221,9 @@ export async function atualizarComponenteProduto(componente_id: string, formData
 }
 
 export async function excluirComponenteProduto(componente_id: string) {
+  const err = await assertPerfil('ADM')
+  if (err) return
+
   const adminClient = createAdminClient()
   await adminClient.from('produto_componentes').delete().eq('id', componente_id)
   revalidatePath('/admin/produtos')
@@ -204,6 +233,9 @@ export async function excluirComponenteProduto(componente_id: string) {
 // ── Serviços do produto ───────────────────────────────────────────────────────
 
 export async function criarServicoProduto(formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   const produto_id = formData.get('produto_id') as string
   const nome = formData.get('nome') as string
@@ -223,6 +255,9 @@ export async function criarServicoProduto(formData: FormData) {
 }
 
 export async function atualizarServicoProduto(servico_id: string, formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
   const adminClient = createAdminClient()
   const nome = formData.get('nome') as string
   const tipo_calculo = formData.get('tipo_calculo') as string
@@ -239,6 +274,9 @@ export async function atualizarServicoProduto(servico_id: string, formData: Form
 }
 
 export async function excluirServicoProduto(servico_id: string) {
+  const err = await assertPerfil('ADM')
+  if (err) return
+
   const adminClient = createAdminClient()
   await adminClient.from('produto_servicos').delete().eq('id', servico_id)
   revalidatePath('/admin/produtos')
@@ -248,12 +286,18 @@ export async function excluirServicoProduto(servico_id: string) {
 // ── Edição rápida de valores ──────────────────────────────────────────────────
 
 export async function atualizarValorComponente(id: string, valor_venda_base: number, custo_interno_base: number) {
+  const err = await assertPerfil('ADM')
+  if (err) return
+
   const adminClient = createAdminClient()
   await adminClient.from('produto_componentes').update({ valor_venda_base, custo_interno_base }).eq('id', id)
   revalidatePath('/admin/produtos')
 }
 
 export async function atualizarValorServico(id: string, valor_venda_base: number, custo_interno_base: number) {
+  const err = await assertPerfil('ADM')
+  if (err) return
+
   const adminClient = createAdminClient()
   await adminClient.from('produto_servicos').update({ valor_venda_base, custo_interno_base }).eq('id', id)
   revalidatePath('/admin/produtos')
@@ -262,6 +306,9 @@ export async function atualizarValorServico(id: string, valor_venda_base: number
 // ── Reordenar produtos (drag-and-drop) ────────────────────────────────────────
 
 export async function reordenarProdutos(updates: { id: string; ordem: number }[]) {
+  const err = await assertPerfil('ADM')
+  if (err) return
+
   const adminClient = createAdminClient()
   await Promise.all(
     updates.map(({ id, ordem }) =>

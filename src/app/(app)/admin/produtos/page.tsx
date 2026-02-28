@@ -1,7 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requirePerfil } from '@/lib/auth'
 import { ProdutosAdminCliente } from './produtos-cliente'
 
 export default async function CatalogoProdutos() {
+  await requirePerfil('ADM')
+
   const adminClient = createAdminClient()
 
   const { data: produtos } = await adminClient
