@@ -35,8 +35,30 @@ export function StepperNav({
   const current = getCurrentStep(pathname)
 
   return (
-    <div className="w-full bg-white border-b border-slate-200 px-8 py-4">
-      <div className="flex items-center justify-between max-w-4xl mx-auto">
+    <div className="w-full bg-white border-b border-slate-200">
+      {/* Mobile: indicador compacto */}
+      <div className="flex md:hidden items-center gap-3 px-4 py-3">
+        <div className="flex items-center gap-1">
+          {STEPS.map(s => (
+            <div
+              key={s.id}
+              className={cn(
+                'h-1.5 rounded-full transition-all',
+                s.id === current ? 'w-4 bg-primary' :
+                s.id < current ? 'w-1.5 bg-primary/50' :
+                'w-1.5 bg-slate-200'
+              )}
+            />
+          ))}
+        </div>
+        <span className="text-sm font-semibold text-slate-800">
+          {STEPS.find(s => s.id === current)?.label}
+        </span>
+        <span className="ml-auto text-xs text-slate-400 tabular-nums">{current}/{STEPS.length}</span>
+      </div>
+
+      {/* Desktop: stepper completo */}
+      <div className="hidden md:flex items-center justify-between max-w-4xl mx-auto px-8 py-4">
         {STEPS.map((step, idx) => {
           const done = step.id < current
           const active = step.id === current

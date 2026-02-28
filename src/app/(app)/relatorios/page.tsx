@@ -102,7 +102,7 @@ export default async function RelatoriosPage() {
   const maxMesCount = Math.max(...meses.map(m => m.count), 1)
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-4 md:p-8 max-w-6xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <BarChart3 className="w-6 h-6 text-slate-700" />

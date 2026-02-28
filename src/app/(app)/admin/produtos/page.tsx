@@ -18,7 +18,7 @@ export default async function CatalogoProdutos() {
     .order('nome')
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <ProdutosAdminCliente produtos={(produtos ?? []) as any} />
     </div>
   )

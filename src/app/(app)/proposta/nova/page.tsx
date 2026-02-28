@@ -21,7 +21,7 @@ export default async function NovaProposta() {
   return (
     <div className="flex flex-col min-h-full">
       <StepperNav />
-      <div className="flex-1 p-8 max-w-4xl mx-auto w-full">
+      <div className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-900">Nova Proposta</h1>
           <p className="text-slate-500 mt-1">Defina o orçamento alvo da proposta</p>

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Package,
   BarChart3,
+  X,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuth } from '@/hooks/useAuth'
@@ -63,7 +64,7 @@ const navItems = [
   },
 ]
 
-export function Sidebar() {
+export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const { usuario, signOut } = useAuth()
 
@@ -75,13 +76,22 @@ export function Sidebar() {
     <aside className="flex flex-col w-64 min-h-screen bg-slate-900 text-slate-100">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-800">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary flex-shrink-0">
           <BookOpen className="w-4 h-4 text-white" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold leading-tight">EdTech</p>
           <p className="text-xs text-slate-400 leading-tight">Propostas</p>
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="md:hidden p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800"
+            aria-label="Fechar menu"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Nav */}

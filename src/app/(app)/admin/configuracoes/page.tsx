@@ -24,7 +24,7 @@ export default async function ConfiguracoesFinanceiras() {
     }>()
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Configurações Financeiras</h1>
         <p className="text-slate-500 mt-1">Parâmetros globais que afetam o cálculo de todas as propostas</p>

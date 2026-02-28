@@ -45,8 +45,8 @@ export default async function Aprovacoes() {
   const pendentes = (aprovacoes ?? []).filter((a: any) => a.proposta?.status === 'Aguardando_aprovacao')
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
+    <div className="p-4 md:p-8">
+      <div className="mb-6 md:mb-8">
         <div className="flex items-center gap-3 mb-1">
           <ShieldCheck className="w-6 h-6 text-slate-700" />
           <h1 className="text-2xl font-bold text-slate-900">Aprovações de Margem</h1>

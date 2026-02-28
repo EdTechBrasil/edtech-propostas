@@ -236,9 +236,9 @@ export function DashboardCliente({
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Propostas</h1>
           <p className="text-slate-500 mt-1">
@@ -324,7 +324,7 @@ export function DashboardCliente({
       </div>
 
       {/* Tabela */}
-      <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
         {filtradas.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
             <FileText className="w-8 h-8 mb-2" />

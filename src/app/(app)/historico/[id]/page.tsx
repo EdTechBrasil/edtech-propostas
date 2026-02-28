@@ -81,7 +81,7 @@ export default async function HistoricoPage({ params }: { params: Promise<{ id: 
   const statusCfg = STATUS_LABEL[proposta.status] ?? { label: proposta.status, className: 'bg-slate-100 text-slate-600' }
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 md:p-8 max-w-3xl">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">

@@ -22,7 +22,7 @@ export default async function PropostaLayout({
   return (
     <div className="flex flex-col min-h-full">
       <StepperNav propostaId={id} passoMaximo={passoMaximo} />
-      <div className="flex-1 p-8 max-w-4xl mx-auto w-full">{children}</div>
+      <div className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full">{children}</div>
     </div>
   )
 }
