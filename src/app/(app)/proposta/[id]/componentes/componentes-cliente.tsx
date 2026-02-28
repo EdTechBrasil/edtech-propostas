@@ -61,6 +61,7 @@ function ItemRow({
   tipoCalculo,
   qtd,
   valor,
+  custo,
   obrigatorio,
   hint,
   onQtdChange,
@@ -72,6 +73,7 @@ function ItemRow({
   tipoCalculo: string
   qtd: number
   valor: number
+  custo: number
   obrigatorio: boolean
   hint: string | null
   onQtdChange: (v: number) => void
@@ -80,6 +82,12 @@ function ItemRow({
 }) {
   const [pending, startTransition] = useTransition()
   const total = qtd * valor
+  const margemItem = valor > 0 ? ((valor - custo) / valor) * 100 : null
+  const margemCor =
+    margemItem === null ? 'text-slate-400' :
+    margemItem >= 20    ? 'text-green-600' :
+    margemItem >= 12    ? 'text-amber-500' :
+    'text-red-500'
 
   return (
     <div className="py-3 border-b border-slate-100 last:border-0">
@@ -118,11 +126,17 @@ function ItemRow({
               value={valor}
               onChange={e => onValorChange(Number(e.target.value))}
               className="h-8 text-sm text-right"
-              title="Valor unitário"
+              title="Valor venda unitário"
             />
           </div>
-          <span className="text-sm font-semibold text-slate-700 w-24 text-right">
+          <span className="text-sm font-semibold text-slate-700 w-24 text-right" title="Total venda">
             {formatCurrency(total)}
+          </span>
+          <span className="text-sm text-slate-500 w-24 text-right" title="Custo unitário">
+            {formatCurrency(custo)}
+          </span>
+          <span className={`text-sm font-medium w-14 text-right ${margemCor}`} title="Margem por item">
+            {margemItem !== null ? `${margemItem.toFixed(1)}%` : '—'}
           </span>
           <Button
             size="icon"
@@ -316,8 +330,10 @@ export function ComponentesCliente({
                 <div className="flex items-center text-xs text-slate-400 pb-2 gap-3">
                   <span className="flex-1">Item</span>
                   <span className="w-20 text-center">Qtd</span>
-                  <span className="w-28 text-center">Valor unit.</span>
-                  <span className="w-24 text-right">Total</span>
+                  <span className="w-28 text-center">Venda unit.</span>
+                  <span className="w-24 text-right">Total venda</span>
+                  <span className="w-24 text-right">Custo unit.</span>
+                  <span className="w-14 text-right">Margem</span>
                   <span className="w-8" />
                 </div>
 
@@ -335,6 +351,7 @@ export function ComponentesCliente({
                           tipoCalculo={tipoCalculo}
                           qtd={state.qtd}
                           valor={state.valor}
+                          custo={state.custo}
                           obrigatorio={c.obrigatorio}
                           hint={getHint(tipoCalculo)}
                           onQtdChange={v => updateItem(c.id, { qtd: v })}
@@ -359,6 +376,7 @@ export function ComponentesCliente({
                           tipoCalculo={tipoCalculo}
                           qtd={state.qtd}
                           valor={state.valor}
+                          custo={state.custo}
                           obrigatorio={s.obrigatorio}
                           hint={getHint(tipoCalculo)}
                           onQtdChange={v => updateItem(s.id, { qtd: v })}
