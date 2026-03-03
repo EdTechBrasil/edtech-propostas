@@ -39,6 +39,7 @@ export type TipoCalculo =
   | 'PorSerie'
   | 'PorAlunoXTema'
   | 'PorProfessorXTema'
+  | 'PorAlunoEProfessorXTema'
 
 export type TipoEventoProposta =
   | 'Criacao'

@@ -314,6 +314,8 @@ export function ComponentesCliente({
       return { text: `Sugestão: qtd = alunos × temas (${numAlunos} × ${numTemas} = ${numAlunos * numTemas})`, type: 'info' }
     if (tipoCalculo === 'PorProfessorXTema' && numProfessores > 0 && numTemas > 0)
       return { text: `Sugestão: qtd = professores × temas (${numProfessores} × ${numTemas} = ${numProfessores * numTemas})`, type: 'info' }
+    if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos > 0 || numProfessores > 0) && numTemas > 0)
+      return { text: `Sugestão: qtd = (alunos + professores) × temas ((${numAlunos} + ${numProfessores}) × ${numTemas} = ${(numAlunos + numProfessores) * numTemas})`, type: 'info' }
     if (tipoCalculo === 'PorProfessor' && numProfessores === 0)
       return { text: `Qtd estimada — preencha Professores no Público`, type: 'warn' }
     if (tipoCalculo === 'PorAluno' && numAlunos === 0)
@@ -324,6 +326,8 @@ export function ComponentesCliente({
       return { text: `Qtd estimada — preencha Alunos e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorProfessorXTema' && (numProfessores === 0 || numTemas === 0))
       return { text: `Qtd estimada — preencha Professores e Temas no Público`, type: 'warn' }
+    if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos === 0 || numTemas === 0))
+      return { text: `Qtd estimada — preencha Alunos, Professores e Temas no Público`, type: 'warn' }
     return null
   }
 

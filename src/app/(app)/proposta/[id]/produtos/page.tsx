@@ -9,7 +9,8 @@ function qtdSugerida(tipo: string, numEsc: number, numAlun: number, numProf: num
   if (tipo === 'PorAluno'         && numAlun > 0) return numAlun
   if (tipo === 'PorEscola'        && numEsc  > 0) return numEsc
   if (tipo === 'PorAlunoXTema'    && numAlun > 0 && numTemas > 0) return numAlun * numTemas
-  if (tipo === 'PorProfessorXTema'&& numProf > 0 && numTemas > 0) return numProf * numTemas
+  if (tipo === 'PorProfessorXTema'      && numProf > 0 && numTemas > 0) return numProf * numTemas
+  if (tipo === 'PorAlunoEProfessorXTema' && (numAlun > 0 || numProf > 0) && numTemas > 0) return (numAlun + numProf) * numTemas
   return 1
 }
 

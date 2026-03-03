@@ -57,7 +57,8 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       if (tc === 'PorProfessor'  && proposta.num_professores === 0) return true
       if (tc === 'PorEscola'     && proposta.num_escolas === 0)     return true
       if (tc === 'PorAlunoXTema'     && (proposta.num_alunos === 0 || proposta.num_temas === 0))     return true
-      if (tc === 'PorProfessorXTema' && (proposta.num_professores === 0 || proposta.num_temas === 0)) return true
+      if (tc === 'PorProfessorXTema'      && (proposta.num_professores === 0 || proposta.num_temas === 0)) return true
+      if (tc === 'PorAlunoEProfessorXTema' && (proposta.num_alunos === 0 || proposta.num_temas === 0))     return true
       return false
     })
   )

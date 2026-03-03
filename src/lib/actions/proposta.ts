@@ -122,7 +122,8 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     if (tipoCalculo === 'PorAluno'      && numAlun > 0) return numAlun
     if (tipoCalculo === 'PorEscola'     && numEsc  > 0) return numEsc
     if (tipoCalculo === 'PorAlunoXTema'      && numAlun > 0 && numTemas > 0) return numAlun * numTemas
-    if (tipoCalculo === 'PorProfessorXTema'  && numProf > 0 && numTemas > 0) return numProf * numTemas
+    if (tipoCalculo === 'PorProfessorXTema'      && numProf > 0 && numTemas > 0) return numProf * numTemas
+    if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlun > 0 || numProf > 0) && numTemas > 0) return (numAlun + numProf) * numTemas
     return 1
   }
 
