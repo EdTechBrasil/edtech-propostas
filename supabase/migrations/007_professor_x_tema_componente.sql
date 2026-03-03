@@ -1,6 +1,10 @@
--- Adiciona componente PorProfessorXTema ao produto "Meu Primeiro Código"
+-- Adiciona PorProfessorXTema ao enum e cria componente em "Meu Primeiro Código"
 -- Execute este script no Supabase SQL Editor
 
+-- Passo 1: adicionar valor ao enum (deve rodar fora de bloco de transação)
+ALTER TYPE tipo_calculo ADD VALUE IF NOT EXISTS 'PorProfessorXTema';
+
+-- Passo 2: inserir componente
 DO $$
 DECLARE
   prod_id uuid;
