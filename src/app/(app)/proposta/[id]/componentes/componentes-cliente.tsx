@@ -76,7 +76,7 @@ function ItemRow({
   valor: number
   custo: number
   obrigatorio: boolean
-  hint: string | null
+  hint: { text: string; type: 'info' | 'warn' } | null
   onQtdChange: (v: number) => void
   onValorChange: (v: number) => void
   onSave: () => void
@@ -159,7 +159,9 @@ function ItemRow({
       </div>
 
       {hint && (
-        <p className="text-xs text-blue-500 mt-1 ml-0">{hint}</p>
+        <p className={`text-xs mt-1 ${hint.type === 'warn' ? 'text-amber-600' : 'text-blue-500'}`}>
+          {hint.text}
+        </p>
       )}
     </div>
   )
@@ -301,17 +303,23 @@ export function ComponentesCliente({
   const margem       = receitaBruta > 0 ? ((receitaBruta - custoTotal) / receitaBruta) * 100 : 0
 
   // Hint de quantidade por tipo de cálculo
-  function getHint(tipoCalculo: string): string | null {
+  function getHint(tipoCalculo: string): { text: string; type: 'info' | 'warn' } | null {
     if (tipoCalculo === 'PorProfessor' && numProfessores > 0)
-      return `Sugestão: qtd = nº de professores (${numProfessores})`
+      return { text: `Sugestão: qtd = nº de professores (${numProfessores})`, type: 'info' }
     if (tipoCalculo === 'PorAluno' && numAlunos > 0)
-      return `Sugestão: qtd = nº de alunos (${numAlunos})`
+      return { text: `Sugestão: qtd = nº de alunos (${numAlunos})`, type: 'info' }
     if (tipoCalculo === 'PorEscola' && numEscolas > 0)
-      return `Sugestão: qtd = nº de escolas (${numEscolas})`
+      return { text: `Sugestão: qtd = nº de escolas (${numEscolas})`, type: 'info' }
     if (tipoCalculo === 'PorAlunoXTema' && numAlunos > 0 && numTemas > 0)
-      return `Sugestão: qtd = alunos × temas (${numAlunos} × ${numTemas} = ${numAlunos * numTemas} livros)`
+      return { text: `Sugestão: qtd = alunos × temas (${numAlunos} × ${numTemas} = ${numAlunos * numTemas})`, type: 'info' }
+    if (tipoCalculo === 'PorProfessor' && numProfessores === 0)
+      return { text: `Qtd estimada — preencha Professores no Público`, type: 'warn' }
+    if (tipoCalculo === 'PorAluno' && numAlunos === 0)
+      return { text: `Qtd estimada — preencha Alunos no Público`, type: 'warn' }
+    if (tipoCalculo === 'PorEscola' && numEscolas === 0)
+      return { text: `Qtd estimada — preencha Escolas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorAlunoXTema' && (numAlunos === 0 || numTemas === 0))
-      return `Preencha Alunos e Temas na etapa Público para ver a sugestão`
+      return { text: `Qtd estimada — preencha Alunos e Temas no Público`, type: 'warn' }
     return null
   }
 

@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ComponentesCliente } from './componentes-cliente'
 import Link from 'next/link'
+import { AlertTriangle } from 'lucide-react'
 
 export default async function ComponentesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -49,12 +50,41 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
     `)
     .eq('proposta_id', id)
 
+  const precisaPublico = (produtosProposta ?? []).some(pp =>
+    [...(pp.componentes as any[]), ...(pp.servicos as any[])].some(item => {
+      const tc: string = item.componente?.tipo_calculo ?? item.servico?.tipo_calculo ?? ''
+      if (tc === 'PorAluno'      && proposta.num_alunos === 0)      return true
+      if (tc === 'PorProfessor'  && proposta.num_professores === 0) return true
+      if (tc === 'PorEscola'     && proposta.num_escolas === 0)     return true
+      if (tc === 'PorAlunoXTema' && (proposta.num_alunos === 0 || proposta.num_temas === 0)) return true
+      return false
+    })
+  )
+
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Componentes</h1>
         <p className="text-slate-500 mt-1">Ajuste quantidades e valores de cada componente</p>
       </div>
+
+      {precisaPublico && (
+        <div className="flex items-start gap-3 rounded-lg bg-amber-50 border border-amber-200 p-4 mb-6">
+          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800">Dados do público não preenchidos</p>
+            <p className="text-sm text-amber-700 mt-0.5">
+              Alguns itens estão com quantidade 1 por padrão. Preencha o Público para que
+              as quantidades sejam calculadas automaticamente.
+            </p>
+          </div>
+          <Link href={`/proposta/${id}/publico`}>
+            <Button variant="outline" size="sm" className="text-amber-700 border-amber-300 hover:bg-amber-100 flex-shrink-0">
+              Ir para Público →
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {(!produtosProposta || produtosProposta.length === 0) ? (
         <div className="flex flex-col items-center justify-center h-48 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
