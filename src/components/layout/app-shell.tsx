@@ -20,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar — drawer no mobile, fixo no desktop */}
       <div className={cn(
-        'fixed inset-y-0 left-0 z-30 md:relative md:flex md:flex-col',
+        'fixed inset-y-0 left-0 z-30 md:sticky md:top-0 md:h-screen md:overflow-y-auto md:flex md:flex-col',
         sidebarOpen ? 'flex' : 'hidden md:flex'
       )}>
         <Sidebar onClose={() => setSidebarOpen(false)} />
