@@ -344,6 +344,19 @@ export function ComponentesCliente({
         {produtos.map(pp => {
           if (pp.componentes.length === 0 && pp.servicos.length === 0) return null
 
+          const countLivrosPAEPT = pp.componentes.filter(
+            c => c.componente?.tipo_calculo === 'PorAlunoEProfessorXTema'
+          ).length
+
+          const subtitleLivros = (() => {
+            if (countLivrosPAEPT === 0 || numTemas === 0 || (numAlunos + numProfessores) === 0) return null
+            const totAlun = numAlunos * numTemas * countLivrosPAEPT
+            const totProf = numProfessores * numTemas * countLivrosPAEPT
+            const total = totAlun + totProf
+            const fmt = (n: number) => n.toLocaleString('pt-BR')
+            return `${fmt(total)} livros (${fmt(totAlun)} alunos + ${fmt(totProf)} professores)`
+          })()
+
           return (
             <Card key={pp.id}>
               <CardHeader className="pb-3">
@@ -353,6 +366,9 @@ export function ComponentesCliente({
                     {(pp.componentes?.length ?? 0) + (pp.servicos?.length ?? 0)} itens
                   </Badge>
                 </CardTitle>
+                {subtitleLivros && (
+                  <p className="text-sm text-slate-500 mt-0.5">{subtitleLivros}</p>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="flex items-center text-xs text-slate-400 pb-2 gap-3">
