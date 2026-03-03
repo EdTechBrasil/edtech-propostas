@@ -76,7 +76,7 @@ type Produto = {
 }
 
 const CATEGORIAS = ['LicencaAluno', 'LicencaProfessor', 'Kit', 'Livro', 'Tema', 'Pagina', 'Credito', 'ItemFixo', 'Plataforma']
-const TIPOS_CALCULO = ['Fixo', 'PorAluno', 'PorProfessor', 'PorEscola', 'PorSerie', 'PorAlunoXTema']
+const TIPOS_CALCULO = ['Fixo', 'PorAluno', 'PorProfessor', 'PorEscola', 'PorSerie', 'PorAlunoXTema', 'PorProfessorXTema']
 
 // ── Célula de valor editável inline ──────────────────────────────────────────
 

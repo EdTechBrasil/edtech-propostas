@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button'
 import { ProdutosCliente } from './produtos-cliente'
 import Link from 'next/link'
 
-function qtdSugerida(tipo: string, numEsc: number, numAlun: number, numProf: number): number {
-  if (tipo === 'PorProfessor' && numProf > 0) return numProf
-  if (tipo === 'PorAluno'     && numAlun > 0) return numAlun
-  if (tipo === 'PorEscola'    && numEsc  > 0) return numEsc
+function qtdSugerida(tipo: string, numEsc: number, numAlun: number, numProf: number, numTemas: number): number {
+  if (tipo === 'PorProfessor'     && numProf > 0) return numProf
+  if (tipo === 'PorAluno'         && numAlun > 0) return numAlun
+  if (tipo === 'PorEscola'        && numEsc  > 0) return numEsc
+  if (tipo === 'PorAlunoXTema'    && numAlun > 0 && numTemas > 0) return numAlun * numTemas
+  if (tipo === 'PorProfessorXTema'&& numProf > 0 && numTemas > 0) return numProf * numTemas
   return 1
 }
 
@@ -18,7 +20,7 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
   const [{ data: proposta }, { data: catalogo }, { data: selecionados }] = await Promise.all([
     supabase
       .from('propostas')
-      .select('id, orcamento_alvo, limite_orcamento_max, num_escolas, num_alunos, num_professores')
+      .select('id, orcamento_alvo, limite_orcamento_max, num_escolas, num_alunos, num_professores, num_temas')
       .eq('id', id)
       .single<{
         id: string
@@ -27,6 +29,7 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
         num_escolas: number
         num_alunos: number
         num_professores: number
+        num_temas: number
       }>(),
     supabase
       .from('produtos')
@@ -65,7 +68,7 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
   const valorPorProduto: Record<string, number> = {}
   for (const c of (componentes ?? []) as any[]) {
     valorPorProduto[c.produto_id] = (valorPorProduto[c.produto_id] ?? 0) +
-      qtdSugerida(c.tipo_calculo, proposta.num_escolas ?? 0, proposta.num_alunos ?? 0, proposta.num_professores ?? 0) *
+      qtdSugerida(c.tipo_calculo, proposta.num_escolas ?? 0, proposta.num_alunos ?? 0, proposta.num_professores ?? 0, proposta.num_temas ?? 0) *
       c.valor_venda_base
   }
 
