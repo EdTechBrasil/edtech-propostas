@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/utils/format'
-import { Lock, Save, Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -117,7 +117,7 @@ function ItemRow({
               value={qtdFocused && qtd === 0 ? '' : qtd}
               onChange={e => onQtdChange(e.target.value === '' ? 0 : Number(e.target.value))}
               onFocus={e => { setQtdFocused(true); e.target.select() }}
-              onBlur={() => setQtdFocused(false)}
+              onBlur={() => { setQtdFocused(false); startTransition(onSave) }}
               className="h-8 text-sm text-center"
               title="Quantidade"
             />
@@ -131,7 +131,7 @@ function ItemRow({
               value={valorFocused && valor === 0 ? '' : valor}
               onChange={e => onValorChange(e.target.value === '' ? 0 : Number(e.target.value))}
               onFocus={e => { setValorFocused(true); e.target.select() }}
-              onBlur={() => setValorFocused(false)}
+              onBlur={() => { setValorFocused(false); startTransition(onSave) }}
               className="h-8 text-sm text-right"
               title="Valor venda unitário"
             />
@@ -143,18 +143,8 @@ function ItemRow({
             {formatCurrency(custo)}
           </span>
           <span className={`text-sm font-medium w-14 text-right ${margemCor}`} title="Margem por item">
-            {margemItem !== null ? `${margemItem.toFixed(1)}%` : '—'}
+            {margemItem !== null ? `${margemItem.toFixed(1)}%` : ''}
           </span>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-slate-400 hover:text-primary"
-            onClick={() => startTransition(onSave)}
-            disabled={pending}
-            title="Salvar"
-          >
-            {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          </Button>
         </div>
       </div>
 
@@ -312,10 +302,8 @@ export function ComponentesCliente({
       return { text: `Sugestão: qtd = nº de escolas (${numEscolas})`, type: 'info' }
     if (tipoCalculo === 'PorAlunoXTema' && numAlunos > 0 && numTemas > 0)
       return { text: `Sugestão: qtd = alunos × temas (${numAlunos} × ${numTemas} = ${numAlunos * numTemas})`, type: 'info' }
-    if (tipoCalculo === 'PorProfessorXTema' && numProfessores > 0 && numTemas > 0)
-      return { text: `Sugestão: qtd = professores × temas (${numProfessores} × ${numTemas} = ${numProfessores * numTemas})`, type: 'info' }
     if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos > 0 || numProfessores > 0) && numTemas > 0)
-      return { text: `Sugestão: qtd = (alunos + professores) × temas ((${numAlunos} + ${numProfessores}) × ${numTemas} = ${(numAlunos + numProfessores) * numTemas})`, type: 'info' }
+      return { text: `${(numAlunos * numTemas).toLocaleString('pt-BR')} para Alunos + ${(numProfessores * numTemas).toLocaleString('pt-BR')} para Professores`, type: 'info' }
     if (tipoCalculo === 'PorProfessor' && numProfessores === 0)
       return { text: `Qtd estimada — preencha Professores no Público`, type: 'warn' }
     if (tipoCalculo === 'PorAluno' && numAlunos === 0)
@@ -324,8 +312,6 @@ export function ComponentesCliente({
       return { text: `Qtd estimada — preencha Escolas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorAlunoXTema' && (numAlunos === 0 || numTemas === 0))
       return { text: `Qtd estimada — preencha Alunos e Temas no Público`, type: 'warn' }
-    if (tipoCalculo === 'PorProfessorXTema' && (numProfessores === 0 || numTemas === 0))
-      return { text: `Qtd estimada — preencha Professores e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos === 0 || numTemas === 0))
       return { text: `Qtd estimada — preencha Alunos, Professores e Temas no Público`, type: 'warn' }
     return null
@@ -378,7 +364,6 @@ export function ComponentesCliente({
                   <span className="w-24 text-right">Total venda</span>
                   <span className="w-24 text-right">Custo unit.</span>
                   <span className="w-14 text-right">Margem</span>
-                  <span className="w-8" />
                 </div>
 
                 {pp.componentes.length > 0 && (
