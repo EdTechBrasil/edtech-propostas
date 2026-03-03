@@ -328,9 +328,12 @@ export function ComponentesCliente({
 
       <div className="space-y-6">
         {produtos.map(pp => {
-          if (pp.componentes.length === 0 && pp.servicos.length === 0) return null
+          const visibleComponentes = pp.componentes.filter(
+            c => c.componente?.tipo_calculo !== 'PorProfessorXTema'
+          )
+          if (visibleComponentes.length === 0 && pp.servicos.length === 0) return null
 
-          const countLivrosPAEPT = pp.componentes.filter(
+          const countLivrosPAEPT = visibleComponentes.filter(
             c => c.componente?.tipo_calculo === 'PorAlunoEProfessorXTema'
           ).length
 
@@ -349,7 +352,7 @@ export function ComponentesCliente({
                 <CardTitle className="text-base flex items-center gap-2">
                   {pp.produto?.nome}
                   <Badge variant="secondary" className="text-xs font-normal">
-                    {(pp.componentes?.length ?? 0) + (pp.servicos?.length ?? 0)} itens
+                    {visibleComponentes.length + pp.servicos.length} itens
                   </Badge>
                 </CardTitle>
                 {subtitleLivros && (
@@ -366,10 +369,10 @@ export function ComponentesCliente({
                   <span className="w-14 text-right">Margem</span>
                 </div>
 
-                {pp.componentes.length > 0 && (
+                {visibleComponentes.length > 0 && (
                   <div className="mb-2">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Componentes</p>
-                    {pp.componentes.map(c => {
+                    {visibleComponentes.map(c => {
                       const state = items[c.id] ?? { qtd: c.quantidade, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
                       const tipoCalculo = c.componente?.tipo_calculo ?? ''
                       return (
