@@ -30,14 +30,22 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="mb-4 flex gap-4">
-        <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm">
-          <span className="text-slate-500">Orçamento alvo: </span>
-          <span className="font-semibold">{formatCurrency(proposta.orcamento_alvo)}</span>
-        </div>
-        <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm">
-          <span className="text-slate-500">Limite máximo: </span>
-          <span className="font-semibold">{formatCurrency(proposta.limite_orcamento_max ?? 0)}</span>
-        </div>
+        {proposta.orcamento_alvo > 0 ? (
+          <>
+            <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm">
+              <span className="text-slate-500">Orçamento alvo: </span>
+              <span className="font-semibold">{formatCurrency(proposta.orcamento_alvo)}</span>
+            </div>
+            <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm">
+              <span className="text-slate-500">Limite máximo: </span>
+              <span className="font-semibold">{formatCurrency(proposta.limite_orcamento_max ?? 0)}</span>
+            </div>
+          </>
+        ) : (
+          <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 font-medium">
+            Orçamento não definido
+          </div>
+        )}
       </div>
 
       <Card>

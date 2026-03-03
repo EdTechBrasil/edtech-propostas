@@ -37,11 +37,10 @@ export default async function NovaProposta() {
           <CardContent>
             <form action={criarProposta as any} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="orcamento_alvo">Orçamento alvo (R$) *</Label>
+                <Label htmlFor="orcamento_alvo">Orçamento alvo (R$)</Label>
                 <CurrencyInput
                   name="orcamento_alvo"
                   className="text-lg"
-                  required
                 />
               </div>
 

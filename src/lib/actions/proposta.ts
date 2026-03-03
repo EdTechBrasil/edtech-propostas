@@ -27,10 +27,7 @@ export async function criarProposta(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const orcamento_alvo = Number(formData.get('orcamento_alvo'))
-  if (!orcamento_alvo || orcamento_alvo <= 0) {
-    return { error: 'Informe um valor válido' }
-  }
+  const orcamento_alvo = Number(formData.get('orcamento_alvo')) || 0
 
   const { data: config } = await supabase
     .from('configuracao_financeira')
