@@ -50,6 +50,7 @@ interface Props {
   numProfessores: number
   numAlunos: number
   numEscolas: number
+  numTemas: number
   produtos: ProdutoProposta[]
 }
 
@@ -273,6 +274,7 @@ export function ComponentesCliente({
   numProfessores,
   numAlunos,
   numEscolas,
+  numTemas,
   produtos,
 }: Props) {
   // Estado global: todos os items (componentes + serviços) de todos os produtos
@@ -306,6 +308,10 @@ export function ComponentesCliente({
       return `Sugestão: qtd = nº de alunos (${numAlunos})`
     if (tipoCalculo === 'PorEscola' && numEscolas > 0)
       return `Sugestão: qtd = nº de escolas (${numEscolas})`
+    if (tipoCalculo === 'PorAlunoXTema' && numAlunos > 0 && numTemas > 0)
+      return `Sugestão: qtd = alunos × temas (${numAlunos} × ${numTemas} = ${numAlunos * numTemas} livros)`
+    if (tipoCalculo === 'PorAlunoXTema' && (numAlunos === 0 || numTemas === 0))
+      return `Preencha Alunos e Temas na etapa Público para ver a sugestão`
     return null
   }
 

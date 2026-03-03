@@ -10,7 +10,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
 
   const { data: proposta } = await supabase
     .from('propostas')
-    .select('id, orcamento_alvo, limite_orcamento_max, num_professores, num_alunos, num_escolas')
+    .select('id, orcamento_alvo, limite_orcamento_max, num_professores, num_alunos, num_escolas, num_temas')
     .eq('id', id)
     .single<{
       id: string
@@ -19,6 +19,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       num_professores: number
       num_alunos: number
       num_escolas: number
+      num_temas: number
     }>()
 
   if (!proposta) notFound()
@@ -69,6 +70,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
           numProfessores={proposta.num_professores ?? 0}
           numAlunos={proposta.num_alunos ?? 0}
           numEscolas={proposta.num_escolas ?? 0}
+          numTemas={proposta.num_temas ?? 0}
           produtos={produtosProposta as any}
         />
       )}
