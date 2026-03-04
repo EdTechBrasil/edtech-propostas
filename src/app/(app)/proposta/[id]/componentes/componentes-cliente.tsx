@@ -368,9 +368,16 @@ export function ComponentesCliente({
 
       <div className="space-y-6">
         {produtos.map(pp => {
-          const visibleComponentes = pp.componentes.filter(
-            c => c.componente?.tipo_calculo !== 'PorProfessorXTema'
-          )
+          const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
+          const visibleComponentes = pp.componentes.filter(c => {
+            const tc = c.componente?.tipo_calculo ?? ''
+            if (tc === 'PorProfessorXTema') return false
+            if (TAPETE_TYPES.has(tc)) {
+              if (seriesTapetesState === null) return true  // não configurado ainda → mostra tudo (dialog vai abrir)
+              return seriesSplit.includes(TAPETE_KEYS[tc])  // só mostra os selecionados
+            }
+            return true
+          })
           if (visibleComponentes.length === 0 && pp.servicos.length === 0) return null
 
           const countLivrosPAEPT = visibleComponentes.filter(
