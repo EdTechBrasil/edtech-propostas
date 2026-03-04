@@ -5,6 +5,26 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { notificarGestores } from './notificacoes'
 
+// ── Cálculo de quantidade sugerida ────────────────────────────────────────────
+
+function calcQtd(
+  tipoCalculo: string,
+  numProf: number,
+  numAlun: number,
+  numEsc: number,
+  numTemas: number,
+  numKits: number
+): number {
+  if (tipoCalculo === 'PorProfessor'           && numProf > 0) return numProf
+  if (tipoCalculo === 'PorAluno'               && numAlun > 0) return numAlun
+  if (tipoCalculo === 'PorEscola'              && numEsc  > 0) return numEsc
+  if (tipoCalculo === 'PorAlunoXTema'          && numAlun > 0 && numTemas > 0) return numAlun * numTemas
+  if (tipoCalculo === 'PorProfessorXTema'      && numProf > 0 && numTemas > 0) return numProf * numTemas
+  if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlun > 0 || numProf > 0) && numTemas > 0) return (numAlun + numProf) * numTemas
+  if (tipoCalculo === 'PorEscolaXKit'          && numEsc  > 0 && numKits > 0) return numEsc * numKits
+  return 1
+}
+
 async function registrarHistorico(
   proposta_id: string,
   usuario_id: string,
@@ -84,6 +104,42 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     .update({ publico_descricao, num_escolas, num_alunos, num_professores, num_temas, num_kits })
     .eq('id', proposta_id)
 
+  // Recalcula quantidades de todos os componentes e serviços da proposta
+  const [{ data: comps }, { data: servs }] = await Promise.all([
+    supabase
+      .from('proposta_componentes')
+      .select('id, componente:produto_componentes(tipo_calculo)')
+      .eq('proposta_id', proposta_id),
+    supabase
+      .from('proposta_servicos')
+      .select('id, servico:produto_servicos(tipo_calculo)')
+      .eq('proposta_id', proposta_id),
+  ])
+
+  const updates: Promise<any>[] = []
+
+  for (const c of comps ?? []) {
+    const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
+    if (tc === 'Fixo') continue
+    updates.push(
+      supabase.from('proposta_componentes')
+        .update({ quantidade: calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits) })
+        .eq('id', c.id)
+    )
+  }
+
+  for (const s of servs ?? []) {
+    const tc = (s.servico as any)?.tipo_calculo ?? 'Fixo'
+    if (tc === 'Fixo') continue
+    updates.push(
+      supabase.from('proposta_servicos')
+        .update({ quantidade: calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits) })
+        .eq('id', s.id)
+    )
+  }
+
+  await Promise.all(updates)
+
   await registrarHistorico(proposta_id, user.id, 'MudancaOrcamento', publico_descricao)
 
   redirect(`/proposta/${proposta_id}/produtos`)
@@ -119,16 +175,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
   const numTemas = pubData?.num_temas ?? 0
   const numKits = pubData?.num_kits ?? 5
 
-  function qtdSugerida(tipoCalculo: string): number {
-    if (tipoCalculo === 'PorProfessor'  && numProf > 0) return numProf
-    if (tipoCalculo === 'PorAluno'      && numAlun > 0) return numAlun
-    if (tipoCalculo === 'PorEscola'     && numEsc  > 0) return numEsc
-    if (tipoCalculo === 'PorAlunoXTema'      && numAlun > 0 && numTemas > 0) return numAlun * numTemas
-    if (tipoCalculo === 'PorProfessorXTema'      && numProf > 0 && numTemas > 0) return numProf * numTemas
-    if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlun > 0 || numProf > 0) && numTemas > 0) return (numAlun + numProf) * numTemas
-    if (tipoCalculo === 'PorEscolaXKit' && numEsc > 0 && numKits > 0) return numEsc * numKits
-    return 1
-  }
+  const qtdSugerida = (tc: string) => calcQtd(tc, numProf, numAlun, numEsc, numTemas, numKits)
 
   // Adiciona o produto
   const { data: pp, error } = await supabase
