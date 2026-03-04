@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { atualizarComponente, atualizarServico } from '@/lib/actions/proposta'
+import { atualizarComponente, atualizarServico, atualizarNumKits } from '@/lib/actions/proposta'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -271,6 +271,9 @@ export function ComponentesCliente({
   numKits,
   produtos,
 }: Props) {
+  const [numKitsState, setNumKitsState] = useState(numKits)
+  const [, startKitsTransition] = useTransition()
+
   // Estado global: todos os items (componentes + serviços) de todos os produtos
   const [items, setItems] = useState<Record<string, ItemState>>(() => {
     const initial: Record<string, ItemState> = {}
@@ -316,9 +319,9 @@ export function ComponentesCliente({
       return { text: `Qtd estimada — preencha Alunos e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos === 0 || numTemas === 0))
       return { text: `Qtd estimada — preencha Alunos, Professores e Temas no Público`, type: 'warn' }
-    if (tipoCalculo === 'PorEscolaXKit' && numEscolas > 0 && numKits > 0)
-      return { text: `${numEscolas} escolas × ${numKits} kits = ${numEscolas * numKits}`, type: 'info' }
-    if (tipoCalculo === 'PorEscolaXKit' && (numEscolas === 0 || numKits === 0))
+    if (tipoCalculo === 'PorEscolaXKit' && numEscolas > 0 && numKitsState > 0)
+      return { text: `${numEscolas} escolas × ${numKitsState} kits = ${numEscolas * numKitsState}`, type: 'info' }
+    if (tipoCalculo === 'PorEscolaXKit' && (numEscolas === 0 || numKitsState === 0))
       return { text: `Qtd estimada — preencha Escolas e Kits no Público`, type: 'warn' }
     return null
   }
@@ -352,14 +355,37 @@ export function ComponentesCliente({
             return `${fmt(total)} livros (${fmt(totAlun)} alunos + ${fmt(totProf)} professores)`
           })()
 
+          const hasKit = visibleComponentes.some(c => c.componente?.tipo_calculo === 'PorEscolaXKit')
+
           return (
             <Card key={pp.id}>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base flex items-center gap-2 flex-wrap">
                   {pp.produto?.nome}
                   <Badge variant="secondary" className="text-xs font-normal">
                     {visibleComponentes.length + pp.servicos.length} itens
                   </Badge>
+                  {hasKit && (
+                    <span className="flex items-center gap-1.5 text-sm font-normal text-slate-500 ml-auto">
+                      Kits por escola:
+                      <input
+                        type="number"
+                        min="1"
+                        value={numKitsState}
+                        onChange={e => {
+                          const v = Math.max(1, Number(e.target.value) || 1)
+                          setNumKitsState(v)
+                          for (const c of visibleComponentes) {
+                            if (c.componente?.tipo_calculo === 'PorEscolaXKit') {
+                              updateItem(c.id, { qtd: numEscolas * v })
+                            }
+                          }
+                        }}
+                        onBlur={() => startKitsTransition(() => atualizarNumKits(propostaId, numKitsState))}
+                        className="w-16 h-7 rounded border border-slate-300 text-sm text-center px-1 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      />
+                    </span>
+                  )}
                 </CardTitle>
                 {subtitleLivros && (
                   <p className="text-sm text-slate-500 mt-0.5">{subtitleLivros}</p>

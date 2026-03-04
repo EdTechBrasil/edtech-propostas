@@ -92,16 +92,23 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   const num_alunos = Number(formData.get('alunos') || 0)
   const num_professores = Number(formData.get('professores') || 0)
   const num_temas = Number(formData.get('temas') || 0)
-  const num_kits = Number(formData.get('num_kits')) || 5
   const distribuicao = formData.get('distribuicao') || ''
 
   const publico_descricao = distribuicao
     ? `Distribuição por série: ${distribuicao}`
     : `Escolas: ${num_escolas} | Alunos: ${num_alunos} | Professores: ${num_professores} | Temas: ${num_temas}`
 
+  // Busca num_kits atual (não é editado no Público)
+  const { data: current } = await supabase
+    .from('propostas')
+    .select('num_kits')
+    .eq('id', proposta_id)
+    .single<{ num_kits: number }>()
+  const num_kits = current?.num_kits ?? 5
+
   await supabase
     .from('propostas')
-    .update({ publico_descricao, num_escolas, num_alunos, num_professores, num_temas, num_kits })
+    .update({ publico_descricao, num_escolas, num_alunos, num_professores, num_temas })
     .eq('id', proposta_id)
 
   // Recalcula quantidades de todos os componentes e serviços da proposta
@@ -143,6 +150,39 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   await registrarHistorico(proposta_id, user.id, 'MudancaOrcamento', publico_descricao)
 
   redirect(`/proposta/${proposta_id}/produtos`)
+}
+
+// ── Kits por Escola (configurado no card de Componentes) ─────────────────────
+
+export async function atualizarNumKits(proposta_id: string, num_kits: number) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { data: proposta } = await supabase
+    .from('propostas')
+    .select('num_escolas')
+    .eq('id', proposta_id)
+    .single<{ num_escolas: number }>()
+
+  const num_escolas = proposta?.num_escolas ?? 0
+  const novaQtd = num_escolas > 0 && num_kits > 0 ? num_escolas * num_kits : 1
+
+  await supabase.from('propostas').update({ num_kits }).eq('id', proposta_id)
+
+  // Atualiza todos os componentes PorEscolaXKit desta proposta
+  const { data: comps } = await supabase
+    .from('proposta_componentes')
+    .select('id, componente:produto_componentes(tipo_calculo)')
+    .eq('proposta_id', proposta_id)
+
+  const updates = (comps ?? [])
+    .filter(c => (c.componente as any)?.tipo_calculo === 'PorEscolaXKit')
+    .map(c => supabase.from('proposta_componentes').update({ quantidade: novaQtd }).eq('id', c.id))
+
+  await Promise.all(updates)
+  revalidatePath(`/proposta/${proposta_id}/componentes`)
+  return { novaQtd }
 }
 
 // ── Step 3: Produtos ──────────────────────────────────────────────────────────
