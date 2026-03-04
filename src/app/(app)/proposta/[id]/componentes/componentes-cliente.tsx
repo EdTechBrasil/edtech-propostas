@@ -324,11 +324,11 @@ export function ComponentesCliente({
       const enabled = seriesSplit.includes(key)
       const mult = TAPETE_MULT[tipoCalculo]
       if (!enabled) return { text: 'Série não incluída — qtd = 0', type: 'info' }
-      if (numTemas > 0 && numEscolas > 0 && numKitsState > 0) {
-        const qty = mult * numTemas * numEscolas * numKitsState
-        return { text: `${mult} × ${numTemas} temas × ${numEscolas} esc × ${numKitsState} kits = ${qty.toLocaleString('pt-BR')}`, type: 'info' }
+      if (numTemas > 0 && numKitsState > 0) {
+        const qty = mult * numTemas * numKitsState
+        return { text: `${mult} × ${numTemas} temas × ${numKitsState} kits = ${qty.toLocaleString('pt-BR')}`, type: 'info' }
       }
-      return { text: 'Preencha Escolas, Temas e Kits para calcular', type: 'warn' }
+      return { text: 'Preencha Temas e Kits para calcular', type: 'warn' }
     }
     if (tipoCalculo === 'PorProfessor' && numProfessores > 0)
       return { text: `Sugestão: qtd = nº de professores (${numProfessores})`, type: 'info' }
@@ -424,7 +424,7 @@ export function ComponentesCliente({
                                 } else if (TAPETE_TYPES.has(tc)) {
                                   const key = TAPETE_KEYS[tc]
                                   if (seriesSplit.includes(key)) {
-                                    updateItem(c.id, { qtd: TAPETE_MULT[tc] * numTemas * numEscolas * v })
+                                    updateItem(c.id, { qtd: TAPETE_MULT[tc] * numTemas * v })
                                   }
                                 }
                               }
@@ -553,9 +553,9 @@ export function ComponentesCliente({
                   <p className="text-sm font-medium text-slate-800">{label}</p>
                   <p className="text-xs text-slate-400">{mult} tapetes por tema × kit</p>
                 </div>
-                {numTemas > 0 && numEscolas > 0 && numKitsState > 0 && checkedSeries.includes(key) && (
+                {numTemas > 0 && numKitsState > 0 && checkedSeries.includes(key) && (
                   <span className="text-xs font-medium text-blue-600">
-                    = {(mult * numTemas * numEscolas * numKitsState).toLocaleString('pt-BR')}
+                    = {(mult * numTemas * numKitsState).toLocaleString('pt-BR')}
                   </span>
                 )}
               </label>
@@ -574,8 +574,8 @@ export function ComponentesCliente({
                     if (TAPETE_TYPES.has(tc)) {
                       const key = TAPETE_KEYS[tc]
                       const enabled = novasSeries.includes(key)
-                      const qty = enabled && numTemas > 0 && numEscolas > 0 && numKitsState > 0
-                        ? TAPETE_MULT[tc] * numTemas * numEscolas * numKitsState
+                      const qty = enabled && numTemas > 0 && numKitsState > 0
+                        ? TAPETE_MULT[tc] * numTemas * numKitsState
                         : 0
                       updateItem(c.id, { qtd: qty })
                     }
