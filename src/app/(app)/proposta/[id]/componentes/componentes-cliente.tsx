@@ -381,7 +381,7 @@ export function ComponentesCliente({
                             }
                           }
                         }}
-                        onBlur={() => startKitsTransition(() => atualizarNumKits(propostaId, numKitsState))}
+                        onBlur={() => startKitsTransition(async () => { await atualizarNumKits(propostaId, numKitsState) })}
                         className="w-16 h-7 rounded border border-slate-300 text-sm text-center px-1 focus:outline-none focus:ring-2 focus:ring-slate-400"
                       />
                     </span>
