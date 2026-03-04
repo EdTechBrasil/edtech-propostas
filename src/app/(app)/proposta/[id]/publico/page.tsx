@@ -1,12 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { atualizarPublico } from '@/lib/actions/proposta'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { BackButton } from '@/components/ui/back-button'
-import { formatCurrency } from '@/utils/format'
 import { notFound } from 'next/navigation'
+import { PublicoCliente } from './publico-cliente'
 
 export default async function PublicoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -14,130 +8,34 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
 
   const { data: proposta } = await supabase
     .from('propostas')
-    .select('id, orcamento_alvo, limite_orcamento_max, publico_descricao, num_escolas, num_alunos, num_professores, num_temas')
+    .select(`
+      id, orcamento_alvo, limite_orcamento_max,
+      num_escolas, num_professores,
+      num_alunos_pre_i, num_alunos_pre_ii,
+      num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
+      num_temas_pre_i, num_temas_pre_ii,
+      num_temas_ano1, num_temas_ano2, num_temas_ano3
+    `)
     .eq('id', id)
-    .single<{ id: string; orcamento_alvo: number; limite_orcamento_max: number; publico_descricao: string | null; num_escolas: number; num_alunos: number; num_professores: number; num_temas: number }>()
+    .single<{
+      id: string
+      orcamento_alvo: number
+      limite_orcamento_max: number
+      num_escolas: number
+      num_professores: number
+      num_alunos_pre_i: number
+      num_alunos_pre_ii: number
+      num_alunos_ano1: number
+      num_alunos_ano2: number
+      num_alunos_ano3: number
+      num_temas_pre_i: number
+      num_temas_pre_ii: number
+      num_temas_ano1: number
+      num_temas_ano2: number
+      num_temas_ano3: number
+    }>()
 
   if (!proposta) notFound()
 
-  const action = atualizarPublico.bind(null, id)
-
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Público</h1>
-        <p className="text-slate-500 mt-1">Defina o público-alvo desta proposta</p>
-      </div>
-
-      <div className="mb-4 flex gap-4">
-        {proposta.orcamento_alvo > 0 ? (
-          <>
-            <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm">
-              <span className="text-slate-500">Orçamento alvo: </span>
-              <span className="font-semibold">{formatCurrency(proposta.orcamento_alvo)}</span>
-            </div>
-            <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm">
-              <span className="text-slate-500">Limite máximo: </span>
-              <span className="font-semibold">{formatCurrency(proposta.limite_orcamento_max ?? 0)}</span>
-            </div>
-          </>
-        ) : (
-          <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 font-medium">
-            Orçamento não definido
-          </div>
-        )}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Estrutura do público</CardTitle>
-          <CardDescription>
-            Informe as quantidades ou use a distribuição por série.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={action} className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="escolas">Escolas</Label>
-                <Input
-                  id="escolas"
-                  name="escolas"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  defaultValue={proposta.num_escolas || proposta.publico_descricao?.match(/Escolas: (\d+)/)?.[1] || ''}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="alunos">Alunos</Label>
-                <Input
-                  id="alunos"
-                  name="alunos"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  defaultValue={proposta.num_alunos || proposta.publico_descricao?.match(/Alunos: (\d+)/)?.[1] || ''}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="professores">Professores</Label>
-                <Input
-                  id="professores"
-                  name="professores"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  defaultValue={proposta.num_professores || proposta.publico_descricao?.match(/Professores: (\d+)/)?.[1] || ''}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="temas">Temas <span className="text-slate-400 font-normal">(1–4)</span></Label>
-                <Input
-                  id="temas"
-                  name="temas"
-                  type="number"
-                  min="0"
-                  max="4"
-                  placeholder="0"
-                  defaultValue={proposta.num_temas || ''}
-                />
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-400">ou</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="distribuicao">Distribuição por série (opcional)</Label>
-              <Input
-                id="distribuicao"
-                name="distribuicao"
-                placeholder="Ex: 1º ao 5º ano — 200 alunos; 6º ao 9º ano — 300 alunos"
-                defaultValue={
-                  proposta.publico_descricao?.startsWith('Distribuição por série:')
-                    ? proposta.publico_descricao.replace('Distribuição por série: ', '')
-                    : ''
-                }
-              />
-              <p className="text-xs text-slate-400">
-                Se preenchido, substitui os campos acima.
-              </p>
-            </div>
-
-            <div className="flex justify-between">
-              <BackButton />
-              <Button type="submit">Continuar →</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  )
+  return <PublicoCliente proposta={proposta} />
 }

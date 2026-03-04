@@ -7,9 +7,9 @@ import { notificarGestores } from './notificacoes'
 
 // ── Cálculo de quantidade sugerida ────────────────────────────────────────────
 
-const TAPETE_TYPES = new Set(['TapetePreI', 'TapetePreII', 'Tapete1a3'])
-const TAPETE_KEYS: Record<string, string> = { TapetePreI: 'PreI', TapetePreII: 'PreII', Tapete1a3: '1a3' }
-const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 12, Tapete1a3: 16 }
+const TAPETE_TYPES = new Set(['TapetePreI', 'TapetePreII', 'TapeteAno1', 'TapeteAno2', 'TapeteAno3'])
+const TAPETE_KEYS: Record<string, string> = { TapetePreI: 'PreI', TapetePreII: 'PreII', TapeteAno1: 'Ano1', TapeteAno2: 'Ano2', TapeteAno3: 'Ano3' }
+const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 12, TapeteAno1: 16, TapeteAno2: 16, TapeteAno3: 16 }
 
 function calcQtd(
   tipoCalculo: string,
@@ -17,7 +17,8 @@ function calcQtd(
   numAlun: number,
   numEsc: number,
   numTemas: number,
-  numKits: number
+  numKits: number,
+  temasPorSerie: Record<string, number> = {}
 ): number {
   if (tipoCalculo === 'PorProfessor'           && numProf > 0) return numProf
   if (tipoCalculo === 'PorAluno'               && numAlun > 0) return numAlun
@@ -26,8 +27,10 @@ function calcQtd(
   if (tipoCalculo === 'PorProfessorXTema'      && numProf > 0 && numTemas > 0) return numProf * numTemas
   if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlun > 0 || numProf > 0) && numTemas > 0) return (numAlun + numProf) * numTemas
   if (tipoCalculo === 'PorEscolaXKit'          && numEsc  > 0 && numKits > 0) return numEsc * numKits
-  if (TAPETE_TYPES.has(tipoCalculo) && numTemas > 0 && numKits > 0)
-    return TAPETE_MULT[tipoCalculo] * numTemas * numKits
+  if (TAPETE_TYPES.has(tipoCalculo)) {
+    const t = temasPorSerie[TAPETE_KEYS[tipoCalculo]] ?? 0
+    return t > 0 && numKits > 0 ? TAPETE_MULT[tipoCalculo] * t * numKits : 0
+  }
   return 1
 }
 
@@ -94,28 +97,60 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const num_escolas = Number(formData.get('escolas') || 0)
-  const num_alunos = Number(formData.get('alunos') || 0)
+  const num_escolas     = Number(formData.get('escolas') || 0)
   const num_professores = Number(formData.get('professores') || 0)
-  const num_temas = Number(formData.get('temas') || 0)
-  const distribuicao = formData.get('distribuicao') || ''
 
-  const publico_descricao = distribuicao
-    ? `Distribuição por série: ${distribuicao}`
-    : `Escolas: ${num_escolas} | Alunos: ${num_alunos} | Professores: ${num_professores} | Temas: ${num_temas}`
+  // Alunos por série
+  const alunos_pre_i  = Number(formData.get('alunos_pre_i') || 0)
+  const alunos_pre_ii = Number(formData.get('alunos_pre_ii') || 0)
+  const alunos_ano1   = Number(formData.get('alunos_ano1') || 0)
+  const alunos_ano2   = Number(formData.get('alunos_ano2') || 0)
+  const alunos_ano3   = Number(formData.get('alunos_ano3') || 0)
 
-  // Busca num_kits e series_tapetes atuais (não editados no Público)
+  // Temas por série
+  const temas_pre_i   = Number(formData.get('temas_pre_i') || 0)
+  const temas_pre_ii  = Number(formData.get('temas_pre_ii') || 0)
+  const temas_ano1    = Number(formData.get('temas_ano1') || 0)
+  const temas_ano2    = Number(formData.get('temas_ano2') || 0)
+  const temas_ano3    = Number(formData.get('temas_ano3') || 0)
+
+  // Agregados: total de alunos e máximo de temas (para livros PorAlunoEProfessorXTema)
+  const num_alunos = alunos_pre_i + alunos_pre_ii + alunos_ano1 + alunos_ano2 + alunos_ano3
+  const num_temas  = Math.max(temas_pre_i, temas_pre_ii, temas_ano1, temas_ano2, temas_ano3, 0)
+
+  // series_tapetes: séries com alunos > 0 (calculado automaticamente)
+  const seriesList: string[] = []
+  if (alunos_pre_i  > 0) seriesList.push('PreI')
+  if (alunos_pre_ii > 0) seriesList.push('PreII')
+  if (alunos_ano1   > 0) seriesList.push('Ano1')
+  if (alunos_ano2   > 0) seriesList.push('Ano2')
+  if (alunos_ano3   > 0) seriesList.push('Ano3')
+  const series_tapetes = seriesList.join(',')
+
+  const temasPorSerie: Record<string, number> = {
+    PreI: temas_pre_i, PreII: temas_pre_ii,
+    Ano1: temas_ano1,  Ano2: temas_ano2, Ano3: temas_ano3,
+  }
+
+  const publico_descricao = `Escolas: ${num_escolas} | Alunos: ${num_alunos} | Professores: ${num_professores} | Temas: ${num_temas}`
+
+  // Busca num_kits atual
   const { data: current } = await supabase
     .from('propostas')
-    .select('num_kits, series_tapetes')
+    .select('num_kits')
     .eq('id', proposta_id)
-    .single<{ num_kits: number; series_tapetes: string | null }>()
+    .single<{ num_kits: number }>()
   const num_kits = current?.num_kits ?? 5
-  const series_set = new Set((current?.series_tapetes ?? '').split(',').filter(Boolean))
 
   await supabase
     .from('propostas')
-    .update({ publico_descricao, num_escolas, num_alunos, num_professores, num_temas })
+    .update({
+      publico_descricao, num_escolas, num_alunos, num_professores, num_temas, series_tapetes,
+      num_alunos_pre_i: alunos_pre_i, num_alunos_pre_ii: alunos_pre_ii,
+      num_alunos_ano1: alunos_ano1, num_alunos_ano2: alunos_ano2, num_alunos_ano3: alunos_ano3,
+      num_temas_pre_i: temas_pre_i, num_temas_pre_ii: temas_pre_ii,
+      num_temas_ano1: temas_ano1, num_temas_ano2: temas_ano2, num_temas_ano3: temas_ano3,
+    })
     .eq('id', proposta_id)
 
   // Recalcula quantidades de todos os componentes e serviços da proposta
@@ -135,8 +170,8 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       .filter(c => (c.componente as any)?.tipo_calculo !== 'Fixo')
       .map(c => {
         const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
-        const qty = TAPETE_TYPES.has(tc) && !series_set.has(TAPETE_KEYS[tc])
-          ? 0
+        const qty = TAPETE_TYPES.has(tc)
+          ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
           : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
         return supabase.from('proposta_componentes')
           .update({ quantidade: qty })
@@ -166,13 +201,27 @@ export async function atualizarNumKits(proposta_id: string, num_kits: number) {
 
   const { data: proposta } = await supabase
     .from('propostas')
-    .select('num_escolas, num_temas, series_tapetes')
+    .select('num_escolas, series_tapetes, num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3')
     .eq('id', proposta_id)
-    .single<{ num_escolas: number; num_temas: number; series_tapetes: string | null }>()
+    .single<{
+      num_escolas: number
+      series_tapetes: string | null
+      num_temas_pre_i: number
+      num_temas_pre_ii: number
+      num_temas_ano1: number
+      num_temas_ano2: number
+      num_temas_ano3: number
+    }>()
 
   const num_escolas = proposta?.num_escolas ?? 0
-  const num_temas = proposta?.num_temas ?? 0
   const series_set = new Set((proposta?.series_tapetes ?? '').split(',').filter(Boolean))
+  const temasPorSerie: Record<string, number> = {
+    PreI:  proposta?.num_temas_pre_i  ?? 0,
+    PreII: proposta?.num_temas_pre_ii ?? 0,
+    Ano1:  proposta?.num_temas_ano1   ?? 0,
+    Ano2:  proposta?.num_temas_ano2   ?? 0,
+    Ano3:  proposta?.num_temas_ano3   ?? 0,
+  }
   const novaQtd = num_escolas > 0 && num_kits > 0 ? num_escolas * num_kits : 1
 
   await supabase.from('propostas').update({ num_kits }).eq('id', proposta_id)
@@ -190,7 +239,7 @@ export async function atualizarNumKits(proposta_id: string, num_kits: number) {
     .map(c => {
       const tc = (c.componente as any)?.tipo_calculo
       const qty = TAPETE_TYPES.has(tc)
-        ? calcQtd(tc, 0, 0, num_escolas, num_temas, num_kits)
+        ? calcQtd(tc, 0, 0, num_escolas, 0, num_kits, temasPorSerie)
         : novaQtd
       return supabase.from('proposta_componentes').update({ quantidade: qty }).eq('id', c.id)
     })
@@ -198,51 +247,6 @@ export async function atualizarNumKits(proposta_id: string, num_kits: number) {
   await Promise.all(updates)
   revalidatePath(`/proposta/${proposta_id}/componentes`)
   return { novaQtd }
-}
-
-// ── Séries de Tapetes (configurado no card de Componentes) ───────────────────
-
-export async function atualizarSeriesTapetes(proposta_id: string, series: string[]) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Não autenticado' }
-
-  const seriesTapetes = series.join(',')
-
-  const { data: proposta } = await supabase
-    .from('propostas')
-    .select('num_professores, num_alunos, num_escolas, num_temas, num_kits')
-    .eq('id', proposta_id)
-    .single<{ num_professores: number; num_alunos: number; num_escolas: number; num_temas: number; num_kits: number }>()
-
-  await supabase.from('propostas').update({ series_tapetes: seriesTapetes }).eq('id', proposta_id)
-
-  const numProf  = proposta?.num_professores ?? 0
-  const numAlun  = proposta?.num_alunos ?? 0
-  const numEsc   = proposta?.num_escolas ?? 0
-  const numTemas = proposta?.num_temas ?? 0
-  const numKits  = proposta?.num_kits ?? 5
-
-  const { data: comps } = await supabase
-    .from('proposta_componentes')
-    .select('id, componente:produto_componentes(tipo_calculo)')
-    .eq('proposta_id', proposta_id)
-
-  const tapetes = (comps ?? []).filter(c => TAPETE_TYPES.has((c.componente as any)?.tipo_calculo))
-
-  if (tapetes.length > 0) {
-    await Promise.all(
-      tapetes.map(c => {
-        const tc = (c.componente as any)?.tipo_calculo
-        const enabled = series.includes(TAPETE_KEYS[tc])
-        const qty = enabled ? calcQtd(tc, numProf, numAlun, numEsc, numTemas, numKits) : 0
-        return supabase.from('proposta_componentes').update({ quantidade: qty }).eq('id', c.id)
-      })
-    )
-  }
-
-  revalidatePath(`/proposta/${proposta_id}/componentes`)
-  return { success: true, seriesTapetes }
 }
 
 // ── Step 3: Produtos ──────────────────────────────────────────────────────────
@@ -265,17 +269,36 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
   // Busca público da proposta para auto-sugestão de quantidades
   const { data: pubData } = await supabase
     .from('propostas')
-    .select('num_professores, num_alunos, num_escolas, num_temas, num_kits')
+    .select('num_professores, num_alunos, num_escolas, num_temas, num_kits, series_tapetes, num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3')
     .eq('id', proposta_id)
-    .single<{ num_professores: number; num_alunos: number; num_escolas: number; num_temas: number; num_kits: number }>()
+    .single<{
+      num_professores: number; num_alunos: number; num_escolas: number
+      num_temas: number; num_kits: number; series_tapetes: string | null
+      num_temas_pre_i: number; num_temas_pre_ii: number
+      num_temas_ano1: number; num_temas_ano2: number; num_temas_ano3: number
+    }>()
 
-  const numProf = pubData?.num_professores ?? 0
-  const numAlun = pubData?.num_alunos ?? 0
-  const numEsc  = pubData?.num_escolas ?? 0
+  const numProf  = pubData?.num_professores ?? 0
+  const numAlun  = pubData?.num_alunos ?? 0
+  const numEsc   = pubData?.num_escolas ?? 0
   const numTemas = pubData?.num_temas ?? 0
-  const numKits = pubData?.num_kits ?? 5
+  const numKits  = pubData?.num_kits ?? 5
+  const series_set = new Set((pubData?.series_tapetes ?? '').split(',').filter(Boolean))
+  const temasPorSerie: Record<string, number> = {
+    PreI:  pubData?.num_temas_pre_i  ?? 0,
+    PreII: pubData?.num_temas_pre_ii ?? 0,
+    Ano1:  pubData?.num_temas_ano1   ?? 0,
+    Ano2:  pubData?.num_temas_ano2   ?? 0,
+    Ano3:  pubData?.num_temas_ano3   ?? 0,
+  }
 
-  const qtdSugerida = (tc: string) => TAPETE_TYPES.has(tc) ? 0 : calcQtd(tc, numProf, numAlun, numEsc, numTemas, numKits)
+  const qtdSugerida = (tc: string) => {
+    if (TAPETE_TYPES.has(tc)) {
+      if (!series_set.has(TAPETE_KEYS[tc])) return 0
+      return calcQtd(tc, 0, 0, numEsc, 0, numKits, temasPorSerie)
+    }
+    return calcQtd(tc, numProf, numAlun, numEsc, numTemas, numKits)
+  }
 
   // Adiciona o produto
   const { data: pp, error } = await supabase
