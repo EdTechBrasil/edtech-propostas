@@ -1,13 +1,20 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { atualizarComponente, atualizarServico, atualizarNumKits } from '@/lib/actions/proposta'
+import { atualizarComponente, atualizarServico, atualizarNumKits, atualizarSeriesTapetes } from '@/lib/actions/proposta'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatCurrency } from '@/utils/format'
-import { Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Lock, TrendingUp, TrendingDown, Minus, Settings2 } from 'lucide-react'
+
+// ─── Constantes de Tapetes ────────────────────────────────────────────────────
+
+const TAPETE_TYPES = new Set(['TapetePreI', 'TapetePreII', 'Tapete1a3'])
+const TAPETE_KEYS: Record<string, string> = { TapetePreI: 'PreI', TapetePreII: 'PreII', Tapete1a3: '1a3' }
+const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 12, Tapete1a3: 16 }
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -52,6 +59,7 @@ interface Props {
   numEscolas: number
   numTemas: number
   numKits: number
+  seriesTapetes: string | null
   produtos: ProdutoProposta[]
 }
 
@@ -82,7 +90,7 @@ function ItemRow({
   onValorChange: (v: number) => void
   onSave: () => void
 }) {
-  const [pending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const [qtdFocused, setQtdFocused] = useState(false)
   const [valorFocused, setValorFocused] = useState(false)
   const total = qtd * valor
@@ -269,10 +277,21 @@ export function ComponentesCliente({
   numEscolas,
   numTemas,
   numKits,
+  seriesTapetes,
   produtos,
 }: Props) {
   const [numKitsState, setNumKitsState] = useState(numKits)
   const [, startKitsTransition] = useTransition()
+
+  const hasTapetesGlobal = produtos.some(pp =>
+    pp.componentes.some(c => TAPETE_TYPES.has(c.componente?.tipo_calculo ?? ''))
+  )
+  const [seriesTapetesState, setSeriesTapetesState] = useState<string | null>(seriesTapetes)
+  const [tapetesDialogOpen, setTapetesDialogOpen] = useState(() => hasTapetesGlobal && seriesTapetes === null)
+  const [checkedSeries, setCheckedSeries] = useState<string[]>(() =>
+    (seriesTapetes ?? '').split(',').filter(Boolean)
+  )
+  const [, startTapetesTransition] = useTransition()
 
   // Estado global: todos os items (componentes + serviços) de todos os produtos
   const [items, setItems] = useState<Record<string, ItemState>>(() => {
@@ -299,6 +318,18 @@ export function ComponentesCliente({
 
   // Hint de quantidade por tipo de cálculo
   function getHint(tipoCalculo: string): { text: string; type: 'info' | 'warn' } | null {
+    if (TAPETE_TYPES.has(tipoCalculo)) {
+      const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
+      const key = TAPETE_KEYS[tipoCalculo]
+      const enabled = seriesSplit.includes(key)
+      const mult = TAPETE_MULT[tipoCalculo]
+      if (!enabled) return { text: 'Série não incluída — qtd = 0', type: 'info' }
+      if (numTemas > 0 && numEscolas > 0 && numKitsState > 0) {
+        const qty = mult * numTemas * numEscolas * numKitsState
+        return { text: `${mult} × ${numTemas} temas × ${numEscolas} esc × ${numKitsState} kits = ${qty.toLocaleString('pt-BR')}`, type: 'info' }
+      }
+      return { text: 'Preencha Escolas, Temas e Kits para calcular', type: 'warn' }
+    }
     if (tipoCalculo === 'PorProfessor' && numProfessores > 0)
       return { text: `Sugestão: qtd = nº de professores (${numProfessores})`, type: 'info' }
     if (tipoCalculo === 'PorAluno' && numAlunos > 0)
@@ -356,6 +387,7 @@ export function ComponentesCliente({
           })()
 
           const hasKit = visibleComponentes.some(c => c.componente?.tipo_calculo === 'PorEscolaXKit')
+          const hasProductTapetes = visibleComponentes.some(c => TAPETE_TYPES.has(c.componente?.tipo_calculo ?? ''))
 
           return (
             <Card key={pp.id}>
@@ -365,25 +397,51 @@ export function ComponentesCliente({
                   <Badge variant="secondary" className="text-xs font-normal">
                     {visibleComponentes.length + pp.servicos.length} itens
                   </Badge>
-                  {hasKit && (
-                    <span className="flex items-center gap-1.5 text-sm font-normal text-slate-500 ml-auto">
-                      Kits por escola:
-                      <input
-                        type="number"
-                        min="1"
-                        value={numKitsState}
-                        onChange={e => {
-                          const v = Math.max(1, Number(e.target.value) || 1)
-                          setNumKitsState(v)
-                          for (const c of visibleComponentes) {
-                            if (c.componente?.tipo_calculo === 'PorEscolaXKit') {
-                              updateItem(c.id, { qtd: numEscolas * v })
-                            }
-                          }
-                        }}
-                        onBlur={() => startKitsTransition(async () => { await atualizarNumKits(propostaId, numKitsState) })}
-                        className="w-16 h-7 rounded border border-slate-300 text-sm text-center px-1 focus:outline-none focus:ring-2 focus:ring-slate-400"
-                      />
+                  {(hasKit || hasProductTapetes) && (
+                    <span className="flex items-center gap-3 ml-auto">
+                      {hasKit && (
+                        <span className="flex items-center gap-1.5 text-sm font-normal text-slate-500">
+                          Kits por escola:
+                          <input
+                            type="number"
+                            min="1"
+                            value={numKitsState}
+                            onChange={e => {
+                              const v = Math.max(1, Number(e.target.value) || 1)
+                              setNumKitsState(v)
+                              const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
+                              for (const c of visibleComponentes) {
+                                const tc = c.componente?.tipo_calculo ?? ''
+                                if (tc === 'PorEscolaXKit') {
+                                  updateItem(c.id, { qtd: numEscolas * v })
+                                } else if (TAPETE_TYPES.has(tc)) {
+                                  const key = TAPETE_KEYS[tc]
+                                  if (seriesSplit.includes(key)) {
+                                    updateItem(c.id, { qtd: TAPETE_MULT[tc] * numTemas * numEscolas * v })
+                                  }
+                                }
+                              }
+                            }}
+                            onBlur={() => startKitsTransition(async () => { await atualizarNumKits(propostaId, numKitsState) })}
+                            className="w-16 h-7 rounded border border-slate-300 text-sm text-center px-1 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                          />
+                        </span>
+                      )}
+                      {hasProductTapetes && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCheckedSeries((seriesTapetesState ?? '').split(',').filter(Boolean))
+                            setTapetesDialogOpen(true)
+                          }}
+                          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 border border-slate-200 rounded px-2 py-1 hover:border-slate-300"
+                        >
+                          <Settings2 className="w-3 h-3" />
+                          {seriesTapetesState === null
+                            ? 'Configurar séries ⚠'
+                            : `Séries (${(seriesTapetesState || '').split(',').filter(Boolean).length})`}
+                        </button>
+                      )}
                     </span>
                   )}
                 </CardTitle>
@@ -456,6 +514,75 @@ export function ComponentesCliente({
           )
         })}
       </div>
+
+      <Dialog open={tapetesDialogOpen} onOpenChange={setTapetesDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Séries — Tapetes Educacionais</DialogTitle>
+            <DialogDescription>
+              Selecione as séries incluídas nesta proposta. As quantidades serão calculadas automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {[
+              { key: 'PreI',  label: 'Pré I',        mult: 9 },
+              { key: 'PreII', label: 'Pré II',       mult: 12 },
+              { key: '1a3',   label: '1º ao 3º ano', mult: 16 },
+            ].map(({ key, label, mult }) => (
+              <label key={key} className="flex items-center gap-3 cursor-pointer rounded-lg border border-slate-100 p-3 hover:bg-slate-50">
+                <input
+                  type="checkbox"
+                  checked={checkedSeries.includes(key)}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setCheckedSeries(prev => [...prev, key])
+                    } else {
+                      setCheckedSeries(prev => prev.filter(s => s !== key))
+                    }
+                  }}
+                  className="w-4 h-4 rounded accent-slate-700"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-800">{label}</p>
+                  <p className="text-xs text-slate-400">{mult} tapetes por tema × kit</p>
+                </div>
+                {numTemas > 0 && numEscolas > 0 && numKitsState > 0 && checkedSeries.includes(key) && (
+                  <span className="text-xs font-medium text-blue-600">
+                    = {(mult * numTemas * numEscolas * numKitsState).toLocaleString('pt-BR')}
+                  </span>
+                )}
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                const novasSeries = checkedSeries
+                const novoSeriesTapetes = novasSeries.join(',')
+                setSeriesTapetesState(novoSeriesTapetes)
+                // Atualiza quantidades dos tapetes otimisticamente
+                for (const pp of produtos) {
+                  for (const c of pp.componentes) {
+                    const tc = c.componente?.tipo_calculo ?? ''
+                    if (TAPETE_TYPES.has(tc)) {
+                      const key = TAPETE_KEYS[tc]
+                      const enabled = novasSeries.includes(key)
+                      const qty = enabled && numTemas > 0 && numEscolas > 0 && numKitsState > 0
+                        ? TAPETE_MULT[tc] * numTemas * numEscolas * numKitsState
+                        : 0
+                      updateItem(c.id, { qtd: qty })
+                    }
+                  }
+                }
+                setTapetesDialogOpen(false)
+                startTapetesTransition(async () => { await atualizarSeriesTapetes(propostaId, novasSeries) })
+              }}
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
