@@ -72,6 +72,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   const num_alunos = Number(formData.get('alunos') || 0)
   const num_professores = Number(formData.get('professores') || 0)
   const num_temas = Number(formData.get('temas') || 0)
+  const num_kits = Number(formData.get('num_kits')) || 5
   const distribuicao = formData.get('distribuicao') || ''
 
   const publico_descricao = distribuicao
@@ -80,7 +81,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
 
   await supabase
     .from('propostas')
-    .update({ publico_descricao, num_escolas, num_alunos, num_professores, num_temas })
+    .update({ publico_descricao, num_escolas, num_alunos, num_professores, num_temas, num_kits })
     .eq('id', proposta_id)
 
   await registrarHistorico(proposta_id, user.id, 'MudancaOrcamento', publico_descricao)
@@ -108,14 +109,15 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
   // Busca público da proposta para auto-sugestão de quantidades
   const { data: pubData } = await supabase
     .from('propostas')
-    .select('num_professores, num_alunos, num_escolas, num_temas')
+    .select('num_professores, num_alunos, num_escolas, num_temas, num_kits')
     .eq('id', proposta_id)
-    .single<{ num_professores: number; num_alunos: number; num_escolas: number; num_temas: number }>()
+    .single<{ num_professores: number; num_alunos: number; num_escolas: number; num_temas: number; num_kits: number }>()
 
   const numProf = pubData?.num_professores ?? 0
   const numAlun = pubData?.num_alunos ?? 0
   const numEsc  = pubData?.num_escolas ?? 0
   const numTemas = pubData?.num_temas ?? 0
+  const numKits = pubData?.num_kits ?? 5
 
   function qtdSugerida(tipoCalculo: string): number {
     if (tipoCalculo === 'PorProfessor'  && numProf > 0) return numProf
@@ -124,6 +126,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     if (tipoCalculo === 'PorAlunoXTema'      && numAlun > 0 && numTemas > 0) return numAlun * numTemas
     if (tipoCalculo === 'PorProfessorXTema'      && numProf > 0 && numTemas > 0) return numProf * numTemas
     if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlun > 0 || numProf > 0) && numTemas > 0) return (numAlun + numProf) * numTemas
+    if (tipoCalculo === 'PorEscolaXKit' && numEsc > 0 && numKits > 0) return numEsc * numKits
     return 1
   }
 
@@ -392,7 +395,7 @@ export async function duplicarProposta(proposta_id: string) {
 
   const { data: original } = await supabase
     .from('propostas')
-    .select('orcamento_alvo, limite_orcamento_max, publico_descricao, num_escolas, num_alunos, num_professores, num_temas, repasse_tipo, repasse_valor, desconto_global_percent')
+    .select('orcamento_alvo, limite_orcamento_max, publico_descricao, num_escolas, num_alunos, num_professores, num_temas, num_kits, repasse_tipo, repasse_valor, desconto_global_percent')
     .eq('id', proposta_id)
     .single<any>()
 
@@ -409,6 +412,7 @@ export async function duplicarProposta(proposta_id: string) {
       num_alunos: original.num_alunos,
       num_professores: original.num_professores,
       num_temas: original.num_temas,
+      num_kits: original.num_kits,
       repasse_tipo: original.repasse_tipo,
       repasse_valor: original.repasse_valor,
       desconto_global_percent: original.desconto_global_percent,

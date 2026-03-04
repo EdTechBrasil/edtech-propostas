@@ -51,6 +51,7 @@ interface Props {
   numAlunos: number
   numEscolas: number
   numTemas: number
+  numKits: number
   produtos: ProdutoProposta[]
 }
 
@@ -267,6 +268,7 @@ export function ComponentesCliente({
   numAlunos,
   numEscolas,
   numTemas,
+  numKits,
   produtos,
 }: Props) {
   // Estado global: todos os items (componentes + serviços) de todos os produtos
@@ -314,6 +316,10 @@ export function ComponentesCliente({
       return { text: `Qtd estimada — preencha Alunos e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos === 0 || numTemas === 0))
       return { text: `Qtd estimada — preencha Alunos, Professores e Temas no Público`, type: 'warn' }
+    if (tipoCalculo === 'PorEscolaXKit' && numEscolas > 0 && numKits > 0)
+      return { text: `${numEscolas} escolas × ${numKits} kits = ${numEscolas * numKits}`, type: 'info' }
+    if (tipoCalculo === 'PorEscolaXKit' && (numEscolas === 0 || numKits === 0))
+      return { text: `Qtd estimada — preencha Escolas e Kits no Público`, type: 'warn' }
     return null
   }
 

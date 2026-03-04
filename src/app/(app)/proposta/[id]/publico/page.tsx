@@ -14,9 +14,9 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
 
   const { data: proposta } = await supabase
     .from('propostas')
-    .select('id, orcamento_alvo, limite_orcamento_max, publico_descricao, num_escolas, num_alunos, num_professores, num_temas')
+    .select('id, orcamento_alvo, limite_orcamento_max, publico_descricao, num_escolas, num_alunos, num_professores, num_temas, num_kits')
     .eq('id', id)
-    .single<{ id: string; orcamento_alvo: number; limite_orcamento_max: number; publico_descricao: string | null; num_escolas: number; num_alunos: number; num_professores: number; num_temas: number }>()
+    .single<{ id: string; orcamento_alvo: number; limite_orcamento_max: number; publico_descricao: string | null; num_escolas: number; num_alunos: number; num_professores: number; num_temas: number; num_kits: number }>()
 
   if (!proposta) notFound()
 
@@ -57,7 +57,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
         </CardHeader>
         <CardContent>
           <form action={action} className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="escolas">Escolas</Label>
                 <Input
@@ -102,6 +102,18 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
                   placeholder="0"
                   defaultValue={proposta.num_temas || ''}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="num_kits">Kits por Escola</Label>
+                <Input
+                  id="num_kits"
+                  name="num_kits"
+                  type="number"
+                  min="1"
+                  placeholder="5"
+                  defaultValue={proposta.num_kits ?? 5}
+                />
+                <p className="text-xs text-slate-500">Padrão: 5 kits por escola</p>
               </div>
             </div>
 

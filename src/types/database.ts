@@ -40,6 +40,7 @@ export type TipoCalculo =
   | 'PorAlunoXTema'
   | 'PorProfessorXTema'
   | 'PorAlunoEProfessorXTema'
+  | 'PorEscolaXKit'
 
 export type TipoEventoProposta =
   | 'Criacao'
@@ -125,6 +126,7 @@ export interface Proposta {
   num_escolas: number
   num_alunos: number
   num_professores: number
+  num_kits: number
   cliente_nome_instituicao: string | null
   cliente_cnpj: string | null
   cliente_responsavel: string | null
