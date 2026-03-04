@@ -123,29 +123,24 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       .eq('proposta_id', proposta_id),
   ])
 
-  const updates: Promise<any>[] = []
-
-  for (const c of comps ?? []) {
-    const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
-    if (tc === 'Fixo') continue
-    updates.push(
-      supabase.from('proposta_componentes')
-        .update({ quantidade: calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits) })
-        .eq('id', c.id)
-    )
-  }
-
-  for (const s of servs ?? []) {
-    const tc = (s.servico as any)?.tipo_calculo ?? 'Fixo'
-    if (tc === 'Fixo') continue
-    updates.push(
-      supabase.from('proposta_servicos')
-        .update({ quantidade: calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits) })
-        .eq('id', s.id)
-    )
-  }
-
-  await Promise.all(updates)
+  await Promise.all([
+    ...(comps ?? [])
+      .filter(c => (c.componente as any)?.tipo_calculo !== 'Fixo')
+      .map(c => {
+        const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
+        return supabase.from('proposta_componentes')
+          .update({ quantidade: calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits) })
+          .eq('id', c.id)
+      }),
+    ...(servs ?? [])
+      .filter(s => (s.servico as any)?.tipo_calculo !== 'Fixo')
+      .map(s => {
+        const tc = (s.servico as any)?.tipo_calculo ?? 'Fixo'
+        return supabase.from('proposta_servicos')
+          .update({ quantidade: calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits) })
+          .eq('id', s.id)
+      }),
+  ])
 
   await registrarHistorico(proposta_id, user.id, 'MudancaOrcamento', publico_descricao)
 
