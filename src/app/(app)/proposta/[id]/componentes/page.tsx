@@ -57,7 +57,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       ),
       servicos:proposta_servicos(
         id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio,
-        servico:produto_servicos(nome, tipo_calculo)
+        servico:produto_servicos(nome, tipo_calculo, valor_venda_base)
       )
     `)
     .eq('proposta_id', id)

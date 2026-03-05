@@ -33,7 +33,7 @@ interface Servico {
   custo_interno_unit: number
   desconto_percent: number
   obrigatorio: boolean
-  servico: { nome: string; tipo_calculo: string } | null
+  servico: { nome: string; tipo_calculo: string; valor_venda_base: number } | null
 }
 
 interface ProdutoProposta {
@@ -293,7 +293,7 @@ export function ComponentesCliente({
         initial[c.id] = { qtd: c.quantidade, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
       }
       for (const s of pp.servicos) {
-        initial[s.id] = { qtd: s.quantidade, valor: s.valor_venda_unit, custo: s.custo_interno_unit }
+        initial[s.id] = { qtd: s.quantidade, valor: s.valor_venda_unit || (s.servico?.valor_venda_base ?? 0), custo: s.custo_interno_unit }
       }
     }
     return initial
