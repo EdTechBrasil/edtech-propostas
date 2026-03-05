@@ -83,9 +83,6 @@ function SortableProductCard({
             {produto.descricao && (
               <p className="text-sm text-slate-500 mt-0.5">{produto.descricao}</p>
             )}
-            {produto.valor_total > 0 && (
-              <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(produto.valor_total)}</p>
-            )}
           </div>
 
           <Button
