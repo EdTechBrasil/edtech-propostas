@@ -10,11 +10,11 @@ import { BackButton } from '@/components/ui/back-button'
 import { formatCurrency } from '@/utils/format'
 
 const SERIES = [
-  { key: 'pre_i',  label: 'Pré I',     mult: 9 },
-  { key: 'pre_ii', label: 'Pré II',    mult: 12 },
-  { key: 'ano1',   label: '1ª série',  mult: 16 },
-  { key: 'ano2',   label: '2ª série',  mult: 16 },
-  { key: 'ano3',   label: '3ª série',  mult: 16 },
+  { key: 'pre_i',  label: 'Pré I',     mult: 9,  maxTemas: 3 },
+  { key: 'pre_ii', label: 'Pré II',    mult: 12, maxTemas: 3 },
+  { key: 'ano1',   label: '1ª série',  mult: 16, maxTemas: 4 },
+  { key: 'ano2',   label: '2ª série',  mult: 16, maxTemas: 4 },
+  { key: 'ano3',   label: '3ª série',  mult: 16, maxTemas: 4 },
 ]
 
 interface ServicoFormacao {
@@ -242,11 +242,14 @@ export function PublicoCliente({
                             name={`temas_${s.key}`}
                             type="number"
                             min="0"
-                            max="4"
+                            max={s.maxTemas}
                             placeholder="0"
                             className="w-20 h-8"
                             value={temas[s.key]}
-                            onChange={e => setTemas(prev => ({ ...prev, [s.key]: e.target.value }))}
+                            onChange={e => {
+                              const val = Math.min(Number(e.target.value), s.maxTemas)
+                              setTemas(prev => ({ ...prev, [s.key]: val > 0 ? String(val) : e.target.value }))
+                            }}
                           />
                         </div>
                       ))}
