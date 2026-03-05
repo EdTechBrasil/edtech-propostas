@@ -5,7 +5,8 @@ import { adicionarProduto, removerProduto, reordenarProdutos } from '@/lib/actio
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Plus, Trash2, Loader2, PackageOpen, GripVertical } from 'lucide-react'
+import { Plus, Trash2, Loader2, PackageOpen } from 'lucide-react'
+import { DragHandle } from '@/components/ui/drag-handle'
 import { formatCurrency } from '@/utils/format'
 import {
   DndContext,
@@ -60,20 +61,19 @@ function SortableProductCard({
   onRemover: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: produto.id })
-  const style = { transform: CSS.Transform.toString(transform), transition }
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 1 : 'auto',
+  }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      <Card className={`border-primary/30 bg-primary/5 ${isDragging ? 'opacity-50 shadow-lg z-50' : ''}`}>
+    <div ref={setNodeRef} style={style}>
+      <Card className="border-primary/30 bg-primary/5">
         <CardContent className="flex items-center gap-3 p-4">
-          <button
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 flex-shrink-0 touch-none"
-            tabIndex={-1}
-            aria-label="Arrastar para reordenar"
-          >
-            <GripVertical className="w-4 h-4" />
-          </button>
+          <DragHandle {...attributes} {...listeners} />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
