@@ -7,8 +7,8 @@ import { cn } from '@/utils/cn'
 
 const STEPS = [
   { id: 1, label: 'Orçamento', path: 'orcamento' },
-  { id: 2, label: 'Público', path: 'publico' },
-  { id: 3, label: 'Produtos', path: 'produtos' },
+  { id: 2, label: 'Produtos', path: 'produtos' },
+  { id: 3, label: 'Público',  path: 'publico'  },
   { id: 4, label: 'Componentes', path: 'componentes' },
   { id: 5, label: 'Descontos', path: 'descontos' },
   { id: 6, label: 'Repasse', path: 'repasse' },

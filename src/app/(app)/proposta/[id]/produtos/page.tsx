@@ -96,11 +96,8 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
         totalAtual={totalAtual}
       />
 
-      <div className="flex justify-between mt-6">
+      <div className="flex justify-end mt-6">
         <Link href={`/proposta/${id}/publico`}>
-          <Button variant="outline">← Voltar</Button>
-        </Link>
-        <Link href={`/proposta/${id}/componentes`}>
           <Button disabled={(selecionados ?? []).length === 0}>
             Continuar →
           </Button>

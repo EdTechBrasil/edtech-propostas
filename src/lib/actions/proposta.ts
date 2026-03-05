@@ -87,7 +87,7 @@ export async function criarProposta(formData: FormData) {
     `Orçamento: R$ ${orcamento_alvo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
   )
 
-  redirect(`/proposta/${proposta.id}/publico`)
+  redirect(`/proposta/${proposta.id}/produtos`)
 }
 
 // ── Step 2: Público ───────────────────────────────────────────────────────────
@@ -99,24 +99,34 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
 
   const num_escolas     = Number(formData.get('escolas') || 0)
   const num_professores = Number(formData.get('professores') || 0)
+  const hasMpc = formData.get('has_mpc') === 'true'
 
-  // Alunos por série
-  const alunos_pre_i  = Number(formData.get('alunos_pre_i') || 0)
-  const alunos_pre_ii = Number(formData.get('alunos_pre_ii') || 0)
-  const alunos_ano1   = Number(formData.get('alunos_ano1') || 0)
-  const alunos_ano2   = Number(formData.get('alunos_ano2') || 0)
-  const alunos_ano3   = Number(formData.get('alunos_ano3') || 0)
+  let alunos_pre_i: number, alunos_pre_ii: number, alunos_ano1: number, alunos_ano2: number, alunos_ano3: number
+  let temas_pre_i: number, temas_pre_ii: number, temas_ano1: number, temas_ano2: number, temas_ano3: number
+  let num_alunos: number, num_temas: number
 
-  // Temas por série
-  const temas_pre_i   = Number(formData.get('temas_pre_i') || 0)
-  const temas_pre_ii  = Number(formData.get('temas_pre_ii') || 0)
-  const temas_ano1    = Number(formData.get('temas_ano1') || 0)
-  const temas_ano2    = Number(formData.get('temas_ano2') || 0)
-  const temas_ano3    = Number(formData.get('temas_ano3') || 0)
-
-  // Agregados: total de alunos e máximo de temas (para livros PorAlunoEProfessorXTema)
-  const num_alunos = alunos_pre_i + alunos_pre_ii + alunos_ano1 + alunos_ano2 + alunos_ano3
-  const num_temas  = Math.max(temas_pre_i, temas_pre_ii, temas_ano1, temas_ano2, temas_ano3, 0)
+  if (hasMpc) {
+    // Alunos por série
+    alunos_pre_i  = Number(formData.get('alunos_pre_i') || 0)
+    alunos_pre_ii = Number(formData.get('alunos_pre_ii') || 0)
+    alunos_ano1   = Number(formData.get('alunos_ano1') || 0)
+    alunos_ano2   = Number(formData.get('alunos_ano2') || 0)
+    alunos_ano3   = Number(formData.get('alunos_ano3') || 0)
+    // Temas por série
+    temas_pre_i   = Number(formData.get('temas_pre_i') || 0)
+    temas_pre_ii  = Number(formData.get('temas_pre_ii') || 0)
+    temas_ano1    = Number(formData.get('temas_ano1') || 0)
+    temas_ano2    = Number(formData.get('temas_ano2') || 0)
+    temas_ano3    = Number(formData.get('temas_ano3') || 0)
+    num_alunos = alunos_pre_i + alunos_pre_ii + alunos_ano1 + alunos_ano2 + alunos_ano3
+    num_temas  = Math.max(temas_pre_i, temas_pre_ii, temas_ano1, temas_ano2, temas_ano3, 0)
+  } else {
+    // Form simples: campos globais, zerando todos os campos por série
+    alunos_pre_i = alunos_pre_ii = alunos_ano1 = alunos_ano2 = alunos_ano3 = 0
+    temas_pre_i  = temas_pre_ii  = temas_ano1  = temas_ano2  = temas_ano3  = 0
+    num_alunos = Number(formData.get('alunos') || 0)
+    num_temas  = Number(formData.get('temas') || 0)
+  }
 
   // series_tapetes: séries com alunos > 0 (calculado automaticamente)
   const seriesList: string[] = []
@@ -189,7 +199,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
 
   await registrarHistorico(proposta_id, user.id, 'MudancaOrcamento', publico_descricao)
 
-  redirect(`/proposta/${proposta_id}/produtos`)
+  redirect(`/proposta/${proposta_id}/componentes`)
 }
 
 // ── Kits por Escola (configurado no card de Componentes) ─────────────────────

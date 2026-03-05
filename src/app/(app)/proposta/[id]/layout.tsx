@@ -16,8 +16,8 @@ export default async function PropostaLayout({
     .select('id', { count: 'exact', head: true })
     .eq('proposta_id', id)
 
-  // Sem produtos: etapas 4-8 ficam bloqueadas no stepper
-  const passoMaximo = (produtosCount ?? 0) > 0 ? 8 : 3
+  // Sem produtos: etapas 3-8 ficam bloqueadas no stepper
+  const passoMaximo = (produtosCount ?? 0) > 0 ? 8 : 2
 
   return (
     <div className="flex flex-col min-h-full">
