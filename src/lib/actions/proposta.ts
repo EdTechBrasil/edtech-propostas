@@ -168,7 +168,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   const [{ data: comps }, { data: servs }] = await Promise.all([
     supabase
       .from('proposta_componentes')
-      .select('id, componente:produto_componentes(tipo_calculo)')
+      .select('id, componente:produto_componentes(tipo_calculo, categoria)')
       .eq('proposta_id', proposta_id),
     supabase
       .from('proposta_servicos')
@@ -178,12 +178,19 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
 
   await Promise.all([
     ...(comps ?? [])
-      .filter(c => (c.componente as any)?.tipo_calculo !== 'Fixo')
+      .filter(c => {
+        const tc = (c.componente as any)?.tipo_calculo
+        const cat = (c.componente as any)?.categoria
+        return tc !== 'Fixo' || cat === 'Kit'
+      })
       .map(c => {
         const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
-        const qty = TAPETE_TYPES.has(tc)
-          ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
-          : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
+        const cat = (c.componente as any)?.categoria ?? ''
+        const qty = cat === 'Kit'
+          ? num_escolas * 5
+          : TAPETE_TYPES.has(tc)
+            ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
+            : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
         return supabase.from('proposta_componentes')
           .update({ quantidade: qty })
           .eq('id', c.id)
@@ -325,7 +332,8 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     Ano3:  pubData?.num_temas_ano3   ?? 0,
   }
 
-  const qtdSugerida = (tc: string, nome?: string) => {
+  const qtdSugerida = (tc: string, nome?: string, categoria?: string) => {
+    if (categoria === 'Kit') return numEsc * 5
     if (TAPETE_TYPES.has(tc)) {
       if (!series_set.has(TAPETE_KEYS[tc])) return 0
       return calcQtd(tc, 0, 0, numEsc, 0, numKits, temasPorSerie)
@@ -359,7 +367,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
         proposta_id,
         proposta_produto_id: pp.id,
         produto_componente_id: c.id,
-        quantidade: qtdSugerida(c.tipo_calculo),
+        quantidade: qtdSugerida(c.tipo_calculo, undefined, c.categoria),
         valor_venda_unit: c.valor_venda_base,
         custo_interno_unit: c.custo_interno_base,
         desconto_percent: 0,
