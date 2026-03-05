@@ -754,6 +754,21 @@ export async function reordenarProdutos(updates: { id: string; ordem: number }[]
   )
 }
 
+// ── Reordenar catálogo (componentes / serviços) ───────────────────────────────
+
+export async function reordenarCatalogo(
+  updates: { id: string; ordem: number }[],
+  tipo: 'componentes' | 'servicos'
+) {
+  const supabase = await createClient()
+  const tabela = tipo === 'componentes' ? 'produto_componentes' : 'produto_servicos'
+  await Promise.allSettled(
+    updates.map(({ id, ordem }) =>
+      supabase.from(tabela).update({ ordem }).eq('id', id)
+    )
+  )
+}
+
 // ── Reordenar propostas (drag-and-drop) ───────────────────────────────────────
 
 export async function reordenarPropostas(updates: { id: string; ordem: number }[]) {

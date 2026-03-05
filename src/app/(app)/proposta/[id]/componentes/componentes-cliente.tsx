@@ -1,12 +1,28 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { atualizarComponente, atualizarServico, atualizarNumKits } from '@/lib/actions/proposta'
+import { atualizarComponente, atualizarServico, atualizarNumKits, reordenarCatalogo } from '@/lib/actions/proposta'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/utils/format'
 import { Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { DragHandle } from '@/components/ui/drag-handle'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 // ─── Constantes de Tapetes ────────────────────────────────────────────────────
 
@@ -23,7 +39,7 @@ interface Componente {
   custo_interno_unit: number
   desconto_percent: number
   obrigatorio: boolean
-  componente: { nome: string; categoria: string; tipo_calculo: string } | null
+  componente: { id: string; nome: string; categoria: string; tipo_calculo: string; ordem: number } | null
 }
 
 interface Servico {
@@ -33,7 +49,7 @@ interface Servico {
   custo_interno_unit: number
   desconto_percent: number
   obrigatorio: boolean
-  servico: { nome: string; tipo_calculo: string; valor_venda_base: number } | null
+  servico: { id: string; nome: string; tipo_calculo: string; valor_venda_base: number; ordem: number } | null
 }
 
 interface ProdutoProposta {
@@ -73,6 +89,7 @@ function ItemRow({
   custo,
   obrigatorio,
   hint,
+  dragHandleProps,
   onQtdChange,
   onValorChange,
   onSave,
@@ -85,6 +102,7 @@ function ItemRow({
   custo: number
   obrigatorio: boolean
   hint: { text: string; type: 'info' | 'warn' } | null
+  dragHandleProps?: React.HTMLAttributes<HTMLElement>
   onQtdChange: (v: number) => void
   onValorChange: (v: number) => void
   onSave: () => void
@@ -103,6 +121,9 @@ function ItemRow({
   return (
     <div className="py-3 border-b border-slate-100 last:border-0">
       <div className="flex items-center gap-3">
+        {dragHandleProps && (
+          <DragHandle {...dragHandleProps} className="opacity-0 group-hover:opacity-100 flex-shrink-0" />
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-slate-800 truncate">{nome}</span>
@@ -161,6 +182,21 @@ function ItemRow({
           {hint.text}
         </p>
       )}
+    </div>
+  )
+}
+
+// ─── SortableItemRow ──────────────────────────────────────────────────────────
+
+function SortableItemRow({ sortableId, ...props }: { sortableId: string } & React.ComponentProps<typeof ItemRow>) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      className="group"
+    >
+      <ItemRow {...props} dragHandleProps={{ ...attributes, ...listeners }} />
     </div>
   )
 }
@@ -282,6 +318,9 @@ export function ComponentesCliente({
 }: Props) {
   const [numKitsState, setNumKitsState] = useState(numKits)
   const [, startKitsTransition] = useTransition()
+  const [, startReorderTransition] = useTransition()
+
+  const sensors = useSensors(useSensor(PointerSensor))
 
   const seriesTapetesState = seriesTapetes
 
@@ -297,6 +336,27 @@ export function ComponentesCliente({
       }
     }
     return initial
+  })
+
+  // Ordem dos catálogo-ids por produto (componenteOrdens e servicoOrdens)
+  const [componenteOrdens, setComponenteOrdens] = useState<Record<string, string[]>>(() => {
+    const result: Record<string, string[]> = {}
+    for (const pp of produtos) {
+      result[pp.id] = pp.componentes
+        .filter(c => c.componente !== null)
+        .map(c => c.componente!.id)
+    }
+    return result
+  })
+
+  const [servicoOrdens, setServicoOrdens] = useState<Record<string, string[]>>(() => {
+    const result: Record<string, string[]> = {}
+    for (const pp of produtos) {
+      result[pp.id] = pp.servicos
+        .filter(s => s.servico !== null)
+        .map(s => s.servico!.id)
+    }
+    return result
   })
 
   function updateItem(id: string, patch: Partial<ItemState>) {
@@ -350,6 +410,46 @@ export function ComponentesCliente({
     return null
   }
 
+  function handleDragEndComponentes(produtoPropId: string, allComps: Componente[], event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const currentIds = componenteOrdens[produtoPropId] ?? allComps.map(c => c.componente!.id)
+    const oldIndex = currentIds.indexOf(active.id as string)
+    const newIndex = currentIds.indexOf(over.id as string)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const newIds = arrayMove(currentIds, oldIndex, newIndex)
+    setComponenteOrdens(prev => ({ ...prev, [produtoPropId]: newIds }))
+
+    startReorderTransition(async () => {
+      await reordenarCatalogo(
+        newIds.map((id, i) => ({ id, ordem: i + 1 })),
+        'componentes'
+      )
+    })
+  }
+
+  function handleDragEndServicos(produtoPropId: string, allServs: Servico[], event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const currentIds = servicoOrdens[produtoPropId] ?? allServs.map(s => s.servico!.id)
+    const oldIndex = currentIds.indexOf(active.id as string)
+    const newIndex = currentIds.indexOf(over.id as string)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const newIds = arrayMove(currentIds, oldIndex, newIndex)
+    setServicoOrdens(prev => ({ ...prev, [produtoPropId]: newIds }))
+
+    startReorderTransition(async () => {
+      await reordenarCatalogo(
+        newIds.map((id, i) => ({ id, ordem: i + 1 })),
+        'servicos'
+      )
+    })
+  }
+
   return (
     <div>
       <ResumoAoVivo
@@ -366,8 +466,8 @@ export function ComponentesCliente({
             const tc = c.componente?.tipo_calculo ?? ''
             if (tc === 'PorProfessorXTema') return false
             if (TAPETE_TYPES.has(tc)) {
-              if (seriesTapetesState === null) return true  // não configurado ainda → mostra tudo (dialog vai abrir)
-              return seriesSplit.includes(TAPETE_KEYS[tc])  // só mostra os selecionados
+              if (seriesTapetesState === null) return true
+              return seriesSplit.includes(TAPETE_KEYS[tc])
             }
             return true
           })
@@ -387,6 +487,26 @@ export function ComponentesCliente({
           })()
 
           const hasKit = visibleComponentes.some(c => c.componente?.tipo_calculo === 'PorEscolaXKit')
+
+          // Reorder visibleComponentes by componenteOrdens
+          const compIds = componenteOrdens[pp.id]
+          const orderedComps = compIds
+            ? [...visibleComponentes].sort((a, b) => {
+                const ai = compIds.indexOf(a.componente?.id ?? '')
+                const bi = compIds.indexOf(b.componente?.id ?? '')
+                return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+              })
+            : visibleComponentes
+
+          // Reorder servicos by servicoOrdens
+          const servIds = servicoOrdens[pp.id]
+          const orderedServicos = servIds
+            ? [...pp.servicos].sort((a, b) => {
+                const ai = servIds.indexOf(a.servico?.id ?? '')
+                const bi = servIds.indexOf(b.servico?.id ?? '')
+                return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+              })
+            : pp.servicos
 
           return (
             <Card key={pp.id}>
@@ -432,6 +552,7 @@ export function ComponentesCliente({
               </CardHeader>
               <CardContent>
                 <div className="flex items-center text-xs text-slate-400 pb-2 gap-3">
+                  <span className="w-5 flex-shrink-0" />
                   <span className="flex-1">Item</span>
                   <span className="w-20 text-center">Qtd</span>
                   <span className="w-28 text-center">Venda unit.</span>
@@ -440,54 +561,80 @@ export function ComponentesCliente({
                   <span className="w-14 text-right">Margem</span>
                 </div>
 
-                {visibleComponentes.length > 0 && (
+                {orderedComps.length > 0 && (
                   <div className="mb-2">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Componentes</p>
-                    {visibleComponentes.map(c => {
-                      const state = items[c.id] ?? { qtd: c.quantidade, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
-                      const tipoCalculo = c.componente?.tipo_calculo ?? ''
-                      return (
-                        <ItemRow
-                          key={c.id}
-                          nome={c.componente?.nome ?? '—'}
-                          categoria={c.componente?.categoria}
-                          tipoCalculo={tipoCalculo}
-                          qtd={state.qtd}
-                          valor={state.valor}
-                          custo={state.custo}
-                          obrigatorio={c.obrigatorio}
-                          hint={getHint(tipoCalculo)}
-                          onQtdChange={v => updateItem(c.id, { qtd: v })}
-                          onValorChange={v => updateItem(c.id, { valor: v })}
-                          onSave={() => atualizarComponente(c.id, propostaId, state.qtd, state.valor)}
-                        />
-                      )
-                    })}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={e => handleDragEndComponentes(pp.id, visibleComponentes, e)}
+                    >
+                      <SortableContext
+                        items={orderedComps.map(c => c.componente?.id ?? c.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {orderedComps.map(c => {
+                          const state = items[c.id] ?? { qtd: c.quantidade, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
+                          const tipoCalculo = c.componente?.tipo_calculo ?? ''
+                          const sortableId = c.componente?.id ?? c.id
+                          return (
+                            <SortableItemRow
+                              key={c.id}
+                              sortableId={sortableId}
+                              nome={c.componente?.nome ?? '—'}
+                              categoria={c.componente?.categoria}
+                              tipoCalculo={tipoCalculo}
+                              qtd={state.qtd}
+                              valor={state.valor}
+                              custo={state.custo}
+                              obrigatorio={c.obrigatorio}
+                              hint={getHint(tipoCalculo)}
+                              onQtdChange={v => updateItem(c.id, { qtd: v })}
+                              onValorChange={v => updateItem(c.id, { valor: v })}
+                              onSave={() => atualizarComponente(c.id, propostaId, state.qtd, state.valor)}
+                            />
+                          )
+                        })}
+                      </SortableContext>
+                    </DndContext>
                   </div>
                 )}
 
-                {pp.servicos.length > 0 && (
+                {orderedServicos.length > 0 && (
                   <div>
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-3">Serviços</p>
-                    {pp.servicos.map(s => {
-                      const state = items[s.id] ?? { qtd: s.quantidade, valor: s.valor_venda_unit, custo: s.custo_interno_unit }
-                      const tipoCalculo = s.servico?.tipo_calculo ?? ''
-                      return (
-                        <ItemRow
-                          key={s.id}
-                          nome={s.servico?.nome ?? '—'}
-                          tipoCalculo={tipoCalculo}
-                          qtd={state.qtd}
-                          valor={state.valor}
-                          custo={state.custo}
-                          obrigatorio={s.obrigatorio}
-                          hint={getHint(tipoCalculo)}
-                          onQtdChange={v => updateItem(s.id, { qtd: v })}
-                          onValorChange={v => updateItem(s.id, { valor: v })}
-                          onSave={() => atualizarServico(s.id, propostaId, state.qtd, state.valor)}
-                        />
-                      )
-                    })}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={e => handleDragEndServicos(pp.id, pp.servicos, e)}
+                    >
+                      <SortableContext
+                        items={orderedServicos.map(s => s.servico?.id ?? s.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {orderedServicos.map(s => {
+                          const state = items[s.id] ?? { qtd: s.quantidade, valor: s.valor_venda_unit, custo: s.custo_interno_unit }
+                          const tipoCalculo = s.servico?.tipo_calculo ?? ''
+                          const sortableId = s.servico?.id ?? s.id
+                          return (
+                            <SortableItemRow
+                              key={s.id}
+                              sortableId={sortableId}
+                              nome={s.servico?.nome ?? '—'}
+                              tipoCalculo={tipoCalculo}
+                              qtd={state.qtd}
+                              valor={state.valor}
+                              custo={state.custo}
+                              obrigatorio={s.obrigatorio}
+                              hint={getHint(tipoCalculo)}
+                              onQtdChange={v => updateItem(s.id, { qtd: v })}
+                              onValorChange={v => updateItem(s.id, { valor: v })}
+                              onSave={() => atualizarServico(s.id, propostaId, state.qtd, state.valor)}
+                            />
+                          )
+                        })}
+                      </SortableContext>
+                    </DndContext>
                   </div>
                 )}
               </CardContent>

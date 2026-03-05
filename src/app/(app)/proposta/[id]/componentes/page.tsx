@@ -53,16 +53,26 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       produto:produtos(nome),
       componentes:proposta_componentes(
         id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio,
-        componente:produto_componentes(nome, categoria, tipo_calculo)
+        componente:produto_componentes(id, nome, categoria, tipo_calculo, ordem)
       ),
       servicos:proposta_servicos(
         id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio,
-        servico:produto_servicos(nome, tipo_calculo, valor_venda_base)
+        servico:produto_servicos(id, nome, tipo_calculo, valor_venda_base, ordem)
       )
     `)
     .eq('proposta_id', id)
 
-  const precisaPublico = (produtosProposta ?? []).some(pp =>
+  const produtosOrdenados = (produtosProposta ?? []).map(pp => ({
+    ...pp,
+    componentes: [...(pp.componentes as any[])].sort(
+      (a, b) => (a.componente?.ordem ?? 0) - (b.componente?.ordem ?? 0)
+    ),
+    servicos: [...(pp.servicos as any[])].sort(
+      (a, b) => (a.servico?.ordem ?? 0) - (b.servico?.ordem ?? 0)
+    ),
+  }))
+
+  const precisaPublico = produtosOrdenados.some(pp =>
     [...(pp.componentes as any[]), ...(pp.servicos as any[])].some(item => {
       const tc: string = item.componente?.tipo_calculo ?? item.servico?.tipo_calculo ?? ''
       if (tc === 'PorAluno'      && proposta.num_alunos === 0)      return true
@@ -101,7 +111,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
         </div>
       )}
 
-      {(!produtosProposta || produtosProposta.length === 0) ? (
+      {produtosOrdenados.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-48 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
           <p className="text-sm">Nenhum produto selecionado</p>
           <Link href={`/proposta/${id}/produtos`}>
@@ -125,7 +135,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
             Ano2:  proposta.num_temas_ano2   ?? 0,
             Ano3:  proposta.num_temas_ano3   ?? 0,
           }}
-          produtos={produtosProposta as any}
+          produtos={produtosOrdenados as any}
         />
       )}
 
