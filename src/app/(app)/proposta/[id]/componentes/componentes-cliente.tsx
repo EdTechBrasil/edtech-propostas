@@ -148,12 +148,14 @@ function ItemRow({
           <span className="text-slate-400 text-sm">×</span>
           <div className="w-28">
             <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={valorFocused && valor === 0 ? '' : valor}
-              onChange={e => onValorChange(e.target.value === '' ? 0 : Number(e.target.value))}
-              onFocus={e => { setValorFocused(true); e.target.select() }}
+              type="text"
+              inputMode="decimal"
+              value={valorFocused ? (valor === 0 ? '' : String(valor)) : formatCurrency(valor)}
+              onChange={e => {
+                const raw = e.target.value.replace(/[^\d.]/g, '')
+                onValorChange(raw === '' ? 0 : parseFloat(raw) || 0)
+              }}
+              onFocus={e => { setValorFocused(true); setTimeout(() => e.target.select(), 0) }}
               onBlur={() => { setValorFocused(false); startTransition(onSave) }}
               className="h-8 text-sm text-right"
               title="Valor venda unitário"
