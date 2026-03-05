@@ -63,11 +63,10 @@ function SortableProductCard({
   const style = { transform: CSS.Transform.toString(transform), transition }
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} {...attributes}>
       <Card className={`border-primary/30 bg-primary/5 ${isDragging ? 'opacity-50 shadow-lg z-50' : ''}`}>
         <CardContent className="flex items-center gap-3 p-4">
           <button
-            {...attributes}
             {...listeners}
             className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 flex-shrink-0 touch-none"
             tabIndex={-1}

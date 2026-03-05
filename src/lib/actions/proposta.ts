@@ -324,10 +324,14 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     Ano3:  pubData?.num_temas_ano3   ?? 0,
   }
 
-  const qtdSugerida = (tc: string) => {
+  const qtdSugerida = (tc: string, nome?: string) => {
     if (TAPETE_TYPES.has(tc)) {
       if (!series_set.has(TAPETE_KEYS[tc])) return 0
       return calcQtd(tc, 0, 0, numEsc, 0, numKits, temasPorSerie)
+    }
+    if (tc === 'Fixo' && nome) {
+      const match = nome.match(/\((\d+)h/)
+      if (match) return parseInt(match[1])
     }
     return calcQtd(tc, numProf, numAlun, numEsc, numTemas, numKits)
   }
@@ -376,7 +380,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
         proposta_id,
         proposta_produto_id: pp.id,
         produto_servico_id: s.id,
-        quantidade: qtdSugerida(s.tipo_calculo),
+        quantidade: qtdSugerida(s.tipo_calculo, s.nome),
         valor_venda_unit: s.valor_venda_base,
         custo_interno_unit: s.custo_interno_base,
         desconto_percent: 0,
