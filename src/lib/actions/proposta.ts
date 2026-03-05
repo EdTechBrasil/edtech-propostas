@@ -26,6 +26,7 @@ function calcQtd(
   if (tipoCalculo === 'PorAlunoXTema'          && numAlun > 0 && numTemas > 0) return numAlun * numTemas
   if (tipoCalculo === 'PorProfessorXTema'      && numProf > 0 && numTemas > 0) return numProf * numTemas
   if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlun > 0 || numProf > 0) && numTemas > 0) return (numAlun + numProf) * numTemas
+  if (tipoCalculo === 'Kit'                    && numEsc  > 0) return numEsc * 5
   if (tipoCalculo === 'PorEscolaXKit'          && numEsc  > 0 && numKits > 0) return numEsc * numKits
   if (TAPETE_TYPES.has(tipoCalculo)) {
     const t = temasPorSerie[TAPETE_KEYS[tipoCalculo]] ?? 0
