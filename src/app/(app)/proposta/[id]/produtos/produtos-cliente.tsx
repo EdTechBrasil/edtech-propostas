@@ -72,8 +72,8 @@ function SortableProductCard({
   return (
     <div ref={setNodeRef} style={style}>
       <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="flex items-center gap-3 p-4">
-          <DragHandle {...attributes} {...listeners} />
+        <CardContent className="flex items-center gap-3 p-4 group">
+          <DragHandle {...attributes} {...listeners} className="opacity-0 group-hover:opacity-100 flex-shrink-0" />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
