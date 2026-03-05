@@ -306,6 +306,7 @@ export function ComponentesCliente({
   produtos,
 }: Props) {
   const [numKitsState, setNumKitsState] = useState(numKits)
+  const [kitsInput, setKitsInput] = useState(String(numKits))
   const [, startKitsTransition] = useTransition()
   const [, startReorderTransition] = useTransition()
 
@@ -461,27 +462,37 @@ export function ComponentesCliente({
           <input
             type="number"
             min="1"
-            value={numKitsState}
+            value={kitsInput}
+            onFocus={e => e.target.select()}
             onChange={e => {
-              const v = Math.max(1, Number(e.target.value) || 1)
-              setNumKitsState(v)
-              const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
-              for (const pp of produtos) {
-                for (const c of pp.componentes) {
-                  const tc = c.componente?.tipo_calculo ?? ''
-                  if (tc === 'PorEscolaXKit') {
-                    updateItem(c.id, { qtd: numEscolas * v })
-                  } else if (TAPETE_TYPES.has(tc)) {
-                    const key = TAPETE_KEYS[tc]
-                    if (seriesTapetesState === null || seriesSplit.includes(key)) {
-                      const t = temasPorSerie[key] ?? 0
-                      if (t > 0) updateItem(c.id, { qtd: TAPETE_MULT[tc] * t * v })
+              const raw = e.target.value
+              setKitsInput(raw)
+              const v = parseInt(raw, 10)
+              if (!isNaN(v) && v >= 1) {
+                setNumKitsState(v)
+                const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
+                for (const pp of produtos) {
+                  for (const c of pp.componentes) {
+                    const tc = c.componente?.tipo_calculo ?? ''
+                    if (tc === 'PorEscolaXKit') {
+                      updateItem(c.id, { qtd: numEscolas * v })
+                    } else if (TAPETE_TYPES.has(tc)) {
+                      const key = TAPETE_KEYS[tc]
+                      if (seriesTapetesState === null || seriesSplit.includes(key)) {
+                        const t = temasPorSerie[key] ?? 0
+                        if (t > 0) updateItem(c.id, { qtd: TAPETE_MULT[tc] * t * v })
+                      }
                     }
                   }
                 }
               }
             }}
-            onBlur={() => startKitsTransition(async () => { await atualizarNumKits(propostaId, numKitsState) })}
+            onBlur={() => {
+              const v = Math.max(1, parseInt(kitsInput, 10) || 1)
+              setKitsInput(String(v))
+              setNumKitsState(v)
+              startKitsTransition(async () => { await atualizarNumKits(propostaId, v) })
+            }}
             className="w-16 h-7 rounded border border-slate-300 text-sm text-center px-1 focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
           <span className="text-slate-400 text-xs">— afeta todos os produtos com Kit</span>
