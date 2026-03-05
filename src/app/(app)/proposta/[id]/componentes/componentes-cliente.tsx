@@ -83,11 +83,9 @@ interface Props {
 function ItemRow({
   nome,
   categoria,
-  tipoCalculo,
   qtd,
   valor,
   custo,
-  obrigatorio,
   hint,
   dragHandleProps,
   onQtdChange,
@@ -96,11 +94,9 @@ function ItemRow({
 }: {
   nome: string
   categoria?: string
-  tipoCalculo: string
   qtd: number
   valor: number
   custo: number
-  obrigatorio: boolean
   hint: { text: string; type: 'info' | 'warn' } | null
   dragHandleProps?: React.HTMLAttributes<HTMLElement>
   onQtdChange: (v: number) => void
@@ -584,11 +580,9 @@ export function ComponentesCliente({
                               sortableId={sortableId}
                               nome={c.componente?.nome ?? '—'}
                               categoria={c.componente?.categoria}
-                              tipoCalculo={tipoCalculo}
                               qtd={state.qtd}
                               valor={state.valor}
                               custo={state.custo}
-                              obrigatorio={c.obrigatorio}
                               hint={getHint(tipoCalculo)}
                               onQtdChange={v => updateItem(c.id, { qtd: v })}
                               onValorChange={v => updateItem(c.id, { valor: v })}
@@ -622,11 +616,9 @@ export function ComponentesCliente({
                               key={s.id}
                               sortableId={sortableId}
                               nome={s.servico?.nome ?? '—'}
-                              tipoCalculo={tipoCalculo}
                               qtd={state.qtd}
                               valor={state.valor}
                               custo={state.custo}
-                              obrigatorio={s.obrigatorio}
                               hint={getHint(tipoCalculo)}
                               onQtdChange={v => updateItem(s.id, { qtd: v })}
                               onValorChange={v => updateItem(s.id, { valor: v })}
