@@ -391,7 +391,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
 
   await registrarHistorico(proposta_id, user.id, 'AddProduto', `Produto ID: ${produto_id}`)
   revalidatePath(`/proposta/${proposta_id}/produtos`)
-  return { success: true }
+  return { success: true, propostaProdutoId: pp.id }
 }
 
 export async function removerProduto(proposta_produto_id: string, proposta_id: string) {

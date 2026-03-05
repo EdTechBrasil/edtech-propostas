@@ -70,9 +70,9 @@ function SortableProductCard({
   }
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className="group">
       <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="flex items-center gap-3 p-4 group">
+        <CardContent className="flex items-center gap-3 p-4">
           <DragHandle {...attributes} {...listeners} className="opacity-0 group-hover:opacity-100 flex-shrink-0" />
 
           <div className="flex-1 min-w-0">
@@ -119,8 +119,14 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
     setLoadingId(produto.id)
     startTransition(async () => {
       const result = await adicionarProduto(propostaId, produto.id)
-      if (!result?.error) {
+      if (!result?.error && result?.propostaProdutoId) {
         setOrdemSelecao(prev => [...prev, produto.id])
+        setLista(prev => [...prev, {
+          id: result.propostaProdutoId,
+          produto_id: produto.id,
+          ordem: prev.length,
+          produto: { nome: produto.nome },
+        }])
         setTotalLocal(prev => prev + produto.valor_total)
       }
       setLoadingId(null)
