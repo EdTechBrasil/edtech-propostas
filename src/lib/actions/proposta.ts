@@ -198,7 +198,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   ])
 
   // Atualiza horas de formação/assessoria (MPC)
-  const formacaoUpdates: Promise<any>[] = []
+  const formacaoUpdates: any[] = []
   const presId = formData.get('formacao_presencial_id') as string | null
   const eadId  = formData.get('formacao_ead_id') as string | null
   const assId  = formData.get('formacao_assessoria_id') as string | null
