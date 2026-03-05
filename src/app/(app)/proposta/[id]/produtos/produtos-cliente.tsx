@@ -1,12 +1,27 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { adicionarProduto, removerProduto } from '@/lib/actions/proposta'
+import { adicionarProduto, removerProduto, reordenarProdutos } from '@/lib/actions/proposta'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Plus, Trash2, Loader2, PackageOpen } from 'lucide-react'
+import { Plus, Trash2, Loader2, PackageOpen, GripVertical } from 'lucide-react'
 import { formatCurrency } from '@/utils/format'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface Produto {
   id: string
@@ -18,6 +33,7 @@ interface Produto {
 interface PropostaProduto {
   id: string
   produto_id: string
+  ordem: number
   produto: { nome: string } | null
 }
 
@@ -30,23 +46,82 @@ interface Props {
   totalAtual: number
 }
 
+// ─── Card arrastável (produtos selecionados) ──────────────────────────────────
+
+function SortableProductCard({
+  produto,
+  isLoading,
+  pending,
+  onRemover,
+}: {
+  produto: Produto
+  isLoading: boolean
+  pending: boolean
+  onRemover: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: produto.id })
+  const style = { transform: CSS.Transform.toString(transform), transition }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card className={`border-primary/30 bg-primary/5 ${isDragging ? 'opacity-50 shadow-lg z-50' : ''}`}>
+        <CardContent className="flex items-center gap-3 p-4">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 flex-shrink-0 touch-none"
+            tabIndex={-1}
+            aria-label="Arrastar para reordenar"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-medium text-slate-900">{produto.nome}</p>
+              <Badge variant="success" className="text-xs">Adicionado</Badge>
+            </div>
+            {produto.descricao && (
+              <p className="text-sm text-slate-500 mt-0.5">{produto.descricao}</p>
+            )}
+            {produto.valor_total > 0 && (
+              <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(produto.valor_total)}</p>
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-500 border-red-200 hover:bg-red-50 flex-shrink-0"
+            onClick={onRemover}
+            disabled={isLoading || pending}
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            <span className="ml-1">Remover</span>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ─── ProdutosCliente ──────────────────────────────────────────────────────────
+
 export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecionados, limiteMax, totalAtual }: Props) {
   const [pending, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [lista, setLista] = useState(selecionados)
-
-  // Ordem de seleção: IDs na sequência em que foram adicionados (mais recente no início)
   const [ordemSelecao, setOrdemSelecao] = useState<string[]>(idsSelecionados)
-
-  // Valor total reativo
   const [totalLocal, setTotalLocal] = useState(totalAtual)
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   function handleAdicionar(produto: Produto) {
     setLoadingId(produto.id)
     startTransition(async () => {
       const result = await adicionarProduto(propostaId, produto.id)
       if (!result?.error) {
-        setOrdemSelecao(prev => [produto.id, ...prev])
+        setOrdemSelecao(prev => [...prev, produto.id])
         setTotalLocal(prev => prev + produto.valor_total)
       }
       setLoadingId(null)
@@ -66,13 +141,31 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
     })
   }
 
-  // Selecionados no topo (ordem de seleção: mais recente primeiro) + não selecionados embaixo
-  const selecionadosSet = new Set(ordemSelecao)
-  const catalogoOrdenado = [
-    ...ordemSelecao.map(id => catalogo.find(p => p.id === id)).filter(Boolean) as Produto[],
-    ...catalogo.filter(p => !selecionadosSet.has(p.id)),
-  ]
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
 
+    setOrdemSelecao(prev => {
+      const oldIndex = prev.indexOf(active.id as string)
+      const newIndex = prev.indexOf(over.id as string)
+      const novaOrdem = arrayMove(prev, oldIndex, newIndex)
+
+      startTransition(async () => {
+        const updates = novaOrdem
+          .map((produtoId, index) => {
+            const pp = lista.find(p => p.produto_id === produtoId)
+            return pp ? { id: pp.id, ordem: index } : null
+          })
+          .filter(Boolean) as { id: string; ordem: number }[]
+        await reordenarProdutos(updates)
+      })
+
+      return novaOrdem
+    })
+  }
+
+  const selecionadosSet = new Set(ordemSelecao)
+  const naoSelecionados = catalogo.filter(p => !selecionadosSet.has(p.id))
   const percentualUsado = limiteMax > 0 ? Math.min((totalLocal / limiteMax) * 100, 100) : 0
 
   if (catalogo.length === 0) {
@@ -87,7 +180,7 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
 
   return (
     <div className="space-y-3">
-      {/* Barra de orçamento — reativa */}
+      {/* Barra de orçamento */}
       <Card className="mb-3">
         <CardContent className="pt-4">
           <div className="flex justify-between text-sm mb-2">
@@ -109,22 +202,48 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
         </CardContent>
       </Card>
 
-      {/* Lista de produtos: selecionados no topo */}
-      {catalogoOrdenado.map((produto) => {
-        const adicionado = selecionadosSet.has(produto.id)
-        const pp = lista.find(p => p.produto_id === produto.id)
-        const isLoading = loadingId === produto.id || loadingId === pp?.id
+      {/* Produtos selecionados — arrastáveis */}
+      {ordemSelecao.length > 0 && (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={ordemSelecao} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {ordemSelecao.map(produtoId => {
+                const produto = catalogo.find(p => p.id === produtoId)
+                if (!produto) return null
+                const pp = lista.find(p => p.produto_id === produtoId)
+                const isLoading = loadingId === produtoId || loadingId === pp?.id
+                return (
+                  <SortableProductCard
+                    key={produtoId}
+                    produto={produto}
+                    isLoading={isLoading}
+                    pending={pending}
+                    onRemover={() => pp && handleRemover(pp.id, produto)}
+                  />
+                )
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
 
+      {/* Separador */}
+      {ordemSelecao.length > 0 && naoSelecionados.length > 0 && (
+        <div className="flex items-center gap-2 py-1">
+          <div className="flex-1 h-px bg-slate-200" />
+          <span className="text-xs text-slate-400">Disponíveis para adicionar</span>
+          <div className="flex-1 h-px bg-slate-200" />
+        </div>
+      )}
+
+      {/* Produtos não selecionados */}
+      {naoSelecionados.map(produto => {
+        const isLoading = loadingId === produto.id
         return (
-          <Card key={produto.id} className={adicionado ? 'border-primary/30 bg-primary/5' : ''}>
+          <Card key={produto.id}>
             <CardContent className="flex items-center justify-between p-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-slate-900">{produto.nome}</p>
-                  {adicionado && (
-                    <Badge variant="success" className="text-xs">Adicionado</Badge>
-                  )}
-                </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-slate-900">{produto.nome}</p>
                 {produto.descricao && (
                   <p className="text-sm text-slate-500 mt-0.5">{produto.descricao}</p>
                 )}
@@ -132,28 +251,14 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
                   <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(produto.valor_total)}</p>
                 )}
               </div>
-
-              {adicionado ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-500 border-red-200 hover:bg-red-50"
-                  onClick={() => pp && handleRemover(pp.id, produto)}
-                  disabled={isLoading || pending}
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                  <span className="ml-1">Remover</span>
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => handleAdicionar(produto)}
-                  disabled={isLoading || pending}
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  <span className="ml-1">Adicionar</span>
-                </Button>
-              )}
+              <Button
+                size="sm"
+                onClick={() => handleAdicionar(produto)}
+                disabled={isLoading || pending}
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                <span className="ml-1">Adicionar</span>
+              </Button>
             </CardContent>
           </Card>
         )

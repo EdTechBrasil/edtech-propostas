@@ -729,6 +729,17 @@ export async function cancelarProposta(proposta_id: string) {
   return { success: true }
 }
 
+// ── Reordenar produtos da proposta (drag-and-drop) ────────────────────────────
+
+export async function reordenarProdutos(updates: { id: string; ordem: number }[]) {
+  const supabase = await createClient()
+  await Promise.all(
+    updates.map(({ id, ordem }) =>
+      supabase.from('proposta_produtos').update({ ordem }).eq('id', id)
+    )
+  )
+}
+
 // ── Reordenar propostas (drag-and-drop) ───────────────────────────────────────
 
 export async function reordenarPropostas(updates: { id: string; ordem: number }[]) {
