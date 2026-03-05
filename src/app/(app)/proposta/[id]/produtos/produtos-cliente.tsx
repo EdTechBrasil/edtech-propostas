@@ -33,6 +33,7 @@ interface Produto {
 interface PropostaProduto {
   id: string
   produto_id: string
+  ordem: number
   produto: { nome: string } | null
 }
 
