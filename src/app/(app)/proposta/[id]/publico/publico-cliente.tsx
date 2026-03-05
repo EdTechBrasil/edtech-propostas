@@ -161,7 +161,17 @@ export function PublicoCliente({ proposta, temMPC }: { proposta: Proposta; temMP
 
                 {/* Séries & Alunos */}
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold text-slate-700">Séries &amp; Alunos</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-700">Séries &amp; Alunos</p>
+                    {anyChecked && (
+                      <span className="text-sm text-slate-500">
+                        Total:{' '}
+                        <span className="font-semibold text-slate-700">
+                          {SERIES.reduce((sum, s) => sum + (Number(alunos[s.key]) || 0), 0)} alunos
+                        </span>
+                      </span>
+                    )}
+                  </div>
                   {SERIES.map(s => (
                     <div key={s.key} className="flex items-center gap-3">
                       <label className="flex items-center gap-2 w-28 cursor-pointer">
