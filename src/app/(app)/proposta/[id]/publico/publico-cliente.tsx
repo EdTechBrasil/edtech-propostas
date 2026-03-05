@@ -181,9 +181,7 @@ export function PublicoCliente({ proposta }: { proposta: Proposta }) {
                         onChange={e => setAlunos(prev => ({ ...prev, [s.key]: e.target.value }))}
                       />
                     </div>
-                  ) : (
-                    <span className="text-xs text-slate-400">{s.mult} tapetes/tema/kit</span>
-                  )}
+                  ) : null}
                 </div>
               ))}
             </div>
