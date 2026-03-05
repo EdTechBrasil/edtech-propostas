@@ -733,7 +733,8 @@ export async function cancelarProposta(proposta_id: string) {
 
 export async function reordenarProdutos(updates: { id: string; ordem: number }[]) {
   const supabase = await createClient()
-  await Promise.all(
+  // Coluna `ordem` pode não existir ainda (DDL pendente) — ignora silenciosamente
+  await Promise.allSettled(
     updates.map(({ id, ordem }) =>
       supabase.from('proposta_produtos').update({ ordem }).eq('id', id)
     )

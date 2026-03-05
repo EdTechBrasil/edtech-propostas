@@ -39,9 +39,8 @@ export default async function ProdutosPage({ params }: { params: Promise<{ id: s
       .order('nome'),
     supabase
       .from('proposta_produtos')
-      .select('id, produto_id, ordem, produto:produtos(nome)')
-      .eq('proposta_id', id)
-      .order('ordem', { ascending: true }),
+      .select('id, produto_id, produto:produtos(nome)')
+      .eq('proposta_id', id),
   ])
 
   if (!proposta) notFound()
