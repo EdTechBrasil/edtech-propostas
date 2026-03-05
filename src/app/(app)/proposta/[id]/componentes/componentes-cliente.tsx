@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/utils/format'
-import { Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { DragHandle } from '@/components/ui/drag-handle'
 import {
   DndContext,
@@ -128,12 +128,6 @@ function ItemRow({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-slate-800 truncate">{nome}</span>
             {categoria && <Badge variant="outline" className="text-xs">{categoria}</Badge>}
-            <Badge variant="secondary" className="text-xs">{tipoCalculo}</Badge>
-            {obrigatorio && (
-              <span className="flex items-center gap-1 text-xs text-slate-400">
-                <Lock className="w-3 h-3" /> Obrigatório
-              </span>
-            )}
           </div>
         </div>
 
@@ -167,9 +161,6 @@ function ItemRow({
           </div>
           <span className="text-sm font-semibold text-slate-700 w-24 text-right" title="Total venda">
             {formatCurrency(total)}
-          </span>
-          <span className="text-sm text-slate-500 w-24 text-right" title="Custo unitário">
-            {formatCurrency(custo)}
           </span>
           <span className={`text-sm font-medium w-14 text-right ${margemCor}`} title="Margem por item">
             {margemItem !== null ? `${margemItem.toFixed(1)}%` : ''}
@@ -363,6 +354,13 @@ export function ComponentesCliente({
     setItems(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
   }
 
+  const hasKitGlobal = produtos.some(pp =>
+    pp.componentes.some(c => {
+      const tc = c.componente?.tipo_calculo ?? ''
+      return tc === 'PorEscolaXKit' || TAPETE_TYPES.has(tc)
+    })
+  )
+
   // Cálculos ao vivo
   const receitaBruta = Object.values(items).reduce((sum, i) => sum + i.qtd * i.valor, 0)
   const custoTotal   = Object.values(items).reduce((sum, i) => sum + i.qtd * i.custo, 0)
@@ -459,6 +457,39 @@ export function ComponentesCliente({
         limiteOrcamento={limiteOrcamento}
       />
 
+      {hasKitGlobal && (
+        <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 mb-4">
+          <span>Kits por escola:</span>
+          <input
+            type="number"
+            min="1"
+            value={numKitsState}
+            onChange={e => {
+              const v = Math.max(1, Number(e.target.value) || 1)
+              setNumKitsState(v)
+              const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
+              for (const pp of produtos) {
+                for (const c of pp.componentes) {
+                  const tc = c.componente?.tipo_calculo ?? ''
+                  if (tc === 'PorEscolaXKit') {
+                    updateItem(c.id, { qtd: numEscolas * v })
+                  } else if (TAPETE_TYPES.has(tc)) {
+                    const key = TAPETE_KEYS[tc]
+                    if (seriesTapetesState === null || seriesSplit.includes(key)) {
+                      const t = temasPorSerie[key] ?? 0
+                      if (t > 0) updateItem(c.id, { qtd: TAPETE_MULT[tc] * t * v })
+                    }
+                  }
+                }
+              }
+            }}
+            onBlur={() => startKitsTransition(async () => { await atualizarNumKits(propostaId, numKitsState) })}
+            className="w-16 h-7 rounded border border-slate-300 text-sm text-center px-1 focus:outline-none focus:ring-2 focus:ring-slate-400"
+          />
+          <span className="text-slate-400 text-xs">— afeta todos os produtos com Kit</span>
+        </div>
+      )}
+
       <div className="space-y-6">
         {produtos.map(pp => {
           const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
@@ -485,8 +516,6 @@ export function ComponentesCliente({
             const fmt = (n: number) => n.toLocaleString('pt-BR')
             return `${fmt(total)} livros (${fmt(totAlun)} alunos + ${fmt(totProf)} professores)`
           })()
-
-          const hasKit = visibleComponentes.some(c => c.componente?.tipo_calculo === 'PorEscolaXKit')
 
           // Reorder visibleComponentes by componenteOrdens
           const compIds = componenteOrdens[pp.id]
@@ -516,35 +545,6 @@ export function ComponentesCliente({
                   <Badge variant="secondary" className="text-xs font-normal">
                     {visibleComponentes.length + pp.servicos.length} itens
                   </Badge>
-                  {hasKit && (
-                    <span className="flex items-center gap-1.5 text-sm font-normal text-slate-500 ml-auto">
-                      Kits por escola:
-                      <input
-                        type="number"
-                        min="1"
-                        value={numKitsState}
-                        onChange={e => {
-                          const v = Math.max(1, Number(e.target.value) || 1)
-                          setNumKitsState(v)
-                          const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
-                          for (const c of visibleComponentes) {
-                            const tc = c.componente?.tipo_calculo ?? ''
-                            if (tc === 'PorEscolaXKit') {
-                              updateItem(c.id, { qtd: numEscolas * v })
-                            } else if (TAPETE_TYPES.has(tc)) {
-                              const key = TAPETE_KEYS[tc]
-                              if (seriesTapetesState === null || seriesSplit.includes(key)) {
-                                const t = temasPorSerie[key] ?? 0
-                                if (t > 0) updateItem(c.id, { qtd: TAPETE_MULT[tc] * t * v })
-                              }
-                            }
-                          }
-                        }}
-                        onBlur={() => startKitsTransition(async () => { await atualizarNumKits(propostaId, numKitsState) })}
-                        className="w-16 h-7 rounded border border-slate-300 text-sm text-center px-1 focus:outline-none focus:ring-2 focus:ring-slate-400"
-                      />
-                    </span>
-                  )}
                 </CardTitle>
                 {subtitleLivros && (
                   <p className="text-sm text-slate-500 mt-0.5">{subtitleLivros}</p>
@@ -557,7 +557,6 @@ export function ComponentesCliente({
                   <span className="w-20 text-center">Qtd</span>
                   <span className="w-28 text-center">Venda unit.</span>
                   <span className="w-24 text-right">Total venda</span>
-                  <span className="w-24 text-right">Custo unit.</span>
                   <span className="w-14 text-right">Margem</span>
                 </div>
 
