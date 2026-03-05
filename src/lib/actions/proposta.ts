@@ -197,6 +197,28 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       }),
   ])
 
+  // Atualiza horas de formação/assessoria (MPC)
+  const formacaoUpdates: Promise<any>[] = []
+  const presId = formData.get('formacao_presencial_id') as string | null
+  const eadId  = formData.get('formacao_ead_id') as string | null
+  const assId  = formData.get('formacao_assessoria_id') as string | null
+
+  const horasPresencial = formData.get('horas_formacao_presencial')
+  const horasEAD        = formData.get('horas_formacao_ead')
+  const horasAssessoria = formData.get('horas_formacao_assessoria')
+
+  if (presId && horasPresencial !== null && horasPresencial !== '')
+    formacaoUpdates.push(supabase.from('proposta_servicos')
+      .update({ quantidade: Number(horasPresencial) }).eq('id', presId))
+  if (eadId && horasEAD !== null && horasEAD !== '')
+    formacaoUpdates.push(supabase.from('proposta_servicos')
+      .update({ quantidade: Number(horasEAD) }).eq('id', eadId))
+  if (assId && horasAssessoria !== null && horasAssessoria !== '')
+    formacaoUpdates.push(supabase.from('proposta_servicos')
+      .update({ quantidade: Number(horasAssessoria) }).eq('id', assId))
+
+  if (formacaoUpdates.length > 0) await Promise.all(formacaoUpdates)
+
   await registrarHistorico(proposta_id, user.id, 'MudancaOrcamento', publico_descricao)
 
   redirect(`/proposta/${proposta_id}/componentes`)

@@ -17,6 +17,12 @@ const SERIES = [
   { key: 'ano3',   label: '3ª série',  mult: 16 },
 ]
 
+interface ServicoFormacao {
+  id: string
+  quantidade: number
+  valor_venda_unit: number
+}
+
 interface Proposta {
   id: string
   orcamento_alvo: number
@@ -53,7 +59,15 @@ function temasField(p: Proposta, key: string): number {
   return map[key] ?? 0
 }
 
-export function PublicoCliente({ proposta, temMPC }: { proposta: Proposta; temMPC: boolean }) {
+export function PublicoCliente({
+  proposta,
+  temMPC,
+  servicosFormacao,
+}: {
+  proposta: Proposta
+  temMPC: boolean
+  servicosFormacao: { presencial: ServicoFormacao | null; ead: ServicoFormacao | null; assessoria: ServicoFormacao | null }
+}) {
   const action = atualizarPublico.bind(null, proposta.id)
 
   // checked: series that have alunos filled (only relevant for MPC mode)
@@ -70,6 +84,9 @@ export function PublicoCliente({ proposta, temMPC }: { proposta: Proposta; temMP
   const [temas, setTemas] = useState<Record<string, string>>(() =>
     Object.fromEntries(SERIES.map(s => [s.key, String(temasField(proposta, s.key) || '')]))
   )
+
+  // professores value for dynamic suggestion in formação card
+  const [numProf, setNumProf] = useState(proposta.num_professores || 0)
 
   function toggleSerie(key: string, on: boolean) {
     setChecked(prev => ({ ...prev, [key]: on }))
@@ -97,6 +114,9 @@ export function PublicoCliente({ proposta, temMPC }: { proposta: Proposta; temMP
       Orçamento não definido
     </div>
   )
+
+  const turmas = numProf > 0 ? Math.ceil(numProf / 50) : 0
+  const temFormacao = servicosFormacao.presencial || servicosFormacao.ead || servicosFormacao.assessoria
 
   return (
     <div>
@@ -153,6 +173,7 @@ export function PublicoCliente({ proposta, temMPC }: { proposta: Proposta; temMP
                       min="0"
                       placeholder="0"
                       defaultValue={proposta.num_professores || ''}
+                      onChange={e => setNumProf(Number(e.target.value) || 0)}
                     />
                   </div>
                 </div>
@@ -234,6 +255,83 @@ export function PublicoCliente({ proposta, temMPC }: { proposta: Proposta; temMP
                 )}
               </CardContent>
             </Card>
+
+            {/* Formação e Assessoria */}
+            {temFormacao && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Formação e Assessoria</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-slate-500">
+                    Informe a quantidade de horas necessárias (todos os campos são opcionais):
+                  </p>
+                  <div className="grid grid-cols-3 gap-4">
+                    {servicosFormacao.presencial && (
+                      <div className="space-y-2">
+                        <input type="hidden" name="formacao_presencial_id" value={servicosFormacao.presencial.id} />
+                        <Label htmlFor="horas_formacao_presencial">Horas de Formação Presencial</Label>
+                        <Input
+                          id="horas_formacao_presencial"
+                          name="horas_formacao_presencial"
+                          type="number"
+                          min="0"
+                          placeholder="Ex: 20 (opcional)"
+                          defaultValue={servicosFormacao.presencial.quantidade > 1 ? servicosFormacao.presencial.quantidade : ''}
+                        />
+                        {servicosFormacao.presencial.valor_venda_unit > 0 && (
+                          <p className="text-xs text-slate-500">{formatCurrency(servicosFormacao.presencial.valor_venda_unit)} por hora</p>
+                        )}
+                      </div>
+                    )}
+                    {servicosFormacao.ead && (
+                      <div className="space-y-2">
+                        <input type="hidden" name="formacao_ead_id" value={servicosFormacao.ead.id} />
+                        <Label htmlFor="horas_formacao_ead">Horas de Formação EAD</Label>
+                        <Input
+                          id="horas_formacao_ead"
+                          name="horas_formacao_ead"
+                          type="number"
+                          min="0"
+                          placeholder="Ex: 20 (opcional)"
+                          defaultValue={servicosFormacao.ead.quantidade > 1 ? servicosFormacao.ead.quantidade : ''}
+                        />
+                        {servicosFormacao.ead.valor_venda_unit > 0 && (
+                          <p className="text-xs text-slate-500">{formatCurrency(servicosFormacao.ead.valor_venda_unit)} por hora</p>
+                        )}
+                      </div>
+                    )}
+                    {servicosFormacao.assessoria && (
+                      <div className="space-y-2">
+                        <input type="hidden" name="formacao_assessoria_id" value={servicosFormacao.assessoria.id} />
+                        <Label htmlFor="horas_formacao_assessoria">Horas de Assessoria</Label>
+                        <Input
+                          id="horas_formacao_assessoria"
+                          name="horas_formacao_assessoria"
+                          type="number"
+                          min="0"
+                          placeholder="Ex: 30 (opcional)"
+                          defaultValue={servicosFormacao.assessoria.quantidade > 1 ? servicosFormacao.assessoria.quantidade : ''}
+                        />
+                        {servicosFormacao.assessoria.valor_venda_unit > 0 && (
+                          <p className="text-xs text-slate-500">{formatCurrency(servicosFormacao.assessoria.valor_venda_unit)} por hora</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {servicosFormacao.presencial && (
+                    <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                      <p className="font-medium">Por padrão, 8 horas para cada grupo de 50 professores.</p>
+                      {turmas > 0 && (
+                        <p className="mt-1">
+                          Com {numProf} professor{numProf !== 1 ? 'es' : ''} → {turmas} turma{turmas !== 1 ? 's' : ''} = {turmas * 8} horas sugeridas.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </>
         ) : (
           <>

@@ -6,7 +6,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: proposta }, { data: prods }] = await Promise.all([
+  const [{ data: proposta }, { data: prods }, { data: allServicos }] = await Promise.all([
     supabase
       .from('propostas')
       .select(`
@@ -41,11 +41,28 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       .from('proposta_produtos')
       .select('produto:produtos(nome)')
       .eq('proposta_id', id),
+    supabase
+      .from('proposta_servicos')
+      .select('id, quantidade, valor_venda_unit, servico:produto_servicos(nome)')
+      .eq('proposta_id', id),
   ])
 
   if (!proposta) notFound()
 
   const temMPC = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Primeiro'))
 
-  return <PublicoCliente proposta={proposta} temMPC={temMPC} />
+  const servicoPresencial = (allServicos ?? []).find(s =>
+    (s.servico as any)?.nome?.toLowerCase().includes('presencial')) ?? null
+  const servicoEAD = (allServicos ?? []).find(s =>
+    (s.servico as any)?.nome?.toLowerCase().includes('ead')) ?? null
+  const servicoAssessoria = (allServicos ?? []).find(s =>
+    (s.servico as any)?.nome?.toLowerCase().includes('assessoria')) ?? null
+
+  const servicosFormacao = {
+    presencial: servicoPresencial ? { id: servicoPresencial.id, quantidade: servicoPresencial.quantidade, valor_venda_unit: servicoPresencial.valor_venda_unit } : null,
+    ead: servicoEAD ? { id: servicoEAD.id, quantidade: servicoEAD.quantidade, valor_venda_unit: servicoEAD.valor_venda_unit } : null,
+    assessoria: servicoAssessoria ? { id: servicoAssessoria.id, quantidade: servicoAssessoria.quantidade, valor_venda_unit: servicoAssessoria.valor_venda_unit } : null,
+  }
+
+  return <PublicoCliente proposta={proposta} temMPC={temMPC} servicosFormacao={servicosFormacao} />
 }
