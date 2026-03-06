@@ -432,13 +432,14 @@ export function PublicoCliente({
                   <CardTitle>Séries — Cria+Code</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Cria+Code não usa temas — zerar todos */}
+                  {CRIACODE_SERIES.map(s => (
+                    <input key={s.key} type="hidden" name={`temas_${s.key}`} value="0" />
+                  ))}
                   {/* Hidden inputs for unchecked Cria+Code series */}
                   {criaCodeSeries.map(s => (
                     !checked[s.key] && (
-                      <span key={s.key}>
-                        <input type="hidden" name={`alunos_${s.key}`} value="0" />
-                        <input type="hidden" name={`temas_${s.key}`}  value="0" />
-                      </span>
+                      <input key={s.key} type="hidden" name={`alunos_${s.key}`} value="0" />
                     )
                   ))}
 
@@ -486,37 +487,6 @@ export function PublicoCliente({
                     ))}
                   </div>
 
-                  {anyCriaCodeChecked && (
-                    <>
-                      <hr className="border-slate-100" />
-                      <div className="space-y-3">
-                        <p className="text-sm font-semibold text-slate-700">Temas por série</p>
-                        {criaCodeSeries.filter(s => checked[s.key]).map(s => (
-                          <div key={s.key} className="flex items-center gap-3">
-                            <span className="text-sm text-slate-600 w-28">{s.label}:</span>
-                            <Label htmlFor={`temas_${s.key}_cc`} className="text-sm text-slate-500 whitespace-nowrap">
-                              Temas:
-                            </Label>
-                            <Input
-                              id={`temas_${s.key}_cc`}
-                              name={`temas_${s.key}`}
-                              type="number"
-                              min="0"
-                              max={s.maxTemas}
-                              placeholder="0"
-                              className="w-20 h-8"
-                              value={temas[s.key]}
-                              onChange={e => {
-                                const val = Math.min(Number(e.target.value), s.maxTemas)
-                                setTemas(prev => ({ ...prev, [s.key]: val > 0 ? String(val) : e.target.value }))
-                              }}
-                            />
-                            <span className="text-xs text-slate-400">máx {s.maxTemas}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
                 </CardContent>
               </Card>
             )}
