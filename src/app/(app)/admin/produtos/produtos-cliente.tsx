@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -308,6 +308,7 @@ function ServicoDialog({
 function ProdutoCard({ produto }: { produto: Produto }) {
   const [expandido, setExpandido] = useState(false)
   const [openEdit, setOpenEdit] = useState(false)
+  const [erroEdit, setErroEdit] = useState('')
   const [openExcluir, setOpenExcluir] = useState(false)
   const [erroExcluir, setErroExcluir] = useState('')
   const [confirmarExcluirComp, setConfirmarExcluirComp] = useState<{ id: string; nome: string } | null>(null)
@@ -398,9 +399,14 @@ function ProdutoCard({ produto }: { produto: Produto }) {
           <DialogContent>
             <DialogHeader><DialogTitle>Editar produto</DialogTitle></DialogHeader>
             <form action={(fd) => {
+              setErroEdit('')
               startTransition(async () => {
-                await atualizarProduto(produto.id, fd)
-                setOpenEdit(false)
+                const result = await atualizarProduto(produto.id, fd)
+                if ('error' in result) {
+                  setErroEdit(result.error ?? 'Erro ao salvar')
+                } else {
+                  setOpenEdit(false)
+                }
               })
             }} className="space-y-4">
               <div className="space-y-2">
@@ -411,8 +417,9 @@ function ProdutoCard({ produto }: { produto: Produto }) {
                 <Label>Descrição</Label>
                 <Input name="descricao" defaultValue={produto.descricao ?? ''} />
               </div>
+              {erroEdit && <p className="text-sm text-red-600">{erroEdit}</p>}
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setOpenEdit(false)}>Cancelar</Button>
+                <Button type="button" variant="outline" onClick={() => { setOpenEdit(false); setErroEdit('') }}>Cancelar</Button>
                 <Button type="submit" disabled={isPending}>Salvar</Button>
               </DialogFooter>
             </form>
@@ -629,6 +636,9 @@ export function ProdutosAdminCliente({ produtos: produtosIniciais }: { produtos:
   const [isPending, startTransition] = useTransition()
   const [erro, setErro] = useState('')
   const [produtos, setProdutos] = useState(produtosIniciais)
+  useEffect(() => {
+    setProdutos(produtosIniciais)
+  }, [produtosIniciais])
 
   function handleCriar(formData: FormData) {
     setErro('')
