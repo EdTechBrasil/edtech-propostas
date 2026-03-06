@@ -526,17 +526,6 @@ export function PublicoCliente({
                       defaultValue={proposta.num_alunos || ''}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="temas">Temas</Label>
-                    <Input
-                      id="temas"
-                      name="temas"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      defaultValue={proposta.num_temas || ''}
-                    />
-                  </div>
                 </div>
               </CardContent>
             </Card>
