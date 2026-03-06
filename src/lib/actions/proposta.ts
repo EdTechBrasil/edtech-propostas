@@ -100,10 +100,11 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
 
   const num_escolas     = Number(formData.get('escolas') || 0)
   const num_professores = Number(formData.get('professores') || 0)
-  const hasMpc      = formData.get('has_mpc')       === 'true'
-  const hasCoding   = formData.get('has_coding')    === 'true'
-  const hasEdtechIA = formData.get('has_edtech_ia') === 'true'
-  const hasSeriesData = hasMpc || hasCoding
+  const hasMpc      = formData.get('has_mpc')        === 'true'
+  const hasCoding   = formData.get('has_coding')     === 'true'
+  const hasEdtechIA = formData.get('has_edtech_ia')  === 'true'
+  const hasCriaCode = formData.get('has_criacode')   === 'true'
+  const hasSeriesData = hasMpc || hasCoding || hasCriaCode
 
   // MPC series (pre_i..ano3)
   let alunos_pre_i = 0, alunos_pre_ii = 0, alunos_ano1 = 0, alunos_ano2 = 0, alunos_ano3 = 0
@@ -143,6 +144,24 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     temas_ano7  = Number(formData.get('temas_ano7')  || 0)
     temas_ano8  = Number(formData.get('temas_ano8')  || 0)
     temas_ano9  = Number(formData.get('temas_ano9')  || 0)
+  }
+
+  if (hasCriaCode) {
+    // ano1-ano3: lê se MPC não os preencheu; ano4-ano5: lê se Coding não os preencheu
+    if (!hasMpc) {
+      alunos_ano1 = Number(formData.get('alunos_ano1') || 0)
+      alunos_ano2 = Number(formData.get('alunos_ano2') || 0)
+      alunos_ano3 = Number(formData.get('alunos_ano3') || 0)
+      temas_ano1  = Number(formData.get('temas_ano1')  || 0)
+      temas_ano2  = Number(formData.get('temas_ano2')  || 0)
+      temas_ano3  = Number(formData.get('temas_ano3')  || 0)
+    }
+    if (!hasCoding) {
+      alunos_ano4 = Number(formData.get('alunos_ano4') || 0)
+      alunos_ano5 = Number(formData.get('alunos_ano5') || 0)
+      temas_ano4  = Number(formData.get('temas_ano4')  || 0)
+      temas_ano5  = Number(formData.get('temas_ano5')  || 0)
+    }
   }
 
   // Edtech IA: livros de conceitos (1–4) e práticas (0–2)

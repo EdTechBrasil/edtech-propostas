@@ -17,6 +17,14 @@ const MPC_SERIES = [
   { key: 'ano3',   label: '3ª série',  mult: 16, maxTemas: 4 },
 ]
 
+const CRIACODE_SERIES = [
+  { key: 'ano1', label: '1º Ano', maxTemas: 4 },
+  { key: 'ano2', label: '2º Ano', maxTemas: 4 },
+  { key: 'ano3', label: '3º Ano', maxTemas: 4 },
+  { key: 'ano4', label: '4º Ano', maxTemas: 4 },
+  { key: 'ano5', label: '5º Ano', maxTemas: 4 },
+]
+
 const CODING_SERIES_FULL = [
   { key: 'ano3', label: '3º ano', maxTemas: 10 },
   { key: 'ano4', label: '4º ano', maxTemas: 10 },
@@ -98,12 +106,14 @@ export function PublicoCliente({
   temMPC,
   temCoding,
   temEdtechIA,
+  temCriaCode,
   servicosFormacao,
 }: {
   proposta: Proposta
   temMPC: boolean
   temCoding: boolean
   temEdtechIA: boolean
+  temCriaCode: boolean
   servicosFormacao: { presencial: ServicoFormacao | null; ead: ServicoFormacao | null; assessoria: ServicoFormacao | null }
 }) {
   const action = atualizarPublico.bind(null, proposta.id)
@@ -130,9 +140,12 @@ export function PublicoCliente({
     }
   }
 
-  const anyMpcChecked    = MPC_SERIES.some(s => checked[s.key])
-  const codingSeries     = temMPC ? CODING_SERIES_WITH_MPC : CODING_SERIES_FULL
-  const anyCodingChecked = codingSeries.some(s => checked[s.key])
+  const anyMpcChecked      = MPC_SERIES.some(s => checked[s.key])
+  const codingSeries       = temMPC ? CODING_SERIES_WITH_MPC : CODING_SERIES_FULL
+  const anyCodingChecked   = codingSeries.some(s => checked[s.key])
+  const criaCodeSeries     = CRIACODE_SERIES.filter(s => !temMPC || !['ano1','ano2','ano3'].includes(s.key))
+    .filter(s => !temCoding || !['ano3','ano4','ano5'].includes(s.key))
+  const anyCriaCodeChecked = CRIACODE_SERIES.some(s => checked[s.key])
 
   const [livrosConceitos, setLivrosConceitos] = useState(proposta.num_livros_conceitos || 1)
   const [livrosPraticas,  setLivrosPraticas]  = useState(proposta.num_livros_praticas  || 0)
@@ -156,7 +169,7 @@ export function PublicoCliente({
 
   const turmas = numProf > 0 ? Math.ceil(numProf / 50) : 0
   const temFormacao = servicosFormacao.presencial || servicosFormacao.ead || servicosFormacao.assessoria
-  const hasSeriesMode = temMPC || temCoding
+  const hasSeriesMode = temMPC || temCoding || temCriaCode
   const hasAnySpecialMode = hasSeriesMode || temEdtechIA
 
   return (
@@ -171,9 +184,10 @@ export function PublicoCliente({
       </div>
 
       <form action={action} className="space-y-6">
-        <input type="hidden" name="has_mpc"       value={temMPC      ? 'true' : 'false'} />
-        <input type="hidden" name="has_coding"    value={temCoding   ? 'true' : 'false'} />
-        <input type="hidden" name="has_edtech_ia" value={temEdtechIA ? 'true' : 'false'} />
+        <input type="hidden" name="has_mpc"        value={temMPC       ? 'true' : 'false'} />
+        <input type="hidden" name="has_coding"     value={temCoding    ? 'true' : 'false'} />
+        <input type="hidden" name="has_edtech_ia"  value={temEdtechIA  ? 'true' : 'false'} />
+        <input type="hidden" name="has_criacode"   value={temCriaCode  ? 'true' : 'false'} />
 
         {hasAnySpecialMode ? (
           <>
@@ -389,6 +403,102 @@ export function PublicoCliente({
                             </Label>
                             <Input
                               id={`temas_${s.key}_c`}
+                              name={`temas_${s.key}`}
+                              type="number"
+                              min="0"
+                              max={s.maxTemas}
+                              placeholder="0"
+                              className="w-20 h-8"
+                              value={temas[s.key]}
+                              onChange={e => {
+                                const val = Math.min(Number(e.target.value), s.maxTemas)
+                                setTemas(prev => ({ ...prev, [s.key]: val > 0 ? String(val) : e.target.value }))
+                              }}
+                            />
+                            <span className="text-xs text-slate-400">máx {s.maxTemas}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Cria+Code Section */}
+            {temCriaCode && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Séries — Cria+Code</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Hidden inputs for unchecked Cria+Code series */}
+                  {criaCodeSeries.map(s => (
+                    !checked[s.key] && (
+                      <span key={s.key}>
+                        <input type="hidden" name={`alunos_${s.key}`} value="0" />
+                        <input type="hidden" name={`temas_${s.key}`}  value="0" />
+                      </span>
+                    )
+                  ))}
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-700">Séries &amp; Alunos</p>
+                      {anyCriaCodeChecked && (
+                        <span className="text-sm text-slate-500">
+                          Total:{' '}
+                          <span className="font-semibold text-slate-700">
+                            {CRIACODE_SERIES.reduce((sum, s) => sum + (Number(alunos[s.key]) || 0), 0)} alunos
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                    {criaCodeSeries.map(s => (
+                      <div key={s.key} className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 w-28 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked[s.key] ?? false}
+                            onChange={e => toggleSerie(s.key, e.target.checked)}
+                            className="w-4 h-4 rounded accent-slate-700"
+                          />
+                          <span className="text-sm text-slate-700">{s.label}</span>
+                        </label>
+                        {checked[s.key] && (
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`alunos_${s.key}_cc`} className="text-sm text-slate-500 whitespace-nowrap">
+                              Alunos:
+                            </Label>
+                            <Input
+                              id={`alunos_${s.key}_cc`}
+                              name={`alunos_${s.key}`}
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              className="w-24 h-8"
+                              value={alunos[s.key]}
+                              onChange={e => setAlunos(prev => ({ ...prev, [s.key]: e.target.value }))}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {anyCriaCodeChecked && (
+                    <>
+                      <hr className="border-slate-100" />
+                      <div className="space-y-3">
+                        <p className="text-sm font-semibold text-slate-700">Temas por série</p>
+                        {criaCodeSeries.filter(s => checked[s.key]).map(s => (
+                          <div key={s.key} className="flex items-center gap-3">
+                            <span className="text-sm text-slate-600 w-28">{s.label}:</span>
+                            <Label htmlFor={`temas_${s.key}_cc`} className="text-sm text-slate-500 whitespace-nowrap">
+                              Temas:
+                            </Label>
+                            <Input
+                              id={`temas_${s.key}_cc`}
                               name={`temas_${s.key}`}
                               type="number"
                               min="0"
