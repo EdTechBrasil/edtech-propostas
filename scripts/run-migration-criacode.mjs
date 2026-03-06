@@ -12,8 +12,9 @@ console.log('Cria+Code id:', produto.id)
 await sb.from('produto_componentes').delete().eq('produto_id', produto.id)
 
 const componentes = [
-  { nome: 'Livros do Aluno',     categoria: 'Livro', tipo_calculo: 'PorAlunoXTema',     valor_venda_base: 80,  custo_interno_base: 0, obrigatorio: true, ordem: 1 },
-  { nome: 'Livros do Professor', categoria: 'Livro', tipo_calculo: 'PorProfessorXTema', valor_venda_base: 160, custo_interno_base: 0, obrigatorio: true, ordem: 2 },
+  { nome: 'Livros do Aluno (2 vols/série)',  categoria: 'Livro',      tipo_calculo: 'PorAluno',     valor_venda_base: 388.80, custo_interno_base: 0, obrigatorio: true, ordem: 1 },
+  { nome: 'Guia do Professor (1/série)',     categoria: 'Livro',      tipo_calculo: 'PorProfessor', valor_venda_base: 194.40, custo_interno_base: 0, obrigatorio: true, ordem: 2 },
+  { nome: 'Plataforma de Codificação',       categoria: 'Plataforma', tipo_calculo: 'Fixo',         valor_venda_base: 149.50, custo_interno_base: 0, obrigatorio: true, ordem: 3 },
 ].map(c => ({ ...c, produto_id: produto.id, ativo: true }))
 
 const { error } = await sb.from('produto_componentes').insert(componentes)
