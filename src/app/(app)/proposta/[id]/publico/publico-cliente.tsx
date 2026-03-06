@@ -9,13 +9,26 @@ import { Label } from '@/components/ui/label'
 import { BackButton } from '@/components/ui/back-button'
 import { formatCurrency } from '@/utils/format'
 
-const SERIES = [
+const MPC_SERIES = [
   { key: 'pre_i',  label: 'Pré I',     mult: 9,  maxTemas: 3 },
   { key: 'pre_ii', label: 'Pré II',    mult: 12, maxTemas: 3 },
   { key: 'ano1',   label: '1ª série',  mult: 16, maxTemas: 4 },
   { key: 'ano2',   label: '2ª série',  mult: 16, maxTemas: 4 },
   { key: 'ano3',   label: '3ª série',  mult: 16, maxTemas: 4 },
 ]
+
+const CODING_SERIES_FULL = [
+  { key: 'ano3', label: '3º ano', maxTemas: 10 },
+  { key: 'ano4', label: '4º ano', maxTemas: 10 },
+  { key: 'ano5', label: '5º ano', maxTemas: 10 },
+  { key: 'ano6', label: '6º ano', maxTemas: 10 },
+  { key: 'ano7', label: '7º ano', maxTemas: 10 },
+  { key: 'ano8', label: '8º ano', maxTemas: 10 },
+  { key: 'ano9', label: '9º ano', maxTemas: 10 },
+]
+
+// When MPC is also present, ano3 is already in the MPC section
+const CODING_SERIES_WITH_MPC = CODING_SERIES_FULL.filter(s => s.key !== 'ano3')
 
 interface ServicoFormacao {
   id: string
@@ -41,12 +54,26 @@ interface Proposta {
   num_temas_ano1: number
   num_temas_ano2: number
   num_temas_ano3: number
+  num_alunos_ano4: number
+  num_alunos_ano5: number
+  num_alunos_ano6: number
+  num_alunos_ano7: number
+  num_alunos_ano8: number
+  num_alunos_ano9: number
+  num_temas_ano4: number
+  num_temas_ano5: number
+  num_temas_ano6: number
+  num_temas_ano7: number
+  num_temas_ano8: number
+  num_temas_ano9: number
 }
 
 function alunosField(p: Proposta, key: string): number {
   const map: Record<string, number> = {
     pre_i: p.num_alunos_pre_i, pre_ii: p.num_alunos_pre_ii,
     ano1:  p.num_alunos_ano1,  ano2:   p.num_alunos_ano2,  ano3: p.num_alunos_ano3,
+    ano4:  p.num_alunos_ano4,  ano5:   p.num_alunos_ano5,  ano6: p.num_alunos_ano6,
+    ano7:  p.num_alunos_ano7,  ano8:   p.num_alunos_ano8,  ano9: p.num_alunos_ano9,
   }
   return map[key] ?? 0
 }
@@ -55,37 +82,40 @@ function temasField(p: Proposta, key: string): number {
   const map: Record<string, number> = {
     pre_i: p.num_temas_pre_i, pre_ii: p.num_temas_pre_ii,
     ano1:  p.num_temas_ano1,  ano2:   p.num_temas_ano2,  ano3: p.num_temas_ano3,
+    ano4:  p.num_temas_ano4,  ano5:   p.num_temas_ano5,  ano6: p.num_temas_ano6,
+    ano7:  p.num_temas_ano7,  ano8:   p.num_temas_ano8,  ano9: p.num_temas_ano9,
   }
   return map[key] ?? 0
 }
 
+// Unified series for state initialisation (all possible series)
+const ALL_SERIES = [...MPC_SERIES, ...CODING_SERIES_FULL.filter(s => s.key !== 'ano3')]
+
 export function PublicoCliente({
   proposta,
   temMPC,
+  temCoding,
   servicosFormacao,
 }: {
   proposta: Proposta
   temMPC: boolean
+  temCoding: boolean
   servicosFormacao: { presencial: ServicoFormacao | null; ead: ServicoFormacao | null; assessoria: ServicoFormacao | null }
 }) {
   const action = atualizarPublico.bind(null, proposta.id)
 
-  // checked: series that have alunos filled (only relevant for MPC mode)
   const [checked, setChecked] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(SERIES.map(s => [s.key, alunosField(proposta, s.key) > 0]))
+    Object.fromEntries(ALL_SERIES.map(s => [s.key, alunosField(proposta, s.key) > 0]))
   )
 
-  // alunos input values per serie (as strings for controlled inputs)
   const [alunos, setAlunos] = useState<Record<string, string>>(() =>
-    Object.fromEntries(SERIES.map(s => [s.key, String(alunosField(proposta, s.key) || '')]))
+    Object.fromEntries(ALL_SERIES.map(s => [s.key, String(alunosField(proposta, s.key) || '')]))
   )
 
-  // temas input values per serie
   const [temas, setTemas] = useState<Record<string, string>>(() =>
-    Object.fromEntries(SERIES.map(s => [s.key, String(temasField(proposta, s.key) || '')]))
+    Object.fromEntries(ALL_SERIES.map(s => [s.key, String(temasField(proposta, s.key) || '')]))
   )
 
-  // professores value for dynamic suggestion in formação card
   const [numProf, setNumProf] = useState(proposta.num_professores || 0)
 
   function toggleSerie(key: string, on: boolean) {
@@ -96,7 +126,9 @@ export function PublicoCliente({
     }
   }
 
-  const anyChecked = SERIES.some(s => checked[s.key])
+  const anyMpcChecked    = MPC_SERIES.some(s => checked[s.key])
+  const codingSeries     = temMPC ? CODING_SERIES_WITH_MPC : CODING_SERIES_FULL
+  const anyCodingChecked = codingSeries.some(s => checked[s.key])
 
   const orcamentoInfo = proposta.orcamento_alvo > 0 ? (
     <>
@@ -117,6 +149,7 @@ export function PublicoCliente({
 
   const turmas = numProf > 0 ? Math.ceil(numProf / 50) : 0
   const temFormacao = servicosFormacao.presencial || servicosFormacao.ead || servicosFormacao.assessoria
+  const hasSeriesMode = temMPC || temCoding
 
   return (
     <div>
@@ -130,28 +163,17 @@ export function PublicoCliente({
       </div>
 
       <form action={action} className="space-y-6">
-        <input type="hidden" name="has_mpc" value={temMPC ? 'true' : 'false'} />
+        <input type="hidden" name="has_mpc"    value={temMPC    ? 'true' : 'false'} />
+        <input type="hidden" name="has_coding" value={temCoding ? 'true' : 'false'} />
 
-        {temMPC ? (
+        {hasSeriesMode ? (
           <>
-            {/* Hidden inputs: always submit all 10 per-serie fields */}
-            {SERIES.map(s => (
-              <span key={s.key}>
-                {!checked[s.key] && (
-                  <>
-                    <input type="hidden" name={`alunos_${s.key}`} value="0" />
-                    <input type="hidden" name={`temas_${s.key}`} value="0" />
-                  </>
-                )}
-              </span>
-            ))}
-
+            {/* Escolas + Professores (shared) */}
             <Card>
               <CardHeader>
                 <CardTitle>Estrutura do público</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Escolas + Professores */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="escolas">Escolas</Label>
@@ -177,87 +199,200 @@ export function PublicoCliente({
                     />
                   </div>
                 </div>
-
-                <hr className="border-slate-100" />
-
-                {/* Séries & Alunos */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-slate-700">Séries &amp; Alunos</p>
-                    {anyChecked && (
-                      <span className="text-sm text-slate-500">
-                        Total:{' '}
-                        <span className="font-semibold text-slate-700">
-                          {SERIES.reduce((sum, s) => sum + (Number(alunos[s.key]) || 0), 0)} alunos
-                        </span>
-                      </span>
-                    )}
-                  </div>
-                  {SERIES.map(s => (
-                    <div key={s.key} className="flex items-center gap-3">
-                      <label className="flex items-center gap-2 w-28 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={checked[s.key] ?? false}
-                          onChange={e => toggleSerie(s.key, e.target.checked)}
-                          className="w-4 h-4 rounded accent-slate-700"
-                        />
-                        <span className="text-sm text-slate-700">{s.label}</span>
-                      </label>
-                      {checked[s.key] ? (
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor={`alunos_${s.key}`} className="text-sm text-slate-500 whitespace-nowrap">
-                            Alunos:
-                          </Label>
-                          <Input
-                            id={`alunos_${s.key}`}
-                            name={`alunos_${s.key}`}
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            className="w-24 h-8"
-                            value={alunos[s.key]}
-                            onChange={e => setAlunos(prev => ({ ...prev, [s.key]: e.target.value }))}
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Temas por série (only when at least 1 serie checked) */}
-                {anyChecked && (
-                  <>
-                    <hr className="border-slate-100" />
-                    <div className="space-y-3">
-                      <p className="text-sm font-semibold text-slate-700">Temas por série</p>
-                      {SERIES.filter(s => checked[s.key]).map(s => (
-                        <div key={s.key} className="flex items-center gap-3">
-                          <span className="text-sm text-slate-600 w-28">{s.label}:</span>
-                          <Label htmlFor={`temas_${s.key}`} className="text-sm text-slate-500 whitespace-nowrap">
-                            Temas:
-                          </Label>
-                          <Input
-                            id={`temas_${s.key}`}
-                            name={`temas_${s.key}`}
-                            type="number"
-                            min="0"
-                            max={s.maxTemas}
-                            placeholder="0"
-                            className="w-20 h-8"
-                            value={temas[s.key]}
-                            onChange={e => {
-                              const val = Math.min(Number(e.target.value), s.maxTemas)
-                              setTemas(prev => ({ ...prev, [s.key]: val > 0 ? String(val) : e.target.value }))
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
               </CardContent>
             </Card>
+
+            {/* MPC Section */}
+            {temMPC && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Séries — Meu Primeiro Código</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Hidden inputs for unchecked MPC series */}
+                  {MPC_SERIES.map(s => (
+                    !checked[s.key] && (
+                      <span key={s.key}>
+                        <input type="hidden" name={`alunos_${s.key}`} value="0" />
+                        <input type="hidden" name={`temas_${s.key}`}  value="0" />
+                      </span>
+                    )
+                  ))}
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-700">Séries &amp; Alunos</p>
+                      {anyMpcChecked && (
+                        <span className="text-sm text-slate-500">
+                          Total:{' '}
+                          <span className="font-semibold text-slate-700">
+                            {MPC_SERIES.reduce((sum, s) => sum + (Number(alunos[s.key]) || 0), 0)} alunos
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                    {MPC_SERIES.map(s => (
+                      <div key={s.key} className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 w-28 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked[s.key] ?? false}
+                            onChange={e => toggleSerie(s.key, e.target.checked)}
+                            className="w-4 h-4 rounded accent-slate-700"
+                          />
+                          <span className="text-sm text-slate-700">{s.label}</span>
+                        </label>
+                        {checked[s.key] && (
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`alunos_${s.key}`} className="text-sm text-slate-500 whitespace-nowrap">
+                              Alunos:
+                            </Label>
+                            <Input
+                              id={`alunos_${s.key}`}
+                              name={`alunos_${s.key}`}
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              className="w-24 h-8"
+                              value={alunos[s.key]}
+                              onChange={e => setAlunos(prev => ({ ...prev, [s.key]: e.target.value }))}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {anyMpcChecked && (
+                    <>
+                      <hr className="border-slate-100" />
+                      <div className="space-y-3">
+                        <p className="text-sm font-semibold text-slate-700">Temas por série</p>
+                        {MPC_SERIES.filter(s => checked[s.key]).map(s => (
+                          <div key={s.key} className="flex items-center gap-3">
+                            <span className="text-sm text-slate-600 w-28">{s.label}:</span>
+                            <Label htmlFor={`temas_${s.key}`} className="text-sm text-slate-500 whitespace-nowrap">
+                              Temas:
+                            </Label>
+                            <Input
+                              id={`temas_${s.key}`}
+                              name={`temas_${s.key}`}
+                              type="number"
+                              min="0"
+                              max={s.maxTemas}
+                              placeholder="0"
+                              className="w-20 h-8"
+                              value={temas[s.key]}
+                              onChange={e => {
+                                const val = Math.min(Number(e.target.value), s.maxTemas)
+                                setTemas(prev => ({ ...prev, [s.key]: val > 0 ? String(val) : e.target.value }))
+                              }}
+                            />
+                            <span className="text-xs text-slate-400">máx {s.maxTemas}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Coding Section */}
+            {temCoding && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Séries — Coding</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Hidden inputs for unchecked Coding series */}
+                  {codingSeries.map(s => (
+                    !checked[s.key] && (
+                      <span key={s.key}>
+                        <input type="hidden" name={`alunos_${s.key}`} value="0" />
+                        <input type="hidden" name={`temas_${s.key}`}  value="0" />
+                      </span>
+                    )
+                  ))}
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-700">Séries &amp; Alunos</p>
+                      {anyCodingChecked && (
+                        <span className="text-sm text-slate-500">
+                          Total:{' '}
+                          <span className="font-semibold text-slate-700">
+                            {codingSeries.reduce((sum, s) => sum + (Number(alunos[s.key]) || 0), 0)} alunos
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                    {codingSeries.map(s => (
+                      <div key={s.key} className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 w-28 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked[s.key] ?? false}
+                            onChange={e => toggleSerie(s.key, e.target.checked)}
+                            className="w-4 h-4 rounded accent-slate-700"
+                          />
+                          <span className="text-sm text-slate-700">{s.label}</span>
+                        </label>
+                        {checked[s.key] && (
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`alunos_${s.key}_c`} className="text-sm text-slate-500 whitespace-nowrap">
+                              Alunos:
+                            </Label>
+                            <Input
+                              id={`alunos_${s.key}_c`}
+                              name={`alunos_${s.key}`}
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              className="w-24 h-8"
+                              value={alunos[s.key]}
+                              onChange={e => setAlunos(prev => ({ ...prev, [s.key]: e.target.value }))}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {anyCodingChecked && (
+                    <>
+                      <hr className="border-slate-100" />
+                      <div className="space-y-3">
+                        <p className="text-sm font-semibold text-slate-700">Temas por série</p>
+                        {codingSeries.filter(s => checked[s.key]).map(s => (
+                          <div key={s.key} className="flex items-center gap-3">
+                            <span className="text-sm text-slate-600 w-28">{s.label}:</span>
+                            <Label htmlFor={`temas_${s.key}_c`} className="text-sm text-slate-500 whitespace-nowrap">
+                              Temas:
+                            </Label>
+                            <Input
+                              id={`temas_${s.key}_c`}
+                              name={`temas_${s.key}`}
+                              type="number"
+                              min="0"
+                              max={s.maxTemas}
+                              placeholder="0"
+                              className="w-20 h-8"
+                              value={temas[s.key]}
+                              onChange={e => {
+                                const val = Math.min(Number(e.target.value), s.maxTemas)
+                                setTemas(prev => ({ ...prev, [s.key]: val > 0 ? String(val) : e.target.value }))
+                              }}
+                            />
+                            <span className="text-xs text-slate-400">máx {s.maxTemas}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Formação e Assessoria */}
             {temFormacao && (
@@ -279,7 +414,7 @@ export function PublicoCliente({
                           name="horas_formacao_presencial"
                           type="number"
                           min="0"
-                          placeholder="Ex: 20 (opcional)"
+                          placeholder="Ex: 26 (opcional)"
                           defaultValue={servicosFormacao.presencial.quantidade > 1 ? servicosFormacao.presencial.quantidade : ''}
                         />
                         {servicosFormacao.presencial.valor_venda_unit > 0 && (
@@ -313,7 +448,7 @@ export function PublicoCliente({
                           name="horas_formacao_assessoria"
                           type="number"
                           min="0"
-                          placeholder="Ex: 30 (opcional)"
+                          placeholder="Ex: 20 (opcional)"
                           defaultValue={servicosFormacao.assessoria.quantidade > 1 ? servicosFormacao.assessoria.quantidade : ''}
                         />
                         {servicosFormacao.assessoria.valor_venda_unit > 0 && (
@@ -322,7 +457,7 @@ export function PublicoCliente({
                       </div>
                     )}
                   </div>
-                  {servicosFormacao.presencial && (
+                  {temMPC && servicosFormacao.presencial && (
                     <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700">
                       <p className="font-medium">Por padrão, 8 horas para cada grupo de 50 professores.</p>
                       {turmas > 0 && (
@@ -337,12 +472,13 @@ export function PublicoCliente({
             )}
           </>
         ) : (
+          /* Simple form (no MPC, no Coding) */
           <>
-            {/* Hidden inputs: zero all 10 per-serie fields */}
-            {SERIES.map(s => (
+            {/* Hidden inputs: zero all per-serie fields */}
+            {ALL_SERIES.map(s => (
               <span key={s.key}>
                 <input type="hidden" name={`alunos_${s.key}`} value="0" />
-                <input type="hidden" name={`temas_${s.key}`} value="0" />
+                <input type="hidden" name={`temas_${s.key}`}  value="0" />
               </span>
             ))}
 

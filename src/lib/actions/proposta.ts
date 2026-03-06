@@ -100,36 +100,71 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
 
   const num_escolas     = Number(formData.get('escolas') || 0)
   const num_professores = Number(formData.get('professores') || 0)
-  const hasMpc = formData.get('has_mpc') === 'true'
+  const hasMpc    = formData.get('has_mpc')    === 'true'
+  const hasCoding = formData.get('has_coding') === 'true'
+  const hasSeriesData = hasMpc || hasCoding
 
-  let alunos_pre_i: number, alunos_pre_ii: number, alunos_ano1: number, alunos_ano2: number, alunos_ano3: number
-  let temas_pre_i: number, temas_pre_ii: number, temas_ano1: number, temas_ano2: number, temas_ano3: number
-  let num_alunos: number, num_temas: number
+  // MPC series (pre_i..ano3)
+  let alunos_pre_i = 0, alunos_pre_ii = 0, alunos_ano1 = 0, alunos_ano2 = 0, alunos_ano3 = 0
+  let temas_pre_i  = 0, temas_pre_ii  = 0, temas_ano1  = 0, temas_ano2  = 0, temas_ano3  = 0
+  // Coding series (ano4..ano9; ano3 shared with MPC)
+  let alunos_ano4 = 0, alunos_ano5 = 0, alunos_ano6 = 0, alunos_ano7 = 0, alunos_ano8 = 0, alunos_ano9 = 0
+  let temas_ano4  = 0, temas_ano5  = 0, temas_ano6  = 0, temas_ano7  = 0, temas_ano8  = 0, temas_ano9  = 0
 
   if (hasMpc) {
-    // Alunos por série
-    alunos_pre_i  = Number(formData.get('alunos_pre_i') || 0)
+    alunos_pre_i  = Number(formData.get('alunos_pre_i')  || 0)
     alunos_pre_ii = Number(formData.get('alunos_pre_ii') || 0)
-    alunos_ano1   = Number(formData.get('alunos_ano1') || 0)
-    alunos_ano2   = Number(formData.get('alunos_ano2') || 0)
-    alunos_ano3   = Number(formData.get('alunos_ano3') || 0)
-    // Temas por série
-    temas_pre_i   = Number(formData.get('temas_pre_i') || 0)
-    temas_pre_ii  = Number(formData.get('temas_pre_ii') || 0)
-    temas_ano1    = Number(formData.get('temas_ano1') || 0)
-    temas_ano2    = Number(formData.get('temas_ano2') || 0)
-    temas_ano3    = Number(formData.get('temas_ano3') || 0)
+    alunos_ano1   = Number(formData.get('alunos_ano1')   || 0)
+    alunos_ano2   = Number(formData.get('alunos_ano2')   || 0)
+    alunos_ano3   = Number(formData.get('alunos_ano3')   || 0)
+    temas_pre_i   = Number(formData.get('temas_pre_i')   || 0)
+    temas_pre_ii  = Number(formData.get('temas_pre_ii')  || 0)
+    temas_ano1    = Number(formData.get('temas_ano1')    || 0)
+    temas_ano2    = Number(formData.get('temas_ano2')    || 0)
+    temas_ano3    = Number(formData.get('temas_ano3')    || 0)
+  }
+
+  if (hasCoding) {
+    // ano3 only from Coding form if MPC is not present (to avoid double-reading)
+    if (!hasMpc) {
+      alunos_ano3 = Number(formData.get('alunos_ano3') || 0)
+      temas_ano3  = Number(formData.get('temas_ano3')  || 0)
+    }
+    alunos_ano4 = Number(formData.get('alunos_ano4') || 0)
+    alunos_ano5 = Number(formData.get('alunos_ano5') || 0)
+    alunos_ano6 = Number(formData.get('alunos_ano6') || 0)
+    alunos_ano7 = Number(formData.get('alunos_ano7') || 0)
+    alunos_ano8 = Number(formData.get('alunos_ano8') || 0)
+    alunos_ano9 = Number(formData.get('alunos_ano9') || 0)
+    temas_ano4  = Number(formData.get('temas_ano4')  || 0)
+    temas_ano5  = Number(formData.get('temas_ano5')  || 0)
+    temas_ano6  = Number(formData.get('temas_ano6')  || 0)
+    temas_ano7  = Number(formData.get('temas_ano7')  || 0)
+    temas_ano8  = Number(formData.get('temas_ano8')  || 0)
+    temas_ano9  = Number(formData.get('temas_ano9')  || 0)
+  }
+
+  let num_alunos: number, num_temas: number
+  if (hasSeriesData) {
     num_alunos = alunos_pre_i + alunos_pre_ii + alunos_ano1 + alunos_ano2 + alunos_ano3
-    num_temas  = Math.max(temas_pre_i, temas_pre_ii, temas_ano1, temas_ano2, temas_ano3, 0)
+               + alunos_ano4 + alunos_ano5 + alunos_ano6 + alunos_ano7 + alunos_ano8 + alunos_ano9
+    num_temas  = Math.max(
+      temas_pre_i, temas_pre_ii, temas_ano1, temas_ano2, temas_ano3,
+      temas_ano4, temas_ano5, temas_ano6, temas_ano7, temas_ano8, temas_ano9, 0
+    )
   } else {
-    // Form simples: campos globais, zerando todos os campos por série
-    alunos_pre_i = alunos_pre_ii = alunos_ano1 = alunos_ano2 = alunos_ano3 = 0
-    temas_pre_i  = temas_pre_ii  = temas_ano1  = temas_ano2  = temas_ano3  = 0
     num_alunos = Number(formData.get('alunos') || 0)
     num_temas  = Number(formData.get('temas') || 0)
   }
 
-  // series_tapetes: séries com alunos > 0 (calculado automaticamente)
+  // Pre-computed total for PorAlunoXTema: sum(alunos_série × temas_série) all series
+  const totalAlunoXTema =
+    alunos_pre_i  * temas_pre_i  + alunos_pre_ii * temas_pre_ii +
+    alunos_ano1   * temas_ano1   + alunos_ano2   * temas_ano2   + alunos_ano3 * temas_ano3 +
+    alunos_ano4   * temas_ano4   + alunos_ano5   * temas_ano5   + alunos_ano6 * temas_ano6 +
+    alunos_ano7   * temas_ano7   + alunos_ano8   * temas_ano8   + alunos_ano9 * temas_ano9
+
+  // series_tapetes: séries com alunos > 0 (para tapetes MPC)
   const seriesList: string[] = []
   if (alunos_pre_i  > 0) seriesList.push('PreI')
   if (alunos_pre_ii > 0) seriesList.push('PreII')
@@ -161,6 +196,10 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       num_alunos_ano1: alunos_ano1, num_alunos_ano2: alunos_ano2, num_alunos_ano3: alunos_ano3,
       num_temas_pre_i: temas_pre_i, num_temas_pre_ii: temas_pre_ii,
       num_temas_ano1: temas_ano1, num_temas_ano2: temas_ano2, num_temas_ano3: temas_ano3,
+      num_alunos_ano4: alunos_ano4, num_alunos_ano5: alunos_ano5, num_alunos_ano6: alunos_ano6,
+      num_alunos_ano7: alunos_ano7, num_alunos_ano8: alunos_ano8, num_alunos_ano9: alunos_ano9,
+      num_temas_ano4: temas_ano4, num_temas_ano5: temas_ano5, num_temas_ano6: temas_ano6,
+      num_temas_ano7: temas_ano7, num_temas_ano8: temas_ano8, num_temas_ano9: temas_ano9,
     })
     .eq('id', proposta_id)
 
@@ -190,7 +229,9 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
           ? num_escolas * 5
           : TAPETE_TYPES.has(tc)
             ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
-            : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
+            : tc === 'PorAlunoXTema'
+              ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
+              : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
         return supabase.from('proposta_componentes')
           .update({ quantidade: qty })
           .eq('id', c.id)
@@ -309,13 +350,25 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
   // Busca público da proposta para auto-sugestão de quantidades
   const { data: pubData } = await supabase
     .from('propostas')
-    .select('num_professores, num_alunos, num_escolas, num_temas, num_kits, series_tapetes, num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3')
+    .select(`
+      num_professores, num_alunos, num_escolas, num_temas, num_kits, series_tapetes,
+      num_alunos_pre_i, num_alunos_pre_ii, num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
+      num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3,
+      num_alunos_ano4, num_alunos_ano5, num_alunos_ano6, num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
+      num_temas_ano4, num_temas_ano5, num_temas_ano6, num_temas_ano7, num_temas_ano8, num_temas_ano9
+    `)
     .eq('id', proposta_id)
     .single<{
       num_professores: number; num_alunos: number; num_escolas: number
       num_temas: number; num_kits: number; series_tapetes: string | null
+      num_alunos_pre_i: number; num_alunos_pre_ii: number
+      num_alunos_ano1: number; num_alunos_ano2: number; num_alunos_ano3: number
       num_temas_pre_i: number; num_temas_pre_ii: number
       num_temas_ano1: number; num_temas_ano2: number; num_temas_ano3: number
+      num_alunos_ano4: number; num_alunos_ano5: number; num_alunos_ano6: number
+      num_alunos_ano7: number; num_alunos_ano8: number; num_alunos_ano9: number
+      num_temas_ano4: number; num_temas_ano5: number; num_temas_ano6: number
+      num_temas_ano7: number; num_temas_ano8: number; num_temas_ano9: number
     }>()
 
   const numProf  = pubData?.num_professores ?? 0
@@ -331,6 +384,18 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     Ano2:  pubData?.num_temas_ano2   ?? 0,
     Ano3:  pubData?.num_temas_ano3   ?? 0,
   }
+  const totalAlunoXTema =
+    (pubData?.num_alunos_pre_i  ?? 0) * (pubData?.num_temas_pre_i  ?? 0) +
+    (pubData?.num_alunos_pre_ii ?? 0) * (pubData?.num_temas_pre_ii ?? 0) +
+    (pubData?.num_alunos_ano1   ?? 0) * (pubData?.num_temas_ano1   ?? 0) +
+    (pubData?.num_alunos_ano2   ?? 0) * (pubData?.num_temas_ano2   ?? 0) +
+    (pubData?.num_alunos_ano3   ?? 0) * (pubData?.num_temas_ano3   ?? 0) +
+    (pubData?.num_alunos_ano4   ?? 0) * (pubData?.num_temas_ano4   ?? 0) +
+    (pubData?.num_alunos_ano5   ?? 0) * (pubData?.num_temas_ano5   ?? 0) +
+    (pubData?.num_alunos_ano6   ?? 0) * (pubData?.num_temas_ano6   ?? 0) +
+    (pubData?.num_alunos_ano7   ?? 0) * (pubData?.num_temas_ano7   ?? 0) +
+    (pubData?.num_alunos_ano8   ?? 0) * (pubData?.num_temas_ano8   ?? 0) +
+    (pubData?.num_alunos_ano9   ?? 0) * (pubData?.num_temas_ano9   ?? 0)
 
   const qtdSugerida = (tc: string, nome?: string, categoria?: string) => {
     if (categoria === 'Kit') return numEsc * 5
@@ -342,6 +407,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
       const match = nome.match(/\((\d+)h/)
       if (match) return parseInt(match[1])
     }
+    if (tc === 'PorAlunoXTema') return totalAlunoXTema > 0 ? totalAlunoXTema : numAlun * numTemas
     return calcQtd(tc, numProf, numAlun, numEsc, numTemas, numKits)
   }
 
