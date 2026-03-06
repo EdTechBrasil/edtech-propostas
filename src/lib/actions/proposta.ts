@@ -100,8 +100,9 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
 
   const num_escolas     = Number(formData.get('escolas') || 0)
   const num_professores = Number(formData.get('professores') || 0)
-  const hasMpc    = formData.get('has_mpc')    === 'true'
-  const hasCoding = formData.get('has_coding') === 'true'
+  const hasMpc      = formData.get('has_mpc')       === 'true'
+  const hasCoding   = formData.get('has_coding')    === 'true'
+  const hasEdtechIA = formData.get('has_edtech_ia') === 'true'
   const hasSeriesData = hasMpc || hasCoding
 
   // MPC series (pre_i..ano3)
@@ -143,6 +144,10 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     temas_ano8  = Number(formData.get('temas_ano8')  || 0)
     temas_ano9  = Number(formData.get('temas_ano9')  || 0)
   }
+
+  // Edtech IA: livros de conceitos (1–4) e práticas (0–2)
+  const num_livros_conceitos = hasEdtechIA ? Math.min(4, Math.max(1, Number(formData.get('livros_conceitos') || 1))) : 0
+  const num_livros_praticas  = hasEdtechIA ? Math.min(2, Math.max(0, Number(formData.get('livros_praticas')  || 0))) : 0
 
   let num_alunos: number, num_temas: number
   if (hasSeriesData) {
@@ -200,6 +205,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       num_alunos_ano7: alunos_ano7, num_alunos_ano8: alunos_ano8, num_alunos_ano9: alunos_ano9,
       num_temas_ano4: temas_ano4, num_temas_ano5: temas_ano5, num_temas_ano6: temas_ano6,
       num_temas_ano7: temas_ano7, num_temas_ano8: temas_ano8, num_temas_ano9: temas_ano9,
+      num_livros_conceitos, num_livros_praticas,
     })
     .eq('id', proposta_id)
 
@@ -231,6 +237,10 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
             ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
             : tc === 'PorAlunoXTema'
               ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
+              : tc === 'PorAlunoEProfessorXLivroConceitos'
+              ? (num_alunos + num_professores) * num_livros_conceitos
+              : tc === 'PorAlunoEProfessorXLivroPraticas'
+              ? (num_alunos + num_professores) * num_livros_praticas
               : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
         return supabase.from('proposta_componentes')
           .update({ quantidade: qty })
@@ -355,7 +365,8 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
       num_alunos_pre_i, num_alunos_pre_ii, num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
       num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3,
       num_alunos_ano4, num_alunos_ano5, num_alunos_ano6, num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
-      num_temas_ano4, num_temas_ano5, num_temas_ano6, num_temas_ano7, num_temas_ano8, num_temas_ano9
+      num_temas_ano4, num_temas_ano5, num_temas_ano6, num_temas_ano7, num_temas_ano8, num_temas_ano9,
+      num_livros_conceitos, num_livros_praticas
     `)
     .eq('id', proposta_id)
     .single<{
@@ -369,6 +380,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
       num_alunos_ano7: number; num_alunos_ano8: number; num_alunos_ano9: number
       num_temas_ano4: number; num_temas_ano5: number; num_temas_ano6: number
       num_temas_ano7: number; num_temas_ano8: number; num_temas_ano9: number
+      num_livros_conceitos: number; num_livros_praticas: number
     }>()
 
   const numProf  = pubData?.num_professores ?? 0
@@ -384,6 +396,9 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     Ano2:  pubData?.num_temas_ano2   ?? 0,
     Ano3:  pubData?.num_temas_ano3   ?? 0,
   }
+  const numLivrosConceitos = pubData?.num_livros_conceitos ?? 1
+  const numLivrosPraticas  = pubData?.num_livros_praticas  ?? 0
+
   const totalAlunoXTema =
     (pubData?.num_alunos_pre_i  ?? 0) * (pubData?.num_temas_pre_i  ?? 0) +
     (pubData?.num_alunos_pre_ii ?? 0) * (pubData?.num_temas_pre_ii ?? 0) +
@@ -408,6 +423,8 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
       if (match) return parseInt(match[1])
     }
     if (tc === 'PorAlunoXTema') return totalAlunoXTema > 0 ? totalAlunoXTema : numAlun * numTemas
+    if (tc === 'PorAlunoEProfessorXLivroConceitos') return (numAlun + numProf) * numLivrosConceitos
+    if (tc === 'PorAlunoEProfessorXLivroPraticas')  return (numAlun + numProf) * numLivrosPraticas
     return calcQtd(tc, numProf, numAlun, numEsc, numTemas, numKits)
   }
 

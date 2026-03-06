@@ -66,6 +66,8 @@ interface Proposta {
   num_temas_ano7: number
   num_temas_ano8: number
   num_temas_ano9: number
+  num_livros_conceitos: number
+  num_livros_praticas: number
 }
 
 function alunosField(p: Proposta, key: string): number {
@@ -95,11 +97,13 @@ export function PublicoCliente({
   proposta,
   temMPC,
   temCoding,
+  temEdtechIA,
   servicosFormacao,
 }: {
   proposta: Proposta
   temMPC: boolean
   temCoding: boolean
+  temEdtechIA: boolean
   servicosFormacao: { presencial: ServicoFormacao | null; ead: ServicoFormacao | null; assessoria: ServicoFormacao | null }
 }) {
   const action = atualizarPublico.bind(null, proposta.id)
@@ -130,6 +134,9 @@ export function PublicoCliente({
   const codingSeries     = temMPC ? CODING_SERIES_WITH_MPC : CODING_SERIES_FULL
   const anyCodingChecked = codingSeries.some(s => checked[s.key])
 
+  const [livrosConceitos, setLivrosConceitos] = useState(proposta.num_livros_conceitos || 1)
+  const [livrosPraticas,  setLivrosPraticas]  = useState(proposta.num_livros_praticas  || 0)
+
   const orcamentoInfo = proposta.orcamento_alvo > 0 ? (
     <>
       <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm">
@@ -150,6 +157,7 @@ export function PublicoCliente({
   const turmas = numProf > 0 ? Math.ceil(numProf / 50) : 0
   const temFormacao = servicosFormacao.presencial || servicosFormacao.ead || servicosFormacao.assessoria
   const hasSeriesMode = temMPC || temCoding
+  const hasAnySpecialMode = hasSeriesMode || temEdtechIA
 
   return (
     <div>
@@ -163,11 +171,20 @@ export function PublicoCliente({
       </div>
 
       <form action={action} className="space-y-6">
-        <input type="hidden" name="has_mpc"    value={temMPC    ? 'true' : 'false'} />
-        <input type="hidden" name="has_coding" value={temCoding ? 'true' : 'false'} />
+        <input type="hidden" name="has_mpc"       value={temMPC      ? 'true' : 'false'} />
+        <input type="hidden" name="has_coding"    value={temCoding   ? 'true' : 'false'} />
+        <input type="hidden" name="has_edtech_ia" value={temEdtechIA ? 'true' : 'false'} />
 
-        {hasSeriesMode ? (
+        {hasAnySpecialMode ? (
           <>
+            {/* Hidden zeros para séries quando não há MPC nem Coding */}
+            {!hasSeriesMode && ALL_SERIES.map(s => (
+              <span key={s.key}>
+                <input type="hidden" name={`alunos_${s.key}`} value="0" />
+                <input type="hidden" name={`temas_${s.key}`}  value="0" />
+              </span>
+            ))}
+
             {/* Escolas + Professores (shared) */}
             <Card>
               <CardHeader>
@@ -394,6 +411,68 @@ export function PublicoCliente({
               </Card>
             )}
 
+            {/* Edtech IA Section */}
+            {temEdtechIA && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Edtech IA — Público</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Alunos */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="alunos_ia">Alunos</Label>
+                      <Input
+                        id="alunos_ia"
+                        name="alunos"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        defaultValue={proposta.num_alunos || ''}
+                      />
+                    </div>
+                  </div>
+
+                  <hr className="border-slate-100" />
+
+                  {/* Livros */}
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700 mb-3">Livros do Projeto</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="livros_conceitos">Livros de Conceitos <span className="text-slate-400 font-normal">(obrigatório, 1–4)</span></Label>
+                        <Input
+                          id="livros_conceitos"
+                          name="livros_conceitos"
+                          type="number"
+                          min="1"
+                          max="4"
+                          className="w-24"
+                          value={livrosConceitos}
+                          onChange={e => setLivrosConceitos(Math.min(4, Math.max(1, Number(e.target.value) || 1)))}
+                        />
+                        <p className="text-xs text-slate-500">64 págs × R$ 2,50 = <strong>R$ 160,00</strong>/livro por pessoa</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="livros_praticas">Livros de Práticas Digitais <span className="text-slate-400 font-normal">(opcional, 0–2)</span></Label>
+                        <Input
+                          id="livros_praticas"
+                          name="livros_praticas"
+                          type="number"
+                          min="0"
+                          max="2"
+                          className="w-24"
+                          value={livrosPraticas}
+                          onChange={e => setLivrosPraticas(Math.min(2, Math.max(0, Number(e.target.value) || 0)))}
+                        />
+                        <p className="text-xs text-slate-500">96 págs × R$ 2,50 = <strong>R$ 240,00</strong>/livro por pessoa</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Formação e Assessoria */}
             {temFormacao && (
               <Card>
@@ -472,15 +551,17 @@ export function PublicoCliente({
             )}
           </>
         ) : (
-          /* Simple form (no MPC, no Coding) */
+          /* Simple form (no MPC, no Coding, no Edtech IA) */
           <>
-            {/* Hidden inputs: zero all per-serie fields */}
+            {/* Hidden inputs: zero all per-serie and livros fields */}
             {ALL_SERIES.map(s => (
               <span key={s.key}>
                 <input type="hidden" name={`alunos_${s.key}`} value="0" />
                 <input type="hidden" name={`temas_${s.key}`}  value="0" />
               </span>
             ))}
+            <input type="hidden" name="livros_conceitos" value="0" />
+            <input type="hidden" name="livros_praticas"  value="0" />
 
             <Card>
               <CardHeader>
