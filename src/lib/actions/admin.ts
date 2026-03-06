@@ -225,6 +225,7 @@ export async function excluirComponenteProduto(componente_id: string) {
   if (err) return
 
   const adminClient = createAdminClient()
+  await adminClient.from('proposta_componentes').delete().eq('produto_componente_id', componente_id)
   await adminClient.from('produto_componentes').delete().eq('id', componente_id)
   revalidatePath('/admin/produtos')
   return { success: true }
@@ -278,6 +279,7 @@ export async function excluirServicoProduto(servico_id: string) {
   if (err) return
 
   const adminClient = createAdminClient()
+  await adminClient.from('proposta_servicos').delete().eq('produto_servico_id', servico_id)
   await adminClient.from('produto_servicos').delete().eq('id', servico_id)
   revalidatePath('/admin/produtos')
   return { success: true }
