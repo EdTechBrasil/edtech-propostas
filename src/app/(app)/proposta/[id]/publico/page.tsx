@@ -71,7 +71,8 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
   const temMPC      = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Primeiro'))
   const temCoding   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Coding'))
   const temEdtechIA = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Inteligência Artificial'))
-  const temCriaCode = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Cria+Code'))
+  const temCriaCode   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Cria+Code'))
+  const temCodigoIA   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('O Código IA'))
 
   const servicoPresencial = (allServicos ?? []).find(s =>
     (s.servico as any)?.nome?.toLowerCase().includes('presencial')) ?? null
@@ -86,5 +87,5 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
     assessoria: servicoAssessoria ? { id: servicoAssessoria.id, quantidade: servicoAssessoria.quantidade, valor_venda_unit: servicoAssessoria.valor_venda_unit } : null,
   }
 
-  return <PublicoCliente proposta={proposta} temMPC={temMPC} temCoding={temCoding} temEdtechIA={temEdtechIA} temCriaCode={temCriaCode} servicosFormacao={servicosFormacao} />
+  return <PublicoCliente proposta={proposta} temMPC={temMPC} temCoding={temCoding} temEdtechIA={temEdtechIA} temCriaCode={temCriaCode || temCodigoIA} servicosFormacao={servicosFormacao} />
 }

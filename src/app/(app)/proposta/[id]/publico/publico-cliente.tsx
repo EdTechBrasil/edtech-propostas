@@ -429,7 +429,7 @@ export function PublicoCliente({
             {temCriaCode && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Séries — Cria+Code</CardTitle>
+                  <CardTitle>Séries Atendidas (1º ao 5º Ano)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Cria+Code não usa temas — zerar todos */}
