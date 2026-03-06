@@ -693,7 +693,16 @@ export async function duplicarProposta(proposta_id: string) {
 
   const { data: original } = await supabase
     .from('propostas')
-    .select('orcamento_alvo, limite_orcamento_max, publico_descricao, num_escolas, num_alunos, num_professores, num_temas, num_kits, repasse_tipo, repasse_valor, desconto_global_percent')
+    .select(`
+      orcamento_alvo, limite_orcamento_max, publico_descricao,
+      num_escolas, num_alunos, num_professores, num_temas, num_kits,
+      repasse_tipo, repasse_valor, desconto_global_percent, series_tapetes,
+      num_alunos_pre_i, num_alunos_pre_ii, num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
+      num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3,
+      num_alunos_ano4, num_alunos_ano5, num_alunos_ano6, num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
+      num_temas_ano4, num_temas_ano5, num_temas_ano6, num_temas_ano7, num_temas_ano8, num_temas_ano9,
+      num_livros_conceitos, num_livros_praticas
+    `)
     .eq('id', proposta_id)
     .single<any>()
 
@@ -714,6 +723,31 @@ export async function duplicarProposta(proposta_id: string) {
       repasse_tipo: original.repasse_tipo,
       repasse_valor: original.repasse_valor,
       desconto_global_percent: original.desconto_global_percent,
+      series_tapetes: original.series_tapetes,
+      num_alunos_pre_i: original.num_alunos_pre_i,
+      num_alunos_pre_ii: original.num_alunos_pre_ii,
+      num_alunos_ano1: original.num_alunos_ano1,
+      num_alunos_ano2: original.num_alunos_ano2,
+      num_alunos_ano3: original.num_alunos_ano3,
+      num_temas_pre_i: original.num_temas_pre_i,
+      num_temas_pre_ii: original.num_temas_pre_ii,
+      num_temas_ano1: original.num_temas_ano1,
+      num_temas_ano2: original.num_temas_ano2,
+      num_temas_ano3: original.num_temas_ano3,
+      num_alunos_ano4: original.num_alunos_ano4,
+      num_alunos_ano5: original.num_alunos_ano5,
+      num_alunos_ano6: original.num_alunos_ano6,
+      num_alunos_ano7: original.num_alunos_ano7,
+      num_alunos_ano8: original.num_alunos_ano8,
+      num_alunos_ano9: original.num_alunos_ano9,
+      num_temas_ano4: original.num_temas_ano4,
+      num_temas_ano5: original.num_temas_ano5,
+      num_temas_ano6: original.num_temas_ano6,
+      num_temas_ano7: original.num_temas_ano7,
+      num_temas_ano8: original.num_temas_ano8,
+      num_temas_ano9: original.num_temas_ano9,
+      num_livros_conceitos: original.num_livros_conceitos,
+      num_livros_praticas: original.num_livros_praticas,
       status: 'Rascunho',
     })
     .select('id')
