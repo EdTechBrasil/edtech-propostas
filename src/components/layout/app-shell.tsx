@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Menu, BookOpen } from 'lucide-react'
+import { Menu, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Sidebar } from './sidebar'
 import { cn } from '@/utils/cn'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
     <div className="flex min-h-screen">
@@ -20,32 +21,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar — drawer no mobile, fixo no desktop */}
       <div className={cn(
-        'fixed inset-y-0 left-0 z-30 md:sticky md:top-0 md:h-screen md:overflow-y-auto md:flex md:flex-col',
+        'fixed inset-y-0 left-0 z-30 md:sticky md:top-0 md:h-screen md:overflow-y-auto md:flex md:flex-col transition-all duration-200',
         sidebarOpen ? 'flex' : 'hidden md:flex'
       )}>
-        <Sidebar onClose={() => setSidebarOpen(false)} />
+        <Sidebar onClose={() => setSidebarOpen(false)} collapsed={collapsed} />
       </div>
 
       {/* Área principal */}
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Header mobile */}
-        <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-10">
+        {/* Header persistente */}
+        <header className="flex items-center gap-3 px-4 h-14 bg-white border-b border-slate-200 sticky top-0 z-10">
+          {/* Mobile: abre drawer */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+            className="md:hidden p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100"
             aria-label="Abrir menu"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2">
+          {/* Mobile: logo */}
+          <div className="flex items-center gap-2 md:hidden">
             <div className="flex items-center justify-center w-6 h-6 rounded bg-primary">
               <BookOpen className="w-3 h-3 text-white" />
             </div>
             <span className="text-sm font-semibold text-slate-900">EdTech Propostas</span>
           </div>
+          {/* Desktop: botão colapsar sidebar */}
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="hidden md:flex p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+            aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </header>
 
-        <main className="flex-1 bg-slate-50 overflow-auto">
+        <main className="flex-1 bg-[#F8FAFC] overflow-auto">
           {children}
         </main>
       </div>

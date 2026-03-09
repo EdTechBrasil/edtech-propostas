@@ -309,7 +309,7 @@ export function DashboardCliente({
             onClick={() => setFiltro(f.value)}
             className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
               filtro === f.value
-                ? 'bg-slate-900 text-white'
+                ? 'bg-indigo-600 text-white'
                 : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -324,7 +324,7 @@ export function DashboardCliente({
       </div>
 
       {/* Tabela */}
-      <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
+      <div className="rounded-2xl border border-slate-200 overflow-hidden overflow-x-auto">
         {filtradas.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
             <FileText className="w-8 h-8 mb-2" />
@@ -408,7 +408,7 @@ function StatCard({
       onClick={onClick}
       className={`rounded-xl border p-4 text-left transition-all ${
         active
-          ? 'border-slate-900 bg-slate-900 text-white'
+          ? 'border-indigo-600 bg-indigo-600 text-white'
           : urgente
           ? 'border-yellow-300 bg-yellow-50 hover:border-yellow-400'
           : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
