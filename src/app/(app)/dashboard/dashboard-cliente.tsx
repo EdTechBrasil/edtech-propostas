@@ -1,10 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/format'
 import {
-  FilePlus, FileText, Clock, CheckCircle2, BarChart3, Search,
+  FileText, Clock, CheckCircle2, BarChart3,
 } from 'lucide-react'
 
 type Proposta = {
@@ -48,7 +47,7 @@ function SummaryCard({
   badge?: { text: string; positive: boolean } | null
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
       <div className="flex items-start justify-between mb-4">
         <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${iconBg}`}>
           {icon}
@@ -61,8 +60,8 @@ function SummaryCard({
           </span>
         )}
       </div>
-      <p className="text-sm text-slate-500 mb-1">{label}</p>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{label}</p>
+      <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{value}</p>
     </div>
   )
 }
@@ -91,8 +90,8 @@ function BarChartMensal({ propostas }: { propostas: Proposta[] }) {
   const ticks = [1, 0.75, 0.5, 0.25, 0]
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6">
-      <h2 className="text-base font-semibold text-slate-900 mb-6">Desempenho Mensal</h2>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+      <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-6">Desempenho Mensal</h2>
       <div className="flex gap-4">
         {/* Y-axis */}
         <div className="flex flex-col justify-between text-right" style={{ height: 160 }}>
@@ -112,7 +111,7 @@ function BarChartMensal({ propostas }: { propostas: Proposta[] }) {
               <div key={d.key} className="flex-1 flex items-end h-full">
                 <div
                   title={formatCurrency(d.valor)}
-                  className={`w-full rounded-t-md transition-all ${d.isCurrent ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                  className={`w-full rounded-t-md transition-all ${d.isCurrent ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}`}
                   style={{ height: `${Math.max((d.valor / maxVal) * 100, 2)}%` }}
                 />
               </div>
@@ -120,7 +119,7 @@ function BarChartMensal({ propostas }: { propostas: Proposta[] }) {
           </div>
           <div className="flex gap-2">
             {data.map(d => (
-              <div key={d.key} className="flex-1 text-center text-[11px] text-slate-500 capitalize">
+              <div key={d.key} className="flex-1 text-center text-[11px] text-slate-500 dark:text-slate-400 capitalize">
                 {d.label}
               </div>
             ))}
@@ -139,9 +138,9 @@ function AtividadeRecente({ propostas }: { propostas: Proposta[] }) {
     .slice(0, 5)
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-base font-semibold text-slate-900">Atividade Recente</h2>
+        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Atividade Recente</h2>
         <Link
           href="/propostas"
           className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
@@ -157,19 +156,19 @@ function AtividadeRecente({ propostas }: { propostas: Proposta[] }) {
             <Link
               key={p.id}
               href={linkProposta(p.id, p.status)}
-              className="flex items-center gap-3 -mx-2 px-2 py-2.5 rounded-xl hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-3 -mx-2 px-2 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 flex-shrink-0">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex-shrink-0">
                 <FileText className="w-4 h-4 text-slate-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                   {p.cliente_nome_instituicao || <span className="text-slate-400 italic text-xs">Sem dados</span>}
                 </p>
                 <p className="text-xs text-slate-400 font-mono">{p.id.slice(0, 8).toUpperCase()}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-sm font-semibold text-slate-900">{formatCurrency(p.orcamento_alvo)}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(p.orcamento_alvo)}</p>
                 <p className="text-xs text-slate-400">{formatDataCurta(p.criado_em)}</p>
               </div>
             </Link>
@@ -213,20 +212,8 @@ export function DashboardCliente({
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center gap-3 mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 flex-1">Visão Geral</h1>
-        <Link href="/propostas">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Search className="w-4 h-4" />
-            Buscar propostas
-          </Button>
-        </Link>
-        <Link href="/proposta/nova">
-          <Button className="gap-2">
-            <FilePlus className="w-4 h-4" />
-            Nova Proposta
-          </Button>
-        </Link>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Visão Geral</h1>
       </div>
 
       {/* 3 cards de resumo */}

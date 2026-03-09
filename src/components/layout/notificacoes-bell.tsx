@@ -84,9 +84,9 @@ export function NotificacoesBell({ usuarioId }: { usuarioId: string }) {
       </button>
 
       {open && (
-        <div className="absolute bottom-10 left-0 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-            <p className="text-sm font-semibold text-slate-800">Notificações</p>
+        <div className="absolute bottom-0 left-full ml-2 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Notificações</p>
             {unread > 0 && (
               <button
                 onClick={handleMarkAllRead}
@@ -98,18 +98,18 @@ export function NotificacoesBell({ usuarioId }: { usuarioId: string }) {
           </div>
 
           {notifs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-10 text-slate-400 dark:text-slate-500">
               <Bell className="w-8 h-8 mb-2 opacity-30" />
               <p className="text-xs">Nenhuma notificação</p>
             </div>
           ) : (
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-700">
               {notifs.slice(0, 10).map(n => {
                 const data = n.criado_em.slice(0, 10).split('-').reverse().join('/')
                 const hora = n.criado_em.slice(11, 16)
                 const inner = (
                   <div
-                    className={`px-4 py-3 hover:bg-slate-50 transition-colors ${!n.lida ? 'bg-blue-50/60' : ''}`}
+                    className={`px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${!n.lida ? 'bg-blue-50/60 dark:bg-blue-900/20' : ''}`}
                     onClick={() => setOpen(false)}
                   >
                     <div className="flex items-start gap-2">
@@ -117,8 +117,8 @@ export function NotificacoesBell({ usuarioId }: { usuarioId: string }) {
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
                       )}
                       <div className={!n.lida ? '' : 'ml-3.5'}>
-                        <p className="text-xs font-medium text-slate-800 leading-snug">{n.mensagem}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{data} {hora}</p>
+                        <p className="text-xs font-medium text-slate-800 dark:text-slate-100 leading-snug">{n.mensagem}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{data} {hora}</p>
                       </div>
                     </div>
                   </div>
