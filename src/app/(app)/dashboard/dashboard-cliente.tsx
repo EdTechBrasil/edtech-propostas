@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,10 @@ import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { FilePlus, FileText, Clock, CheckCircle2, XCircle, PenLine, Eye, History, Copy, Loader2 } from 'lucide-react'
+import {
+  FilePlus, FileText, Clock, CheckCircle2, XCircle, PenLine, Eye, History, Copy,
+  Loader2, BarChart3, Search,
+} from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DragHandle } from '@/components/ui/drag-handle'
 import {
@@ -39,15 +42,6 @@ type Proposta = {
   perfil_atual: string
 }
 
-type StatsCount = {
-  Rascunho: number
-  Em_revisao: number
-  Aguardando_aprovacao: number
-  Aprovada_excecao: number
-  Pronta_pdf: number
-  Cancelada: number
-}
-
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   Rascunho:              { label: 'Rascunho',             className: 'bg-slate-100 text-slate-600' },
   Em_revisao:            { label: 'Em revisão',           className: 'bg-blue-100 text-blue-700' },
@@ -58,13 +52,13 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 }
 
 const FILTROS = [
-  { value: 'todos',              label: 'Todas' },
-  { value: 'Rascunho',          label: 'Rascunho' },
-  { value: 'Em_revisao',        label: 'Em revisão' },
+  { value: 'todos',                label: 'Todas' },
+  { value: 'Rascunho',             label: 'Rascunho' },
+  { value: 'Em_revisao',           label: 'Em revisão' },
   { value: 'Aguardando_aprovacao', label: 'Aguard. aprovação' },
-  { value: 'Aprovada_excecao',  label: 'Aprovada' },
-  { value: 'Pronta_pdf',        label: 'Pronta' },
-  { value: 'Cancelada',         label: 'Cancelada' },
+  { value: 'Aprovada_excecao',     label: 'Aprovada' },
+  { value: 'Pronta_pdf',           label: 'Pronta' },
+  { value: 'Cancelada',            label: 'Cancelada' },
 ]
 
 function linkProposta(id: string, status: string) {
@@ -77,12 +71,171 @@ function linkProposta(id: string, status: string) {
   return `/proposta/${id}/publico`
 }
 
+function formatDataCurta(criado_em: string) {
+  const d = new Date(criado_em)
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')
+}
+
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? { label: status, className: 'bg-slate-100 text-slate-600' }
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>
       {cfg.label}
     </span>
+  )
+}
+
+// ── Cards de resumo ───────────────────────────────────────────────────────────
+
+function SummaryCard({
+  iconBg,
+  icon,
+  label,
+  value,
+  badge,
+}: {
+  iconBg: string
+  icon: React.ReactNode
+  label: string
+  value: string
+  badge?: { text: string; positive: boolean } | null
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <div className="flex items-start justify-between mb-4">
+        <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${iconBg}`}>
+          {icon}
+        </div>
+        {badge && (
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+            badge.positive ? 'text-emerald-600 bg-emerald-50' : 'text-red-500 bg-red-50'
+          }`}>
+            {badge.text}
+          </span>
+        )}
+      </div>
+      <p className="text-sm text-slate-500 mb-1">{label}</p>
+      <p className="text-2xl font-bold text-slate-900">{value}</p>
+    </div>
+  )
+}
+
+// ── Gráfico de barras mensal ──────────────────────────────────────────────────
+
+function BarChartMensal({ propostas }: { propostas: Proposta[] }) {
+  const hoje = new Date()
+  const meses = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - 5 + i, 1)
+    return {
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+      isCurrent: i === 5,
+    }
+  })
+
+  const data = meses.map(m => ({
+    ...m,
+    valor: propostas
+      .filter(p => p.status !== 'Cancelada' && p.criado_em.startsWith(m.key))
+      .reduce((sum, p) => sum + p.orcamento_alvo, 0),
+  }))
+
+  const maxVal = Math.max(...data.map(d => d.valor), 1)
+  const ticks = [1, 0.75, 0.5, 0.25, 0]
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <h2 className="text-base font-semibold text-slate-900 mb-6">Desempenho Mensal</h2>
+      <div className="flex gap-4">
+        {/* Y-axis */}
+        <div className="flex flex-col justify-between text-right" style={{ height: 160 }}>
+          {ticks.map(t => {
+            const v = maxVal * t
+            return (
+              <span key={t} className="text-[10px] text-slate-400 leading-none">
+                {v >= 1000 ? `${Math.round(v / 1000)}k` : Math.round(v)}
+              </span>
+            )
+          })}
+        </div>
+        {/* Bars */}
+        <div className="flex-1 flex flex-col gap-2">
+          <div className="flex items-end gap-2" style={{ height: 160 }}>
+            {data.map(d => (
+              <div key={d.key} className="flex-1 flex items-end h-full">
+                <div
+                  title={formatCurrency(d.valor)}
+                  className={`w-full rounded-t-md transition-all ${d.isCurrent ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                  style={{ height: `${Math.max((d.valor / maxVal) * 100, 2)}%` }}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            {data.map(d => (
+              <div key={d.key} className="flex-1 text-center text-[11px] text-slate-500 capitalize">
+                {d.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Atividade recente ─────────────────────────────────────────────────────────
+
+function AtividadeRecente({
+  propostas,
+  onVerTodas,
+}: {
+  propostas: Proposta[]
+  onVerTodas: () => void
+}) {
+  const recentes = [...propostas]
+    .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
+    .slice(0, 5)
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-base font-semibold text-slate-900">Atividade Recente</h2>
+        <button
+          onClick={onVerTodas}
+          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+        >
+          Ver todas
+        </button>
+      </div>
+      {recentes.length === 0 ? (
+        <p className="text-sm text-slate-400 text-center py-6">Nenhuma proposta ainda</p>
+      ) : (
+        <div className="space-y-1">
+          {recentes.map(p => (
+            <Link
+              key={p.id}
+              href={linkProposta(p.id, p.status)}
+              className="flex items-center gap-3 -mx-2 px-2 py-2.5 rounded-xl hover:bg-slate-50 transition-colors"
+            >
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 flex-shrink-0">
+                <FileText className="w-4 h-4 text-slate-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">
+                  {p.cliente_nome_instituicao || <span className="text-slate-400 italic text-xs">Sem dados</span>}
+                </p>
+                <p className="text-xs text-slate-400 font-mono">{p.id.slice(0, 8).toUpperCase()}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-sm font-semibold text-slate-900">{formatCurrency(p.orcamento_alvo)}</p>
+                <p className="text-xs text-slate-400">{formatDataCurta(p.criado_em)}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -198,22 +351,40 @@ export function DashboardCliente({
   usuario: { nome: string; perfil: string }
 }) {
   const [filtro, setFiltro] = useState('todos')
+  const [busca, setBusca] = useState('')
   const [items, setItems] = useState(propostas)
   const [, startTransition] = useTransition()
-
-  const filtradas = filtro === 'todos' ? items : items.filter(p => p.status === filtro)
-
-  // Contagens para os cards
-  const stats: StatsCount = {
-    Rascunho: items.filter(p => p.status === 'Rascunho').length,
-    Em_revisao: items.filter(p => p.status === 'Em_revisao').length,
-    Aguardando_aprovacao: items.filter(p => p.status === 'Aguardando_aprovacao').length,
-    Aprovada_excecao: items.filter(p => p.status === 'Aprovada_excecao').length,
-    Pronta_pdf: items.filter(p => p.status === 'Pronta_pdf').length,
-    Cancelada: items.filter(p => p.status === 'Cancelada').length,
-  }
+  const tabelaRef = useRef<HTMLDivElement>(null)
 
   const podeVerGestor = usuario.perfil === 'Gestor' || usuario.perfil === 'ADM'
+
+  // Stats para summary cards
+  const volumeTotal = items
+    .filter(p => p.status !== 'Cancelada')
+    .reduce((s, p) => s + p.orcamento_alvo, 0)
+  const aprovadas = items.filter(p => p.status === 'Pronta_pdf' || p.status === 'Aprovada_excecao').length
+  const aguardando = items.filter(p => p.status === 'Aguardando_aprovacao').length
+
+  // Badge de variação mensal no volume
+  const hoje = new Date()
+  const mesAtualKey = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+  const mesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)
+  const mesAnteriorKey = `${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth() + 1).padStart(2, '0')}`
+  const volAtual = items
+    .filter(p => p.status !== 'Cancelada' && p.criado_em.startsWith(mesAtualKey))
+    .reduce((s, p) => s + p.orcamento_alvo, 0)
+  const volAnterior = items
+    .filter(p => p.status !== 'Cancelada' && p.criado_em.startsWith(mesAnteriorKey))
+    .reduce((s, p) => s + p.orcamento_alvo, 0)
+  const volumeBadge = volAnterior > 0 ? {
+    text: `${volAtual >= volAnterior ? '+' : ''}${Math.round(((volAtual - volAnterior) / volAnterior) * 100)}%`,
+    positive: volAtual >= volAnterior,
+  } : null
+
+  // Itens filtrados para a tabela
+  const filtradas = items
+    .filter(p => filtro === 'todos' || p.status === filtro)
+    .filter(p => !busca || (p.cliente_nome_instituicao ?? '').toLowerCase().includes(busca.toLowerCase()))
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -222,28 +393,33 @@ export function DashboardCliente({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-
-    // Encontra os índices no array global `items`
     const oldIndex = items.findIndex(p => p.id === active.id)
     const newIndex = items.findIndex(p => p.id === over.id)
     if (oldIndex === -1 || newIndex === -1) return
-
     const novaOrdem = arrayMove(items, oldIndex, newIndex)
     setItems(novaOrdem)
-
     const updates = novaOrdem.map((p, i) => ({ id: p.id, ordem: i + 1 }))
     startTransition(() => { reordenarPropostas(updates) })
   }
 
+  function scrollToTabela() {
+    tabelaRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
     <div className="p-4 md:p-8">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-6 md:mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Propostas</h1>
-          <p className="text-slate-500 mt-1">
-            {usuario.nome} · {usuario.perfil} · {items.length} proposta{items.length !== 1 ? 's' : ''}
-          </p>
+      {/* Header da página */}
+      <div className="flex flex-wrap items-center gap-3 mb-8">
+        <h1 className="text-2xl font-bold text-slate-900 flex-1">Visão Geral</h1>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Buscar propostas..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            className="pl-9 pr-4 py-2 text-sm bg-slate-100 rounded-full border-0 outline-none focus:ring-2 focus:ring-indigo-300 w-52 placeholder:text-slate-400"
+          />
         </div>
         <Link href="/proposta/nova">
           <Button className="gap-2">
@@ -253,176 +429,122 @@ export function DashboardCliente({
         </Link>
       </div>
 
-      {/* Cards de status */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        <StatCard
-          label="Rascunho"
-          count={stats.Rascunho}
-          icon={<PenLine className="w-4 h-4 text-slate-400" />}
-          active={filtro === 'Rascunho'}
-          onClick={() => setFiltro(filtro === 'Rascunho' ? 'todos' : 'Rascunho')}
+      {/* 3 cards de resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <SummaryCard
+          iconBg="bg-indigo-100"
+          icon={<BarChart3 className="w-5 h-5 text-indigo-600" />}
+          label="Volume Total"
+          value={formatCurrency(volumeTotal)}
+          badge={volumeBadge}
         />
-        <StatCard
-          label="Em revisão"
-          count={stats.Em_revisao}
-          icon={<FileText className="w-4 h-4 text-blue-400" />}
-          active={filtro === 'Em_revisao'}
-          onClick={() => setFiltro(filtro === 'Em_revisao' ? 'todos' : 'Em_revisao')}
+        <SummaryCard
+          iconBg="bg-emerald-100"
+          icon={<CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+          label="Propostas Aprovadas"
+          value={String(aprovadas)}
         />
-        <StatCard
-          label="Aguardando"
-          count={stats.Aguardando_aprovacao}
-          icon={<Clock className="w-4 h-4 text-yellow-400" />}
-          active={filtro === 'Aguardando_aprovacao'}
-          onClick={() => setFiltro(filtro === 'Aguardando_aprovacao' ? 'todos' : 'Aguardando_aprovacao')}
-          urgente={stats.Aguardando_aprovacao > 0 && podeVerGestor}
-        />
-        <StatCard
-          label="Aprovada"
-          count={stats.Aprovada_excecao}
-          icon={<CheckCircle2 className="w-4 h-4 text-purple-400" />}
-          active={filtro === 'Aprovada_excecao'}
-          onClick={() => setFiltro(filtro === 'Aprovada_excecao' ? 'todos' : 'Aprovada_excecao')}
-        />
-        <StatCard
-          label="Pronta"
-          count={stats.Pronta_pdf}
-          icon={<CheckCircle2 className="w-4 h-4 text-green-400" />}
-          active={filtro === 'Pronta_pdf'}
-          onClick={() => setFiltro(filtro === 'Pronta_pdf' ? 'todos' : 'Pronta_pdf')}
-        />
-        <StatCard
-          label="Cancelada"
-          count={stats.Cancelada}
-          icon={<XCircle className="w-4 h-4 text-red-400" />}
-          active={filtro === 'Cancelada'}
-          onClick={() => setFiltro(filtro === 'Cancelada' ? 'todos' : 'Cancelada')}
+        <SummaryCard
+          iconBg="bg-orange-100"
+          icon={<Clock className="w-5 h-5 text-orange-500" />}
+          label="Aguardando Resposta"
+          value={String(aguardando)}
         />
       </div>
 
-      {/* Filtro por tabs */}
-      <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
-        {FILTROS.map(f => (
-          <button
-            key={f.value}
-            type="button"
-            onClick={() => setFiltro(f.value)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
-              filtro === f.value
-                ? 'bg-indigo-600 text-white'
-                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            {f.label}
-            {f.value !== 'todos' && (
-              <span className={`ml-1.5 text-xs ${filtro === f.value ? 'text-slate-300' : 'text-slate-400'}`}>
-                {items.filter(p => p.status === f.value).length}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Gráfico + Atividade recente */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-8">
+        <BarChartMensal propostas={items} />
+        <AtividadeRecente propostas={items} onVerTodas={scrollToTabela} />
       </div>
 
-      {/* Tabela */}
-      <div className="rounded-2xl border border-slate-200 overflow-hidden overflow-x-auto">
-        {filtradas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-slate-400">
-            <FileText className="w-8 h-8 mb-2" />
-            <p className="text-sm font-medium">Nenhuma proposta encontrada</p>
-            {filtro === 'todos' && (
-              <Link href="/proposta/nova">
-                <Button variant="link" size="sm" className="mt-2">Criar primeira proposta →</Button>
-              </Link>
-            )}
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="w-8 px-2 py-3" />
-                <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
-                  Cliente / Instituição
-                </th>
-                <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
-                  Orçamento alvo
-                </th>
-                <th className="text-center text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
-                  Status
-                </th>
-                {podeVerGestor && (
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
-                    Criado por
-                  </th>
-                )}
-                <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
-                  Data
-                </th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+      {/* Tabela completa */}
+      <div ref={tabelaRef}>
+        {/* Filtro por tabs */}
+        <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
+          {FILTROS.map(f => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFiltro(f.value)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+                filtro === f.value
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              }`}
             >
-              <SortableContext
-                items={filtradas.map(p => p.id)}
-                strategy={verticalListSortingStrategy}
+              {f.label}
+              {f.value !== 'todos' && (
+                <span className={`ml-1.5 text-xs ${filtro === f.value ? 'text-indigo-200' : 'text-slate-400'}`}>
+                  {items.filter(p => p.status === f.value).length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Tabela */}
+        <div className="rounded-2xl border border-slate-200 overflow-hidden overflow-x-auto">
+          {filtradas.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+              <FileText className="w-8 h-8 mb-2" />
+              <p className="text-sm font-medium">Nenhuma proposta encontrada</p>
+              {filtro === 'todos' && !busca && (
+                <Link href="/proposta/nova">
+                  <Button variant="link" size="sm" className="mt-2">Criar primeira proposta →</Button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="w-8 px-2 py-3" />
+                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
+                    Cliente / Instituição
+                  </th>
+                  <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
+                    Orçamento alvo
+                  </th>
+                  <th className="text-center text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
+                    Status
+                  </th>
+                  {podeVerGestor && (
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
+                      Criado por
+                    </th>
+                  )}
+                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">
+                    Data
+                  </th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {filtradas.map((p) => (
-                    <SortablePropostaRow
-                      key={p.id}
-                      proposta={p}
-                      podeVerGestor={podeVerGestor}
-                    />
-                  ))}
-                </tbody>
-              </SortableContext>
-            </DndContext>
-          </table>
-        )}
+                <SortableContext
+                  items={filtradas.map(p => p.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {filtradas.map((p) => (
+                      <SortablePropostaRow
+                        key={p.id}
+                        proposta={p}
+                        podeVerGestor={podeVerGestor}
+                      />
+                    ))}
+                  </tbody>
+                </SortableContext>
+              </DndContext>
+            </table>
+          )}
+        </div>
       </div>
     </div>
-  )
-}
-
-function StatCard({
-  label,
-  count,
-  icon,
-  active,
-  onClick,
-  urgente,
-}: {
-  label: string
-  count: number
-  icon: React.ReactNode
-  active: boolean
-  onClick: () => void
-  urgente?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-xl border p-4 text-left transition-all ${
-        active
-          ? 'border-indigo-600 bg-indigo-600 text-white'
-          : urgente
-          ? 'border-yellow-300 bg-yellow-50 hover:border-yellow-400'
-          : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
-      }`}
-    >
-      <div className="flex items-center justify-between mb-2">
-        {icon}
-        {urgente && !active && (
-          <span className="flex h-2 w-2 rounded-full bg-yellow-500" />
-        )}
-      </div>
-      <p className={`text-2xl font-bold ${active ? 'text-white' : 'text-slate-900'}`}>{count}</p>
-      <p className={`text-xs mt-0.5 ${active ? 'text-slate-300' : 'text-slate-500'}`}>{label}</p>
-    </button>
   )
 }
 
