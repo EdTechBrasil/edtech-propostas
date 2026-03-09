@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  Rascunho:             { label: 'Rascunho',           className: 'bg-slate-100 text-slate-600' },
+  Rascunho:             { label: 'Rascunho',           className: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' },
   Em_revisao:           { label: 'Em revisão',         className: 'bg-blue-100 text-blue-700' },
   Aguardando_aprovacao: { label: 'Aguard. aprovação',  className: 'bg-yellow-100 text-yellow-700' },
   Aprovada_excecao:     { label: 'Aprovada (exceção)', className: 'bg-purple-100 text-purple-700' },
@@ -105,10 +105,10 @@ export default async function RelatoriosPage() {
     <div className="p-4 md:p-8 max-w-6xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <BarChart3 className="w-6 h-6 text-slate-700" />
+        <BarChart3 className="w-6 h-6 text-slate-700 dark:text-slate-300" />
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Relatórios</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Visão geral do pipeline de propostas</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Relatórios</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Visão geral do pipeline de propostas</p>
         </div>
       </div>
 
@@ -177,17 +177,17 @@ export default async function RelatoriosPage() {
             <div className="space-y-2">
               {meses.map(m => (
                 <div key={m.key} className="flex items-center gap-3">
-                  <span className="text-xs text-slate-400 w-14 shrink-0 capitalize">{m.label}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 w-14 shrink-0 capitalize">{m.label}</span>
                   <div className="flex-1 flex items-center gap-2">
                     <div
                       className="h-5 rounded bg-blue-200 transition-all"
                       style={{ width: `${(m.count / maxMesCount) * 100}%`, minWidth: m.count > 0 ? '8px' : '0' }}
                     />
-                    <span className="text-xs text-slate-600 shrink-0">
+                    <span className="text-xs text-slate-600 dark:text-slate-400 shrink-0">
                       {m.count} {m.count !== 1 ? 'propostas' : 'proposta'}
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400 shrink-0 w-24 text-right">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 w-24 text-right">
                     {formatCurrency(m.valor)}
                   </span>
                 </div>
@@ -211,9 +211,9 @@ export default async function RelatoriosPage() {
                       {cfg.label}
                     </span>
                     <div className="text-right">
-                      <span className="text-sm font-semibold text-slate-800">{count}</span>
+                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{count}</span>
                       {valorTotal > 0 && (
-                        <p className="text-xs text-slate-400">{formatCurrency(valorTotal)}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{formatCurrency(valorTotal)}</p>
                       )}
                     </div>
                   </div>
@@ -233,29 +233,29 @@ export default async function RelatoriosPage() {
           <CardContent>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-xs text-slate-400">
+                <tr className="border-b border-slate-100 dark:border-slate-700 text-xs text-slate-400 dark:text-slate-500">
                   <th className="text-left pb-2 font-medium">Cliente</th>
                   <th className="text-left pb-2 font-medium">Criador</th>
                   <th className="text-center pb-2 font-medium">Status</th>
                   <th className="text-right pb-2 font-medium">Orçamento alvo</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                 {top5.map((p: any) => {
                   const cfg = STATUS_LABEL[p.status] ?? { label: p.status, className: 'bg-slate-100 text-slate-600' }
                   return (
                     <tr key={p.id}>
-                      <td className="py-2 text-slate-800">
-                        {p.cliente_nome_instituicao || <span className="text-slate-400 italic">Sem cliente</span>}
-                        <span className="ml-2 font-mono text-xs text-slate-300">#{p.id.slice(0, 6)}</span>
+                      <td className="py-2 text-slate-800 dark:text-slate-200">
+                        {p.cliente_nome_instituicao || <span className="text-slate-400 dark:text-slate-500 italic">Sem cliente</span>}
+                        <span className="ml-2 font-mono text-xs text-slate-300 dark:text-slate-600">#{p.id.slice(0, 6)}</span>
                       </td>
-                      <td className="py-2 text-slate-500">{(p as any).criador?.nome ?? '—'}</td>
+                      <td className="py-2 text-slate-500 dark:text-slate-400">{(p as any).criador?.nome ?? '—'}</td>
                       <td className="py-2 text-center">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cfg.className}`}>
                           {cfg.label}
                         </span>
                       </td>
-                      <td className="py-2 text-right font-semibold text-slate-800">
+                      <td className="py-2 text-right font-semibold text-slate-800 dark:text-slate-200">
                         {formatCurrency(p.orcamento_alvo)}
                       </td>
                     </tr>
@@ -281,19 +281,19 @@ function MetricCard({
   large?: boolean
 }) {
   const bg = highlight === 'green'
-    ? 'bg-green-50 border-green-200'
+    ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
     : highlight === 'yellow'
-    ? 'bg-yellow-50 border-yellow-200'
-    : 'bg-white'
+    ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800'
+    : 'bg-white dark:bg-slate-800'
 
   return (
     <div className={`rounded-xl border p-5 ${bg}`}>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
         {icon}
       </div>
-      <p className={`font-bold text-slate-900 ${large ? 'text-2xl' : 'text-3xl'}`}>{value}</p>
-      <p className="text-xs text-slate-400 mt-1">{sub}</p>
+      <p className={`font-bold text-slate-900 dark:text-slate-100 ${large ? 'text-2xl' : 'text-3xl'}`}>{value}</p>
+      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{sub}</p>
     </div>
   )
 }

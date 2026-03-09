@@ -25,7 +25,7 @@ export function RepasseCliente({ tipoInicial, valorInicial }: { tipoInicial: str
               'flex flex-col gap-1 rounded-lg border p-4 cursor-pointer transition-colors',
               tipo === t.value
                 ? 'border-primary bg-primary/5 text-primary'
-                : 'border-slate-200 hover:border-slate-300'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
             )}
           >
             <input
@@ -37,7 +37,7 @@ export function RepasseCliente({ tipoInicial, valorInicial }: { tipoInicial: str
               className="sr-only"
             />
             <span className="font-medium text-sm">{t.label}</span>
-            <span className="text-xs text-slate-500">{t.desc}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{t.desc}</span>
           </label>
         ))}
       </div>

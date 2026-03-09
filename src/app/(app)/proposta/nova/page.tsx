@@ -23,8 +23,8 @@ export default async function NovaProposta() {
       <StepperNav />
       <div className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">Nova Proposta</h1>
-          <p className="text-slate-500 mt-1">Defina o orçamento alvo da proposta</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Nova Proposta</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Defina o orçamento alvo da proposta</p>
         </div>
 
         <Card>
@@ -44,9 +44,9 @@ export default async function NovaProposta() {
                 />
               </div>
 
-              <div className="flex items-start gap-3 rounded-lg bg-blue-50 border border-blue-100 p-4">
-                <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-700">
+              <div className="flex items-start gap-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800 p-4">
+                <Info className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-700 dark:text-blue-300">
                   <p className="font-medium">Limite máximo de orçamento</p>
                   <p className="mt-0.5">
                     O total da proposta não pode ultrapassar o orçamento alvo multiplicado por{' '}

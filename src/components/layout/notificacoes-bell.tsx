@@ -84,7 +84,7 @@ export function NotificacoesBell({ usuarioId }: { usuarioId: string }) {
       </button>
 
       {open && (
-        <div className="absolute bottom-0 left-full ml-2 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute bottom-0 left-full ml-2 max-md:left-0 max-md:bottom-full max-md:mb-2 max-md:ml-0 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Notificações</p>
             {unread > 0 && (

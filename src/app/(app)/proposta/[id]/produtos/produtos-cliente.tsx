@@ -77,11 +77,11 @@ function SortableProductCard({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-medium text-slate-900">{produto.nome}</p>
+              <p className="font-medium text-slate-900 dark:text-slate-100">{produto.nome}</p>
               <Badge variant="success" className="text-xs">Adicionado</Badge>
             </div>
             {produto.descricao && (
-              <p className="text-sm text-slate-500 mt-0.5">{produto.descricao}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{produto.descricao}</p>
             )}
           </div>
 
@@ -172,7 +172,7 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
 
   if (catalogo.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
+      <div className="flex flex-col items-center justify-center h-48 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500">
         <PackageOpen className="w-10 h-10 mb-2" />
         <p className="text-sm">Nenhum produto cadastrado no catálogo</p>
         <p className="text-xs mt-1">Peça ao ADM para cadastrar produtos nas Configurações</p>
@@ -186,12 +186,12 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
       <Card className="mb-3">
         <CardContent className="pt-4">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-slate-500">Orçamento consumido</span>
+            <span className="text-slate-500 dark:text-slate-400">Orçamento consumido</span>
             <span className="font-semibold">
               {formatCurrency(totalLocal)} / {formatCurrency(limiteMax)}
             </span>
           </div>
-          <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
                 percentualUsado >= 100 ? 'bg-red-500' :
@@ -200,7 +200,7 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
               style={{ width: `${percentualUsado}%` }}
             />
           </div>
-          <p className="text-xs text-slate-400 mt-1">{percentualUsado.toFixed(1)}% do limite utilizado</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{percentualUsado.toFixed(1)}% do limite utilizado</p>
         </CardContent>
       </Card>
 
@@ -232,9 +232,9 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
       {/* Separador */}
       {ordemSelecao.length > 0 && naoSelecionados.length > 0 && (
         <div className="flex items-center gap-2 py-1">
-          <div className="flex-1 h-px bg-slate-200" />
-          <span className="text-xs text-slate-400">Disponíveis para adicionar</span>
-          <div className="flex-1 h-px bg-slate-200" />
+          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+          <span className="text-xs text-slate-400 dark:text-slate-500">Disponíveis para adicionar</span>
+          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
         </div>
       )}
 
@@ -245,9 +245,9 @@ export function ProdutosCliente({ propostaId, catalogo, selecionados, idsSelecio
           <Card key={produto.id}>
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-900">{produto.nome}</p>
+                <p className="font-medium text-slate-900 dark:text-slate-100">{produto.nome}</p>
                 {produto.descricao && (
-                  <p className="text-sm text-slate-500 mt-0.5">{produto.descricao}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{produto.descricao}</p>
                 )}
               </div>
               <Button

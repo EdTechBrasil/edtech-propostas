@@ -39,7 +39,7 @@ const STATUS_CONFIG: Record<string, {
   icon: React.ElementType
   className: string
 }> = {
-  Rascunho:              { label: 'Rascunho',          icon: FileText,     className: 'bg-slate-100 text-slate-600' },
+  Rascunho:              { label: 'Rascunho',          icon: FileText,     className: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' },
   Em_revisao:            { label: 'Em revisão',         icon: PenLine,      className: 'bg-blue-50 text-blue-600' },
   Aguardando_aprovacao:  { label: 'Pendente',           icon: Clock,        className: 'bg-amber-50 text-amber-600' },
   Aprovada_excecao:      { label: 'Aprovada',           icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-600' },
@@ -103,7 +103,7 @@ function SortableRow({
   }
 
   return (
-    <tr ref={setNodeRef} style={style} className="hover:bg-slate-50 transition-colors group border-b border-slate-100 last:border-0">
+    <tr ref={setNodeRef} style={style} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group border-b border-slate-100 dark:border-slate-700 last:border-0">
       <td className="px-2 py-4 w-8">
         <DragHandle
           {...attributes}
@@ -120,20 +120,20 @@ function SortableRow({
         </Link>
       </td>
       <td className="px-4 py-4">
-        <p className="text-sm font-medium text-slate-900">
-          {p.cliente_nome_instituicao || <span className="text-slate-400 italic">Sem dados do cliente</span>}
+        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+          {p.cliente_nome_instituicao || <span className="text-slate-400 dark:text-slate-500 italic">Sem dados do cliente</span>}
         </p>
         {podeVerGestor && (
-          <p className="text-xs text-slate-400 mt-0.5">{p.criador_nome}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{p.criador_nome}</p>
         )}
       </td>
       <td className="px-4 py-4">
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-slate-600 dark:text-slate-400">
           {p.criado_em.slice(0, 10).split('-').reverse().join('/')}
         </span>
       </td>
       <td className="px-4 py-4">
-        <span className="text-sm font-semibold text-slate-900">
+        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {formatCurrency(p.orcamento_alvo)}
         </span>
       </td>
@@ -223,7 +223,7 @@ export function PropostasCliente({
     <div className="p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 flex-1">Minhas Propostas</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex-1">Minhas Propostas</h1>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
@@ -231,7 +231,7 @@ export function PropostasCliente({
             placeholder="Buscar propostas..."
             value={busca}
             onChange={e => setBusca(e.target.value)}
-            className="pl-9 pr-4 py-2 text-sm bg-slate-100 rounded-full border-0 outline-none focus:ring-2 focus:ring-indigo-300 w-52 placeholder:text-slate-400"
+            className="pl-9 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-full border-0 outline-none focus:ring-2 focus:ring-indigo-300 w-52 placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
         <Link href="/proposta/nova">
@@ -252,7 +252,7 @@ export function PropostasCliente({
             className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
               filtro === f.value
                 ? 'bg-indigo-600 text-white'
-                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             {f.label}
@@ -266,9 +266,9 @@ export function PropostasCliente({
       </div>
 
       {/* Tabela */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden overflow-x-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden overflow-x-auto">
         {filtradas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+          <div className="flex flex-col items-center justify-center h-48 text-slate-400 dark:text-slate-500">
             <FileText className="w-8 h-8 mb-2" />
             <p className="text-sm font-medium">Nenhuma proposta encontrada</p>
             {filtro === 'todos' && !busca && (
@@ -279,25 +279,25 @@ export function PropostasCliente({
           </div>
         ) : (
           <table className="w-full">
-            <thead className="border-b border-slate-200">
+            <thead className="border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="w-8 px-2 py-3" />
-                <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">
+                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Número
                 </th>
-                <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">
+                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Cliente
                 </th>
-                <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">
+                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Data
                 </th>
-                <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">
+                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Valor Total
                 </th>
-                <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">
+                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Status
                 </th>
-                <th className="text-right text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">
+                <th className="text-right text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Ações
                 </th>
               </tr>
@@ -311,7 +311,7 @@ export function PropostasCliente({
                 items={filtradas.map(p => p.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <tbody className="bg-white">
+                <tbody className="bg-white dark:bg-slate-800">
                   {filtradas.map(p => (
                     <SortableRow
                       key={p.id}

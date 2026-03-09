@@ -42,8 +42,8 @@ export default async function DescontosPage({ params }: { params: Promise<{ id: 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Descontos</h1>
-        <p className="text-slate-500 mt-1">Configure descontos por nível. O mais específico prevalece.</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Descontos</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Configure descontos por nível. O mais específico prevalece.</p>
       </div>
 
       <div className="flex items-start gap-3 rounded-lg bg-amber-50 border border-amber-100 p-4 mb-6">

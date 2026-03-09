@@ -31,8 +31,8 @@ export default async function RepassePage({ params }: { params: Promise<{ id: st
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Repasse</h1>
-        <p className="text-slate-500 mt-1">Configure o repasse ao parceiro (opcional)</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Repasse</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Configure o repasse ao parceiro (opcional)</p>
       </div>
 
       <Card>

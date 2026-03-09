@@ -36,12 +36,12 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Dados do Cliente</h1>
-        <p className="text-slate-500 mt-1">Preencha os dados obrigatórios para geração do PDF</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dados do Cliente</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Preencha os dados obrigatórios para geração do PDF</p>
       </div>
 
       {bloqueado && (
-        <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 mb-6 text-sm text-yellow-700">
+        <div className="rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 p-4 mb-6 text-sm text-yellow-700 dark:text-yellow-300">
           Esta proposta está aguardando aprovação de margem. O PDF só poderá ser gerado após a autorização.
         </div>
       )}

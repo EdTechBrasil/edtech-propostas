@@ -35,7 +35,7 @@ export function StepperNav({
   const current = getCurrentStep(pathname)
 
   return (
-    <div className="w-full bg-white border-b border-slate-200">
+    <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
       {/* Mobile: indicador compacto */}
       <div className="flex md:hidden items-center gap-3 px-4 py-3">
         <div className="flex items-center gap-1">
@@ -46,15 +46,15 @@ export function StepperNav({
                 'h-1.5 rounded-full transition-all',
                 s.id === current ? 'w-4 bg-primary' :
                 s.id < current ? 'w-1.5 bg-primary/50' :
-                'w-1.5 bg-slate-200'
+                'w-1.5 bg-slate-200 dark:bg-slate-700'
               )}
             />
           ))}
         </div>
-        <span className="text-sm font-semibold text-slate-800">
+        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
           {STEPS.find(s => s.id === current)?.label}
         </span>
-        <span className="ml-auto text-xs text-slate-400 tabular-nums">{current}/{STEPS.length}</span>
+        <span className="ml-auto text-xs text-slate-400 dark:text-slate-500 tabular-nums">{current}/{STEPS.length}</span>
       </div>
 
       {/* Desktop: stepper completo */}
@@ -72,10 +72,10 @@ export function StepperNav({
 
           const circle = locked ? (
             <div
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 border border-slate-200"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
               title="Complete a etapa anterior primeiro"
             >
-              <Lock className="w-3.5 h-3.5 text-slate-300" />
+              <Lock className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
             </div>
           ) : done ? (
             <Link
@@ -91,7 +91,7 @@ export function StepperNav({
           ) : (
             <Link
               href={href}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-400 border border-slate-200 text-sm font-semibold hover:border-slate-300 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 text-sm font-semibold hover:border-slate-300 transition-colors"
             >
               {step.id}
             </Link>
@@ -103,7 +103,7 @@ export function StepperNav({
               {idx > 0 && (
                 <div className={cn(
                   'flex-1 h-0.5 mr-2',
-                  done ? 'bg-primary' : 'bg-slate-200'
+                  done ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
                 )} />
               )}
 
@@ -112,9 +112,9 @@ export function StepperNav({
                 <span className={cn(
                   'text-xs font-medium whitespace-nowrap',
                   active ? 'text-primary'
-                    : done ? 'text-slate-600'
-                    : locked ? 'text-slate-300'
-                    : 'text-slate-400'
+                    : done ? 'text-slate-600 dark:text-slate-400'
+                    : locked ? 'text-slate-300 dark:text-slate-600'
+                    : 'text-slate-400 dark:text-slate-500'
                 )}>
                   {step.label}
                 </span>
@@ -124,7 +124,7 @@ export function StepperNav({
               {idx < STEPS.length - 1 && (
                 <div className={cn(
                   'flex-1 h-0.5 ml-2',
-                  step.id < current ? 'bg-primary' : 'bg-slate-200'
+                  step.id < current ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
                 )} />
               )}
             </div>

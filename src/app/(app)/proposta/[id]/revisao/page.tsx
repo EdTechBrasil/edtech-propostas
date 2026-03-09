@@ -61,8 +61,8 @@ export default async function RevisaoPage({ params }: { params: Promise<{ id: st
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Revisão Financeira</h1>
-        <p className="text-slate-500 mt-1">Análise final antes de gerar o PDF</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Revisão Financeira</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Análise final antes de gerar o PDF</p>
       </div>
 
       <div className={`flex items-center gap-3 rounded-lg p-4 mb-6 ${
@@ -157,8 +157,8 @@ export default async function RevisaoPage({ params }: { params: Promise<{ id: st
 function Row({ label, value, bold, muted }: { label: string; value: string; bold?: boolean; muted?: boolean }) {
   return (
     <div className="flex justify-between py-1">
-      <span className={`text-sm ${muted ? 'text-slate-400' : 'text-slate-600'}`}>{label}</span>
-      <span className={`text-sm ${bold ? 'font-bold text-slate-900' : muted ? 'text-slate-400' : 'text-slate-700'}`}>
+      <span className={`text-sm ${muted ? 'text-slate-400 dark:text-slate-500' : 'text-slate-600 dark:text-slate-400'}`}>{label}</span>
+      <span className={`text-sm ${bold ? 'font-bold text-slate-900 dark:text-slate-100' : muted ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}>
         {value}
       </span>
     </div>
