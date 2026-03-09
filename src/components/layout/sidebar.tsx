@@ -29,9 +29,9 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard',     href: '/dashboard',          icon: LayoutDashboard, perfis: ['Comercial', 'Gestor', 'ADM'] },
+  { label: 'Relatórios',   href: '/relatorios',         icon: BarChart3,       perfis: ['Gestor', 'ADM'] },
   { label: 'Propostas',     href: '/propostas',          icon: FileText,        perfis: ['Comercial', 'Gestor', 'ADM'] },
   { label: 'Aprovações',   href: '/aprovacao',          icon: ShieldCheck,     perfis: ['Gestor', 'ADM'] },
-  { label: 'Relatórios',   href: '/relatorios',         icon: BarChart3,       perfis: ['Gestor', 'ADM'] },
   { label: 'Usuários',     href: '/admin/usuarios',     icon: Users,           perfis: ['ADM'], group: 'Admin' },
   { label: 'Produtos',      href: '/admin/produtos',     icon: Package,         perfis: ['ADM'], group: 'Admin' },
   { label: 'Configurações', href: '/admin/configuracoes', icon: Settings,       perfis: ['ADM'], group: 'Admin' },
