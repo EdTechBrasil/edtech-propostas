@@ -50,7 +50,6 @@ export default async function DashboardPage() {
   return (
     <DashboardCliente
       propostas={propostasFormatadas}
-      usuario={{ nome: usuario?.nome ?? '', perfil }}
     />
   )
 }

@@ -184,10 +184,8 @@ function AtividadeRecente({ propostas }: { propostas: Proposta[] }) {
 
 export function DashboardCliente({
   propostas,
-  usuario,
 }: {
   propostas: Proposta[]
-  usuario: { nome: string; perfil: string }
 }) {
   // Stats para summary cards
   const volumeTotal = propostas
