@@ -89,12 +89,12 @@ export function Sidebar({
   return (
     <TooltipProvider delayDuration={300}>
       <aside className={cn(
-        'flex flex-col h-full bg-white border-r border-slate-200 transition-all duration-200',
+        'flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-all duration-200',
         collapsed ? 'w-20' : 'w-64'
       )}>
         {/* Logo */}
         <div className={cn(
-          'flex items-center gap-3 py-5 border-b border-slate-200',
+          'flex items-center gap-3 py-5 border-b border-slate-200 dark:border-slate-700',
           collapsed ? 'px-0 justify-center' : 'px-6'
         )}>
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary flex-shrink-0">
@@ -102,8 +102,8 @@ export function Sidebar({
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold leading-tight text-slate-900">EdTech</p>
-              <p className="text-xs text-slate-500 leading-tight">Propostas</p>
+              <p className="text-sm font-semibold leading-tight text-slate-900 dark:text-slate-100">EdTech</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">Propostas</p>
             </div>
           )}
           {onClose && !collapsed && (
@@ -130,8 +130,8 @@ export function Sidebar({
                   'flex items-center rounded-md text-sm font-medium transition-colors',
                   collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2',
                   ativo
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800'
                 )}
               >
                 <Icon className={cn('w-4 h-4 flex-shrink-0', ativo ? 'text-indigo-600' : '')} />
@@ -152,12 +152,12 @@ export function Sidebar({
         </nav>
 
         {/* Usuário */}
-        <div className={cn('py-4 border-t border-slate-200', collapsed ? 'px-2' : 'px-3')}>
+        <div className={cn('py-4 border-t border-slate-200 dark:border-slate-700', collapsed ? 'px-2' : 'px-3')}>
           {!collapsed && (
             <div className="flex items-center justify-between px-3 py-2 mb-2">
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate text-slate-900">{usuario?.nome}</p>
-                <p className="text-xs text-slate-500">{usuario?.perfil}</p>
+                <p className="text-sm font-medium truncate text-slate-900 dark:text-slate-100">{usuario?.nome}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{usuario?.perfil}</p>
               </div>
               {usuario?.id && <NotificacoesBell usuarioId={usuario.id} />}
             </div>
@@ -168,7 +168,7 @@ export function Sidebar({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-center px-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                  className="w-full justify-center px-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800"
                   onClick={signOut}
                 >
                   <LogOut className="w-4 h-4" />
@@ -180,7 +180,7 @@ export function Sidebar({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              className="w-full justify-start text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800"
               onClick={signOut}
             >
               <LogOut className="w-4 h-4 mr-2" />
