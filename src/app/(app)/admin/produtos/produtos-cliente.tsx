@@ -126,7 +126,7 @@ function ValorEditavel({
       title="Clique para editar"
       onClick={() => { setRaw(String(valorLocal)); setEditando(true) }}
       className={`text-right w-full hover:bg-primary/10 rounded px-1.5 py-0.5 transition-colors ${
-        valorLocal === 0 ? 'text-red-400 font-medium' : 'text-slate-700'
+        valorLocal === 0 ? 'text-red-400 font-medium' : 'text-slate-700 dark:text-slate-300'
       }`}
     >
       {valorLocal === 0 ? '— editar' : `R$ ${valorLocal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
@@ -368,10 +368,10 @@ function ProdutoCard({ produto }: { produto: Produto }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-xl border overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''} ${produto.ativo ? 'border-slate-200' : 'border-slate-100'}`}
+      className={`rounded-xl border overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''} ${produto.ativo ? 'border-slate-200 dark:border-slate-700' : 'border-slate-100 dark:border-slate-800'}`}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 bg-white group">
+      <div className="flex items-center gap-3 px-5 py-4 bg-white dark:bg-slate-800 group">
         <DragHandle
           {...attributes}
           {...listeners}
@@ -383,16 +383,16 @@ function ProdutoCard({ produto }: { produto: Produto }) {
         </button>
 
         <button type="button" onClick={() => setExpandido(!expandido)} className="flex-1 text-left">
-          <p className={`font-semibold ${produto.ativo ? 'text-slate-900' : 'text-slate-400'}`}>{produto.nome}</p>
-          {produto.descricao && <p className="text-xs text-slate-400 mt-0.5">{produto.descricao}</p>}
+          <p className={`font-semibold ${produto.ativo ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>{produto.nome}</p>
+          {produto.descricao && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{produto.descricao}</p>}
         </button>
 
-        <span className="text-xs text-slate-400 font-medium">{totalItens} itens</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{totalItens} itens</span>
 
         {/* Editar produto */}
         <Dialog open={openEdit} onOpenChange={setOpenEdit}>
           <DialogTrigger asChild>
-            <button type="button" className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors">
+            <button type="button" className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
               <Pencil className="w-4 h-4" />
             </button>
           </DialogTrigger>
@@ -428,7 +428,7 @@ function ProdutoCard({ produto }: { produto: Produto }) {
 
         {/* Excluir produto */}
         <button type="button" onClick={() => setOpenExcluir(true)}
-          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded transition-colors">
           <Trash2 className="w-4 h-4" />
         </button>
         <Dialog open={openExcluir} onOpenChange={(v) => { setOpenExcluir(v); if (!v) setErroExcluir('') }}>
@@ -436,7 +436,7 @@ function ProdutoCard({ produto }: { produto: Produto }) {
             <DialogHeader>
               <DialogTitle>Excluir produto</DialogTitle>
             </DialogHeader>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               Tem certeza que deseja excluir <strong>{produto.nome}</strong>? Esta ação não pode ser desfeita.
             </p>
             {erroExcluir && <p className="text-sm text-red-600">{erroExcluir}</p>}
@@ -447,19 +447,19 @@ function ProdutoCard({ produto }: { produto: Produto }) {
           </DialogContent>
         </Dialog>
 
-        <div className="flex items-center gap-2 ml-1 pl-3 border-l border-slate-100">
-          <span className="text-xs text-slate-500">{produto.ativo ? 'Ativo' : 'Inativo'}</span>
+        <div className="flex items-center gap-2 ml-1 pl-3 border-l border-slate-100 dark:border-slate-700">
+          <span className="text-xs text-slate-500 dark:text-slate-400">{produto.ativo ? 'Ativo' : 'Inativo'}</span>
           <Switch checked={produto.ativo} onCheckedChange={handleToggle} />
         </div>
       </div>
 
       {/* Conteúdo expandido */}
       {expandido && (
-        <div className="border-t border-slate-100 bg-slate-50 px-5 py-4 space-y-5">
+        <div className="border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-5 py-4 space-y-5">
           {/* Componentes */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Componentes</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Componentes</p>
               <ComponenteDialog produtoId={produto.id} trigger={
                 <Button variant="outline" size="sm" className="gap-1 text-xs h-7">
                   <Plus className="w-3 h-3" /> Componente
@@ -467,12 +467,12 @@ function ProdutoCard({ produto }: { produto: Produto }) {
               } />
             </div>
             {produto.componentes.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">Nenhum componente</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 italic">Nenhum componente</p>
             ) : (
-              <div className="rounded-lg border border-slate-200 overflow-hidden bg-white">
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 text-xs text-slate-400">
+                    <tr className="border-b border-slate-100 dark:border-slate-700 text-xs text-slate-400 dark:text-slate-500">
                       <th className="text-left px-3 py-2 font-medium">Nome</th>
                       <th className="text-left px-3 py-2 font-medium">Categoria</th>
                       <th className="text-left px-3 py-2 font-medium">Cálculo</th>
@@ -482,12 +482,12 @@ function ProdutoCard({ produto }: { produto: Produto }) {
                       <th className="px-3 py-2" />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                     {produto.componentes.map((c) => (
-                      <tr key={c.id} className="hover:bg-slate-50">
-                        <td className="px-3 py-2 font-medium text-slate-800">{c.nome}</td>
-                        <td className="px-3 py-2 text-slate-500">{c.categoria}</td>
-                        <td className="px-3 py-2 text-slate-500">{c.tipo_calculo}</td>
+                      <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <td className="px-3 py-2 font-medium text-slate-800 dark:text-slate-200">{c.nome}</td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{c.categoria}</td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{c.tipo_calculo}</td>
                         <td className="px-3 py-2 text-right">
                           <ValorEditavel
                             valor={c.valor_venda_base}
@@ -502,18 +502,18 @@ function ProdutoCard({ produto }: { produto: Produto }) {
                         </td>
                         <td className="px-3 py-2 text-center">
                           {c.obrigatorio
-                            ? <span className="text-xs bg-slate-100 text-slate-600 rounded px-1.5 py-0.5">Sim</span>
-                            : <span className="text-xs text-slate-300">—</span>}
+                            ? <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded px-1.5 py-0.5">Sim</span>
+                            : <span className="text-xs text-slate-300 dark:text-slate-600">—</span>}
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1 justify-end">
                             <ComponenteDialog produtoId={produto.id} componente={c} trigger={
-                              <button type="button" className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded">
+                              <button type="button" className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                             } />
                             <button type="button" onClick={() => setConfirmarExcluirComp({ id: c.id, nome: c.nome })}
-                              className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded">
+                              className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -531,7 +531,7 @@ function ProdutoCard({ produto }: { produto: Produto }) {
           {/* Serviços */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Serviços</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Serviços</p>
               <ServicoDialog produtoId={produto.id} trigger={
                 <Button variant="outline" size="sm" className="gap-1 text-xs h-7">
                   <Plus className="w-3 h-3" /> Serviço
@@ -539,12 +539,12 @@ function ProdutoCard({ produto }: { produto: Produto }) {
               } />
             </div>
             {produto.servicos.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">Nenhum serviço</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 italic">Nenhum serviço</p>
             ) : (
-              <div className="rounded-lg border border-slate-200 overflow-hidden bg-white">
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 text-xs text-slate-400">
+                    <tr className="border-b border-slate-100 dark:border-slate-700 text-xs text-slate-400 dark:text-slate-500">
                       <th className="text-left px-3 py-2 font-medium">Nome</th>
                       <th className="text-left px-3 py-2 font-medium">Cálculo</th>
                       <th className="text-right px-3 py-2 font-medium">Venda base</th>
@@ -553,11 +553,11 @@ function ProdutoCard({ produto }: { produto: Produto }) {
                       <th className="px-3 py-2" />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                     {produto.servicos.map((s) => (
-                      <tr key={s.id} className="hover:bg-slate-50">
-                        <td className="px-3 py-2 font-medium text-slate-800">{s.nome}</td>
-                        <td className="px-3 py-2 text-slate-500">{s.tipo_calculo}</td>
+                      <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <td className="px-3 py-2 font-medium text-slate-800 dark:text-slate-200">{s.nome}</td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{s.tipo_calculo}</td>
                         <td className="px-3 py-2 text-right">
                           <ValorEditavel
                             valor={s.valor_venda_base}
@@ -572,18 +572,18 @@ function ProdutoCard({ produto }: { produto: Produto }) {
                         </td>
                         <td className="px-3 py-2 text-center">
                           {s.obrigatorio
-                            ? <span className="text-xs bg-slate-100 text-slate-600 rounded px-1.5 py-0.5">Sim</span>
-                            : <span className="text-xs text-slate-300">—</span>}
+                            ? <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded px-1.5 py-0.5">Sim</span>
+                            : <span className="text-xs text-slate-300 dark:text-slate-600">—</span>}
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1 justify-end">
                             <ServicoDialog produtoId={produto.id} servico={s} trigger={
-                              <button type="button" className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded">
+                              <button type="button" className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                             } />
                             <button type="button" onClick={() => setConfirmarExcluirServ({ id: s.id, nome: s.nome })}
-                              className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded">
+                              className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -602,7 +602,7 @@ function ProdutoCard({ produto }: { produto: Produto }) {
       <Dialog open={!!confirmarExcluirComp} onOpenChange={(v) => !v && setConfirmarExcluirComp(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Excluir componente</DialogTitle></DialogHeader>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Tem certeza que deseja excluir <strong>{confirmarExcluirComp?.nome}</strong>?
           </p>
           <DialogFooter>
@@ -616,7 +616,7 @@ function ProdutoCard({ produto }: { produto: Produto }) {
       <Dialog open={!!confirmarExcluirServ} onOpenChange={(v) => !v && setConfirmarExcluirServ(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Excluir serviço</DialogTitle></DialogHeader>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Tem certeza que deseja excluir <strong>{confirmarExcluirServ?.nome}</strong>?
           </p>
           <DialogFooter>
@@ -677,8 +677,8 @@ export function ProdutosAdminCliente({ produtos: produtosIniciais }: { produtos:
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Catálogo de Produtos</h1>
-          <p className="text-slate-500 mt-1">{produtos.length} produto(s) — {ativos} ativo(s)</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Catálogo de Produtos</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{produtos.length} produto(s) — {ativos} ativo(s)</p>
         </div>
 
         <Dialog open={openNovo} onOpenChange={setOpenNovo}>
@@ -713,7 +713,7 @@ export function ProdutosAdminCliente({ produtos: produtosIniciais }: { produtos:
       </div>
 
       {produtos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
+        <div className="flex flex-col items-center justify-center h-64 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500">
           <PackagePlus className="w-10 h-10 mb-3" />
           <p className="font-medium">Nenhum produto cadastrado</p>
           <p className="text-sm mt-1">Crie o primeiro produto para começar</p>

@@ -61,8 +61,8 @@ export function UsuariosCliente({ usuarios }: { usuarios: Usuario[] }) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Gestão de Usuários</h1>
-          <p className="text-slate-500 mt-1">{usuarios.length} usuário(s) cadastrado(s)</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Gestão de Usuários</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{usuarios.length} usuário(s) cadastrado(s)</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
@@ -125,28 +125,28 @@ export function UsuariosCliente({ usuarios }: { usuarios: Usuario[] }) {
         </Dialog>
       </div>
 
-      <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
             <tr>
-              <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">Usuário</th>
-              <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">Perfil</th>
-              <th className="text-center text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">Ativo</th>
+              <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Usuário</th>
+              <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Perfil</th>
+              <th className="text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Ativo</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {usuarios.length === 0 ? (
               <tr>
-                <td colSpan={3} className="text-center text-slate-400 text-sm py-12">
+                <td colSpan={3} className="text-center text-slate-400 dark:text-slate-500 text-sm py-12">
                   Nenhum usuário cadastrado
                 </td>
               </tr>
             ) : (
               usuarios.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                   <td className="px-4 py-3">
-                    <p className="text-sm font-medium text-slate-900">{u.nome || '—'}</p>
-                    <p className="text-xs text-slate-400">{u.email}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{u.nome || '—'}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{u.email}</p>
                   </td>
                   <td className="px-4 py-3">
                     <Select

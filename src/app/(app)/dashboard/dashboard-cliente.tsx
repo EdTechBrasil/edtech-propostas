@@ -212,7 +212,7 @@ export function DashboardCliente({
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="sticky top-0 z-10 -mx-4 md:-mx-8 px-4 md:px-8 py-4 mb-4 bg-[#F8FAFC] dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Visão Geral</h1>
       </div>
 

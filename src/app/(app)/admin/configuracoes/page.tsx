@@ -26,13 +26,13 @@ export default async function ConfiguracoesFinanceiras() {
   return (
     <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Configurações Financeiras</h1>
-        <p className="text-slate-500 mt-1">Parâmetros globais que afetam o cálculo de todas as propostas</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Configurações Financeiras</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Parâmetros globais que afetam o cálculo de todas as propostas</p>
       </div>
 
-      <div className="flex items-start gap-3 rounded-lg bg-blue-50 border border-blue-100 p-4 mb-6">
+      <div className="flex items-start gap-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800 p-4 mb-6">
         <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-blue-700">
+        <div className="text-sm text-blue-700 dark:text-blue-300">
           <p className="font-medium">Atenção</p>
           <p className="mt-0.5">
             Alterações aqui afetam todas as novas propostas. Propostas existentes mantêm os valores usados na criação.
@@ -51,7 +51,7 @@ export default async function ConfiguracoesFinanceiras() {
           <form action={salvarConfiguracaoFinanceira as any} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="margem_minima_percent">Margem mínima aceitável (%)</Label>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
                 Propostas abaixo deste valor precisarão de aprovação de Gestor ou ADM.
               </p>
               <div className="flex items-center gap-3 max-w-xs">
@@ -66,13 +66,13 @@ export default async function ConfiguracoesFinanceiras() {
                   className="text-right"
                   required
                 />
-                <span className="text-slate-500 font-medium">%</span>
+                <span className="text-slate-500 dark:text-slate-400 font-medium">%</span>
               </div>
             </div>
 
             <div className="border-t pt-6 space-y-2">
               <Label htmlFor="margem_global_max_percent">Margem máxima global (%)</Label>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
                 Define o limite máximo de orçamento: orçamento alvo × (1 + margem%).
               </p>
               <div className="flex items-center gap-3 max-w-xs">
@@ -87,13 +87,13 @@ export default async function ConfiguracoesFinanceiras() {
                   className="text-right"
                   required
                 />
-                <span className="text-slate-500 font-medium">%</span>
+                <span className="text-slate-500 dark:text-slate-400 font-medium">%</span>
               </div>
             </div>
 
             <div className="border-t pt-6 space-y-2">
               <Label htmlFor="desconto_max_percent">Desconto máximo permitido (%)</Label>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
                 Nenhum desconto (global, produto ou componente) pode ultrapassar este valor.
               </p>
               <div className="flex items-center gap-3 max-w-xs">
@@ -108,7 +108,7 @@ export default async function ConfiguracoesFinanceiras() {
                   className="text-right"
                   required
                 />
-                <span className="text-slate-500 font-medium">%</span>
+                <span className="text-slate-500 dark:text-slate-400 font-medium">%</span>
               </div>
             </div>
 
