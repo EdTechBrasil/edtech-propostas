@@ -13,6 +13,7 @@ import {
   Package,
   BarChart3,
   X,
+  FileText,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuth } from '@/hooks/useAuth'
@@ -25,6 +26,12 @@ const navItems = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+    perfis: ['Comercial', 'Gestor', 'ADM'],
+  },
+  {
+    label: 'Propostas',
+    href: '/propostas',
+    icon: FileText,
     perfis: ['Comercial', 'Gestor', 'ADM'],
   },
   {
