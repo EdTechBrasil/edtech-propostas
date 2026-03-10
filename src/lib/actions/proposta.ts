@@ -252,7 +252,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
         const cat = (c.componente as any)?.categoria ?? ''
         const qty = TAPETE_TYPES.has(tc)
           ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
-          : cat === 'Kit'
+          : cat === 'Kit' && tc === 'Fixo'
           ? num_escolas * 5
           : tc === 'PorAlunoXTema'
           ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
@@ -436,7 +436,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
       if (!series_set.has(TAPETE_KEYS[tc])) return 0
       return calcQtd(tc, 0, 0, numEsc, 0, numKits, temasPorSerie)
     }
-    if (categoria === 'Kit') return numEsc * 5
+    if (tc === 'Fixo' && categoria === 'Kit') return numEsc * 5
     if (tc === 'Fixo' && nome) {
       const match = nome.match(/\((\d+)h/)
       if (match) return parseInt(match[1])
