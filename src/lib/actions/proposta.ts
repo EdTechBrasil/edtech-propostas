@@ -250,17 +250,17 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       .map(c => {
         const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
         const cat = (c.componente as any)?.categoria ?? ''
-        const qty = cat === 'Kit'
+        const qty = TAPETE_TYPES.has(tc)
+          ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
+          : cat === 'Kit'
           ? num_escolas * 5
-          : TAPETE_TYPES.has(tc)
-            ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
-            : tc === 'PorAlunoXTema'
-              ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
-              : tc === 'PorAlunoEProfessorXLivroConceitos'
-              ? (num_alunos + num_professores) * num_livros_conceitos
-              : tc === 'PorAlunoEProfessorXLivroPraticas'
-              ? (num_alunos + num_professores) * num_livros_praticas
-              : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
+          : tc === 'PorAlunoXTema'
+          ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
+          : tc === 'PorAlunoEProfessorXLivroConceitos'
+          ? (num_alunos + num_professores) * num_livros_conceitos
+          : tc === 'PorAlunoEProfessorXLivroPraticas'
+          ? (num_alunos + num_professores) * num_livros_praticas
+          : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
         return supabase.from('proposta_componentes')
           .update({ quantidade: qty })
           .eq('id', c.id)
@@ -432,11 +432,11 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     (pubData?.num_alunos_ano9   ?? 0) * (pubData?.num_temas_ano9   ?? 0)
 
   const qtdSugerida = (tc: string, nome?: string, categoria?: string) => {
-    if (categoria === 'Kit') return numEsc * 5
     if (TAPETE_TYPES.has(tc)) {
       if (!series_set.has(TAPETE_KEYS[tc])) return 0
       return calcQtd(tc, 0, 0, numEsc, 0, numKits, temasPorSerie)
     }
+    if (categoria === 'Kit') return numEsc * 5
     if (tc === 'Fixo' && nome) {
       const match = nome.match(/\((\d+)h/)
       if (match) return parseInt(match[1])

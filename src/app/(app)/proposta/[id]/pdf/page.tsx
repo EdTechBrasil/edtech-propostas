@@ -158,7 +158,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {(pp.componentes ?? []).map((c: any) => {
+                    {(pp.componentes ?? []).filter((c: any) => c.quantidade > 0).map((c: any) => {
                       const total = c.quantidade * c.valor_venda_unit * (1 - (c.desconto_percent ?? 0) / 100)
                       return (
                         <tr key={c.id}>
@@ -174,7 +174,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
                         </tr>
                       )
                     })}
-                    {(pp.servicos ?? []).map((s: any) => {
+                    {(pp.servicos ?? []).filter((s: any) => s.quantidade > 0).map((s: any) => {
                       const total = s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100)
                       return (
                         <tr key={s.id} className="bg-blue-50/40">
