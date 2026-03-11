@@ -317,18 +317,9 @@ export function ComponentesCliente({
   // Estado global: todos os items (componentes + serviços) de todos os produtos
   const [items, setItems] = useState<Record<string, ItemState>>(() => {
     const initial: Record<string, ItemState> = {}
-    const seriesSplit0 = (seriesTapetes ?? '').split(',').filter(Boolean)
     for (const pp of produtos) {
       for (const c of pp.componentes) {
-        const tc = c.componente?.tipo_calculo ?? ''
-        let qtd = c.quantidade
-        if (tc === 'PorEscolaXKit' && numEscolas > 0 && numKits > 0) {
-          qtd = numEscolas * numKits
-        } else if (TAPETE_TYPES.has(tc) && (seriesTapetes === null || seriesSplit0.includes(TAPETE_KEYS[tc]))) {
-          const t = temasPorSerie[TAPETE_KEYS[tc]] ?? 0
-          if (t > 0) qtd = TAPETE_MULT[tc] * t * numKits
-        }
-        initial[c.id] = { qtd, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
+        initial[c.id] = { qtd: c.quantidade, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
       }
       for (const s of pp.servicos) {
         initial[s.id] = { qtd: s.quantidade, valor: s.valor_venda_unit || (s.servico?.valor_venda_base ?? 0), custo: s.custo_interno_unit }
