@@ -246,7 +246,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
         const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
         const cat = (c.componente as any)?.categoria ?? ''
         const qty = TAPETE_TYPES.has(tc)
-          ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
+          ? (seriesList.includes(TAPETE_KEYS[tc]) ? TAPETE_MULT[tc] * num_kits : 0)
           : cat === 'Kit' && tc === 'Fixo'
           ? num_escolas * 5
           : tc === 'PorAlunoXTema'
