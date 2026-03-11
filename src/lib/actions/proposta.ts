@@ -9,7 +9,7 @@ import { notificarGestores } from './notificacoes'
 
 const TAPETE_TYPES = new Set(['TapetePreI', 'TapetePreII', 'TapeteAno1', 'TapeteAno2', 'TapeteAno3'])
 const TAPETE_KEYS: Record<string, string> = { TapetePreI: 'PreI', TapetePreII: 'PreII', TapeteAno1: 'Ano1', TapeteAno2: 'Ano2', TapeteAno3: 'Ano3' }
-const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 12, TapeteAno1: 16, TapeteAno2: 16, TapeteAno3: 16 }
+const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 11, TapeteAno1: 16, TapeteAno2: 16, TapeteAno3: 16 }
 
 function calcQtd(
   tipoCalculo: string,
@@ -18,7 +18,6 @@ function calcQtd(
   numEsc: number,
   numTemas: number,
   numKits: number,
-  temasPorSerie: Record<string, number> = {}
 ): number {
   if (tipoCalculo === 'PorProfessor'           && numProf > 0) return numProf
   if (tipoCalculo === 'PorAluno'               && numAlun > 0) return numAlun
@@ -29,8 +28,7 @@ function calcQtd(
   if (tipoCalculo === 'Kit'                    && numEsc  > 0) return numEsc * 5
   if (tipoCalculo === 'PorEscolaXKit'          && numEsc  > 0 && numKits > 0) return numEsc * numKits
   if (TAPETE_TYPES.has(tipoCalculo)) {
-    const t = temasPorSerie[TAPETE_KEYS[tipoCalculo]] ?? 0
-    return t > 0 && numKits > 0 ? TAPETE_MULT[tipoCalculo] * t * numKits : 0
+    return numKits > 0 ? TAPETE_MULT[tipoCalculo] * numKits : 0
   }
   return 1
 }
@@ -199,11 +197,6 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   if (alunos_ano3   > 0) seriesList.push('Ano3')
   const series_tapetes = seriesList.join(',')
 
-  const temasPorSerie: Record<string, number> = {
-    PreI: temas_pre_i, PreII: temas_pre_ii,
-    Ano1: temas_ano1,  Ano2: temas_ano2, Ano3: temas_ano3,
-  }
-
   const publico_descricao = `Escolas: ${num_escolas} | Alunos: ${num_alunos} | Professores: ${num_professores} | Temas: ${num_temas}`
 
   // Busca num_kits atual
@@ -253,7 +246,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
         const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
         const cat = (c.componente as any)?.categoria ?? ''
         const qty = TAPETE_TYPES.has(tc)
-          ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits, temasPorSerie)
+          ? calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
           : cat === 'Kit' && tc === 'Fixo'
           ? num_escolas * 5
           : tc === 'PorAlunoXTema'
@@ -329,13 +322,6 @@ export async function atualizarNumKits(proposta_id: string, num_kits: number) {
 
   const num_escolas = proposta?.num_escolas ?? 0
   const series_set = new Set((proposta?.series_tapetes ?? '').split(',').filter(Boolean))
-  const temasPorSerie: Record<string, number> = {
-    PreI:  proposta?.num_temas_pre_i  ?? 0,
-    PreII: proposta?.num_temas_pre_ii ?? 0,
-    Ano1:  proposta?.num_temas_ano1   ?? 0,
-    Ano2:  proposta?.num_temas_ano2   ?? 0,
-    Ano3:  proposta?.num_temas_ano3   ?? 0,
-  }
   const novaQtd = num_escolas > 0 && num_kits > 0 ? num_escolas * num_kits : 1
 
   await supabase.from('propostas').update({ num_kits }).eq('id', proposta_id)
@@ -353,7 +339,7 @@ export async function atualizarNumKits(proposta_id: string, num_kits: number) {
     .map(c => {
       const tc = (c.componente as any)?.tipo_calculo
       const qty = TAPETE_TYPES.has(tc)
-        ? calcQtd(tc, 0, 0, num_escolas, 0, num_kits, temasPorSerie)
+        ? calcQtd(tc, 0, 0, num_escolas, 0, num_kits)
         : novaQtd
       return supabase.from('proposta_componentes').update({ quantidade: qty }).eq('id', c.id)
     })
@@ -412,13 +398,6 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
   const numTemas = pubData?.num_temas ?? 0
   const numKits  = pubData?.num_kits ?? 5
   const series_set = new Set((pubData?.series_tapetes ?? '').split(',').filter(Boolean))
-  const temasPorSerie: Record<string, number> = {
-    PreI:  pubData?.num_temas_pre_i  ?? 0,
-    PreII: pubData?.num_temas_pre_ii ?? 0,
-    Ano1:  pubData?.num_temas_ano1   ?? 0,
-    Ano2:  pubData?.num_temas_ano2   ?? 0,
-    Ano3:  pubData?.num_temas_ano3   ?? 0,
-  }
   const numLivrosConceitos = pubData?.num_livros_conceitos ?? 1
   const numLivrosPraticas  = pubData?.num_livros_praticas  ?? 0
   const numLivrosGuia      = pubData?.num_livros_guia      ?? 1
@@ -439,7 +418,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
   const qtdSugerida = (tc: string, nome?: string, categoria?: string) => {
     if (TAPETE_TYPES.has(tc)) {
       if (!series_set.has(TAPETE_KEYS[tc])) return 0
-      return calcQtd(tc, 0, 0, numEsc, 0, numKits, temasPorSerie)
+      return calcQtd(tc, 0, 0, numEsc, 0, numKits)
     }
     if (tc === 'Fixo' && categoria === 'Kit') return numEsc * 5
     if (tc === 'Fixo' && nome) {

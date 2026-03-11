@@ -28,7 +28,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 const TAPETE_TYPES = new Set(['TapetePreI', 'TapetePreII', 'TapeteAno1', 'TapeteAno2', 'TapeteAno3'])
 const TAPETE_KEYS: Record<string, string> = { TapetePreI: 'PreI', TapetePreII: 'PreII', TapeteAno1: 'Ano1', TapeteAno2: 'Ano2', TapeteAno3: 'Ano3' }
-const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 12, TapeteAno1: 16, TapeteAno2: 16, TapeteAno3: 16 }
+const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 11, TapeteAno1: 16, TapeteAno2: 16, TapeteAno3: 16 }
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -377,12 +377,11 @@ export function ComponentesCliente({
       const enabled = seriesTapetesState === null || seriesSplit.includes(key)
       const mult = TAPETE_MULT[tipoCalculo]
       if (!enabled) return { text: 'Série não incluída — qtd = 0', type: 'info' }
-      const t = temasPorSerie[key] ?? 0
-      if (t > 0 && numKitsState > 0) {
-        const qty = mult * t * numKitsState
-        return { text: `${mult} × ${t} temas × ${numKitsState} kits = ${qty.toLocaleString('pt-BR')}`, type: 'info' }
+      if (numKitsState > 0) {
+        const qty = mult * numKitsState
+        return { text: `${mult} × ${numKitsState} kits = ${qty.toLocaleString('pt-BR')}`, type: 'info' }
       }
-      return { text: 'Preencha Temas e Kits no Público para calcular', type: 'warn' }
+      return { text: 'Preencha Kits no Público para calcular', type: 'warn' }
     }
     if (tipoCalculo === 'PorProfessorXTema' && numProfessores > 0 && numTemas > 0) {
       const total = numProfessores * numTemas * numLivrosGuia
@@ -502,8 +501,7 @@ export function ComponentesCliente({
                     } else if (TAPETE_TYPES.has(tc)) {
                       const key = TAPETE_KEYS[tc]
                       if (seriesTapetesState === null || seriesSplit.includes(key)) {
-                        const t = temasPorSerie[key] ?? 0
-                        if (t > 0) updateItem(c.id, { qtd: TAPETE_MULT[tc] * t * v })
+                        updateItem(c.id, { qtd: TAPETE_MULT[tc] * v })
                       }
                     }
                   }
