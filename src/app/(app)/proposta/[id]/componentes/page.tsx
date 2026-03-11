@@ -15,7 +15,9 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       id, orcamento_alvo, limite_orcamento_max,
       num_professores, num_alunos, num_escolas, num_temas, num_kits, series_tapetes,
       num_temas_pre_i, num_temas_pre_ii,
-      num_temas_ano1, num_temas_ano2, num_temas_ano3
+      num_temas_ano1, num_temas_ano2, num_temas_ano3,
+      num_alunos_pre_i, num_alunos_pre_ii,
+      num_alunos_ano1, num_alunos_ano2, num_alunos_ano3
     `)
     .eq('id', id)
     .single<{
@@ -33,6 +35,11 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       num_temas_ano1: number
       num_temas_ano2: number
       num_temas_ano3: number
+      num_alunos_pre_i: number
+      num_alunos_pre_ii: number
+      num_alunos_ano1: number
+      num_alunos_ano2: number
+      num_alunos_ano3: number
     }>()
 
   if (!proposta) notFound()
@@ -134,6 +141,13 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
             Ano1:  proposta.num_temas_ano1   ?? 0,
             Ano2:  proposta.num_temas_ano2   ?? 0,
             Ano3:  proposta.num_temas_ano3   ?? 0,
+          }}
+          alunosPorSerie={{
+            PreI:  proposta.num_alunos_pre_i  ?? 0,
+            PreII: proposta.num_alunos_pre_ii ?? 0,
+            Ano1:  proposta.num_alunos_ano1   ?? 0,
+            Ano2:  proposta.num_alunos_ano2   ?? 0,
+            Ano3:  proposta.num_alunos_ano3   ?? 0,
           }}
           produtos={produtosOrdenados as any}
         />

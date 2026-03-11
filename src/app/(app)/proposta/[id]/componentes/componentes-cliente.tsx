@@ -75,6 +75,7 @@ interface Props {
   numKits: number
   seriesTapetes: string | null
   temasPorSerie: Record<string, number>
+  alunosPorSerie: Record<string, number>
   produtos: ProdutoProposta[]
 }
 
@@ -303,6 +304,7 @@ export function ComponentesCliente({
   numKits,
   seriesTapetes,
   temasPorSerie,
+  alunosPorSerie,
   produtos,
 }: Props) {
   const [numKitsState, setNumKitsState] = useState(numKits)
@@ -390,8 +392,23 @@ export function ComponentesCliente({
       return { text: `Sugestão: qtd = nº de alunos (${numAlunos})`, type: 'info' }
     if (tipoCalculo === 'PorEscola' && numEscolas > 0)
       return { text: `Sugestão: qtd = nº de escolas (${numEscolas})`, type: 'info' }
-    if (tipoCalculo === 'PorAlunoXTema' && numAlunos > 0 && numTemas > 0)
-      return { text: `Sugestão: qtd = alunos × temas (${numAlunos} × ${numTemas} = ${numAlunos * numTemas})`, type: 'info' }
+    if (tipoCalculo === 'PorAlunoXTema') {
+      const MPC_SERIES = [
+        { key: 'PreI',  label: 'Pré I'    },
+        { key: 'PreII', label: 'Pré II'   },
+        { key: 'Ano1',  label: '1ª série' },
+        { key: 'Ano2',  label: '2ª série' },
+        { key: 'Ano3',  label: '3ª série' },
+      ]
+      const linhas = MPC_SERIES
+        .map(s => ({ ...s, a: alunosPorSerie[s.key] ?? 0, t: temasPorSerie[s.key] ?? 0 }))
+        .filter(s => s.a > 0 && s.t > 0)
+      if (linhas.length === 0)
+        return { text: 'Qtd estimada — preencha Alunos e Temas no Público', type: 'warn' }
+      const total = linhas.reduce((sum, s) => sum + s.a * s.t, 0)
+      const partes = linhas.map(s => `${s.label}: ${s.a} × ${s.t} = ${s.a * s.t}`).join(' | ')
+      return { text: `${partes} | Total: ${total.toLocaleString('pt-BR')}`, type: 'info' }
+    }
     if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos > 0 || numProfessores > 0) && numTemas > 0)
       return { text: `${(numAlunos * numTemas).toLocaleString('pt-BR')} para Alunos + ${(numProfessores * numTemas).toLocaleString('pt-BR')} para Professores`, type: 'info' }
     if (tipoCalculo === 'PorProfessor' && numProfessores === 0)
@@ -400,8 +417,6 @@ export function ComponentesCliente({
       return { text: `Qtd estimada — preencha Alunos no Público`, type: 'warn' }
     if (tipoCalculo === 'PorEscola' && numEscolas === 0)
       return { text: `Qtd estimada — preencha Escolas no Público`, type: 'warn' }
-    if (tipoCalculo === 'PorAlunoXTema' && (numAlunos === 0 || numTemas === 0))
-      return { text: `Qtd estimada — preencha Alunos e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos === 0 || numTemas === 0))
       return { text: `Qtd estimada — preencha Alunos, Professores e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorEscolaXKit' && numEscolas > 0 && numKitsState > 0)
