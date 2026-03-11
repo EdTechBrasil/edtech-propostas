@@ -380,6 +380,10 @@ export function ComponentesCliente({
       }
       return { text: 'Preencha Temas e Kits no Público para calcular', type: 'warn' }
     }
+    if (tipoCalculo === 'PorProfessorXTema' && numProfessores > 0 && numTemas > 0)
+      return { text: `Sugestão: qtd = professores × temas (${numProfessores} × ${numTemas} = ${numProfessores * numTemas})`, type: 'info' }
+    if (tipoCalculo === 'PorProfessorXTema' && (numProfessores === 0 || numTemas === 0))
+      return { text: `Qtd estimada — preencha Professores e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorProfessor' && numProfessores > 0)
       return { text: `Sugestão: qtd = nº de professores (${numProfessores})`, type: 'info' }
     if (tipoCalculo === 'PorAluno' && numAlunos > 0)
@@ -504,7 +508,6 @@ export function ComponentesCliente({
           const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
           const visibleComponentes = pp.componentes.filter(c => {
             const tc = c.componente?.tipo_calculo ?? ''
-            if (tc === 'PorProfessorXTema') return false
             if (TAPETE_TYPES.has(tc)) {
               if (seriesTapetesState === null) return true
               return seriesSplit.includes(TAPETE_KEYS[tc])
