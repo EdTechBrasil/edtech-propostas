@@ -321,6 +321,7 @@ export async function salvarConfiguracaoPdf(formData: FormData) {
   const logo_url = (formData.get('logo_url') as string) || null
   const rodape_condicoes = (formData.get('rodape_condicoes') as string) || null
   const css_customizado = (formData.get('css_customizado') as string) || null
+  const template_pdf_url = (formData.get('template_pdf_url') as string) || null
 
   const { data: existente } = await adminClient
     .from('configuracao_pdf')
@@ -331,7 +332,7 @@ export async function salvarConfiguracaoPdf(formData: FormData) {
   if (existente) {
     await adminClient
       .from('configuracao_pdf')
-      .update({ empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado })
+      .update({ empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado, template_pdf_url })
       .eq('id', existente.id)
   } else {
     await adminClient
@@ -343,6 +344,7 @@ export async function salvarConfiguracaoPdf(formData: FormData) {
         logo_url,
         rodape_condicoes,
         css_customizado,
+        template_pdf_url,
         ativo: true,
         criado_por_usuario_id: usuario.user?.id,
       })
@@ -369,6 +371,29 @@ export async function uploadLogoPdf(formData: FormData) {
   const { error } = await adminClient.storage
     .from('pdf-assets')
     .upload(filename, buffer, { contentType: file.type, upsert: true })
+
+  if (error) return { error: error.message }
+
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdf-assets/${filename}`
+  return { success: true, url }
+}
+
+export async function uploadTemplatePdf(formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
+  const file = formData.get('file') as File
+  if (!file || file.size === 0) return { error: 'Nenhum arquivo enviado' }
+  if (file.type !== 'application/pdf') return { error: 'Somente arquivos PDF são aceitos' }
+
+  const filename = `template-${Date.now()}.pdf`
+
+  const adminClient = createAdminClient()
+  const buffer = Buffer.from(await file.arrayBuffer())
+
+  const { error } = await adminClient.storage
+    .from('pdf-assets')
+    .upload(filename, buffer, { contentType: 'application/pdf', upsert: true })
 
   if (error) return { error: error.message }
 

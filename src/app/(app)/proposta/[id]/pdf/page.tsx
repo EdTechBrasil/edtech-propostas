@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { formatCurrency } from '@/utils/format'
-import { PrintTrigger, PrintButton, PrintLink } from './print-trigger'
+import { PrintTrigger, PrintButton, PrintLink, PrintTriggerManual } from './print-trigger'
+import { PdfTemplateBackground } from './pdf-template-background'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
@@ -51,7 +52,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
       .eq('proposta_id', id),
     supabase
       .from('configuracao_pdf')
-      .select('empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado')
+      .select('empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado, template_pdf_url')
       .eq('ativo', true)
       .single<{
         empresa_nome: string
@@ -60,6 +61,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         logo_url: string | null
         rodape_condicoes: string | null
         css_customizado: string | null
+        template_pdf_url: string | null
       }>(),
   ])
 
@@ -110,11 +112,22 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
             Voltar
           </Button>
         </Link>
-        <span className="text-sm text-slate-400 flex-1">
-          O PDF será aberto automaticamente. Se não abrir,{' '}
-          <PrintLink />.
-        </span>
-        <PrintButton />
+        {configPdf?.template_pdf_url ? (
+          <div className="flex-1 flex items-center justify-between">
+            <span className="text-sm text-slate-400">
+              Aguarde o template carregar para imprimir.
+            </span>
+            <PrintTriggerManual />
+          </div>
+        ) : (
+          <>
+            <span className="text-sm text-slate-400 flex-1">
+              O PDF será aberto automaticamente. Se não abrir,{' '}
+              <PrintLink />.
+            </span>
+            <PrintButton />
+          </>
+        )}
       </div>
 
       {/* PDF Content */}
@@ -262,7 +275,11 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
 
       </div>
 
-      <PrintTrigger />
+      {configPdf?.template_pdf_url ? (
+        <PdfTemplateBackground url={configPdf.template_pdf_url} />
+      ) : (
+        <PrintTrigger />
+      )}
     </>
   )
 }

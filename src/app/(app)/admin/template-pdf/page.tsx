@@ -11,7 +11,7 @@ export default async function TemplatePdfPage() {
 
   const { data: config } = await adminClient
     .from('configuracao_pdf')
-    .select('empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado')
+    .select('empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado, template_pdf_url')
     .eq('ativo', true)
     .single<{
       empresa_nome: string
@@ -20,6 +20,7 @@ export default async function TemplatePdfPage() {
       logo_url: string | null
       rodape_condicoes: string | null
       css_customizado: string | null
+      template_pdf_url: string | null
     }>()
 
   // Busca uma proposta Pronta_pdf para o botão de exemplo
