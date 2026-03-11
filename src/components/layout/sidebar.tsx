@@ -13,6 +13,7 @@ import {
   BarChart3,
   X,
   FileText,
+  FileImage,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuth } from '@/hooks/useAuth'
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { label: 'Usuários',     href: '/admin/usuarios',     icon: Users,           perfis: ['ADM'], group: 'Admin' },
   { label: 'Produtos',      href: '/admin/produtos',     icon: Package,         perfis: ['ADM'], group: 'Admin' },
   { label: 'Configurações', href: '/admin/configuracoes', icon: Settings,       perfis: ['ADM'], group: 'Admin' },
+  { label: 'Template PDF',  href: '/admin/template-pdf',  icon: FileImage,      perfis: ['ADM'], group: 'Admin' },
 ]
 
 function getIniciais(nome?: string | null) {

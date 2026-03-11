@@ -14,6 +14,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
     { data: proposta },
     { data: financeiro },
     { data: produtos },
+    { data: configPdf },
   ] = await Promise.all([
     supabase
       .from('propostas')
@@ -48,6 +49,18 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         )
       `)
       .eq('proposta_id', id),
+    supabase
+      .from('configuracao_pdf')
+      .select('empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado')
+      .eq('ativo', true)
+      .single<{
+        empresa_nome: string
+        proposta_titulo: string
+        proposta_subtitulo: string
+        logo_url: string | null
+        rodape_condicoes: string | null
+        css_customizado: string | null
+      }>(),
   ])
 
   if (!proposta || proposta.status !== 'Pronta_pdf') notFound()
@@ -85,6 +98,9 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
           margin: 20mm 18mm;
         }
       `}</style>
+      {configPdf?.css_customizado && (
+        <style>{configPdf.css_customizado}</style>
+      )}
 
       {/* Toolbar (hidden on print) */}
       <div className="no-print flex items-center gap-3 p-4 border-b bg-slate-50 print:hidden">
@@ -107,8 +123,16 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         {/* Header */}
         <div className="flex items-start justify-between mb-8 pb-6 border-b-2 border-slate-800">
           <div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">PROPOSTA COMERCIAL</div>
-            <div className="text-sm text-slate-500 mt-1">Solução em Tecnologia Educacional</div>
+            {configPdf?.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={configPdf.logo_url} alt={configPdf.empresa_nome} className="h-12 object-contain mb-2" />
+            ) : null}
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">
+              {configPdf?.proposta_titulo ?? 'PROPOSTA COMERCIAL'}
+            </div>
+            <div className="text-sm text-slate-500 mt-1">
+              {configPdf?.proposta_subtitulo ?? 'Solução em Tecnologia Educacional'}
+            </div>
           </div>
           <div className="text-right text-sm text-slate-500 space-y-0.5">
             <div>Emissão: <span className="font-medium text-slate-700">{dataEmissao}</span></div>
@@ -225,7 +249,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
           <div className="grid grid-cols-2 gap-8 text-xs text-slate-400">
             <div>
               <p className="font-semibold text-slate-600 mb-1">Condições gerais</p>
-              <p>Proposta válida até {dataValidade}. Valores sujeitos a revisão após o prazo de validade. Impostos não incluídos.</p>
+              <p>{configPdf?.rodape_condicoes ?? `Proposta válida até ${dataValidade}. Valores sujeitos a revisão após o prazo de validade. Impostos não incluídos.`}</p>
             </div>
             <div className="text-right">
               <div className="mt-8 border-t border-slate-300 pt-2">

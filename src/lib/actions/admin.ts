@@ -305,6 +305,77 @@ export async function atualizarValorServico(id: string, valor_venda_base: number
   revalidatePath('/admin/produtos')
 }
 
+// ── Configuração PDF ──────────────────────────────────────────────────────────
+
+export async function salvarConfiguracaoPdf(formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) redirect('/dashboard')
+
+  const adminClient = createAdminClient()
+
+  const { data: usuario } = await adminClient.auth.getUser()
+
+  const empresa_nome = formData.get('empresa_nome') as string
+  const proposta_titulo = formData.get('proposta_titulo') as string
+  const proposta_subtitulo = formData.get('proposta_subtitulo') as string
+  const logo_url = (formData.get('logo_url') as string) || null
+  const rodape_condicoes = (formData.get('rodape_condicoes') as string) || null
+  const css_customizado = (formData.get('css_customizado') as string) || null
+
+  const { data: existente } = await adminClient
+    .from('configuracao_pdf')
+    .select('id')
+    .eq('ativo', true)
+    .single<{ id: string }>()
+
+  if (existente) {
+    await adminClient
+      .from('configuracao_pdf')
+      .update({ empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado })
+      .eq('id', existente.id)
+  } else {
+    await adminClient
+      .from('configuracao_pdf')
+      .insert({
+        empresa_nome,
+        proposta_titulo,
+        proposta_subtitulo,
+        logo_url,
+        rodape_condicoes,
+        css_customizado,
+        ativo: true,
+        criado_por_usuario_id: usuario.user?.id,
+      })
+  }
+
+  revalidatePath('/admin/template-pdf')
+  revalidatePath('/proposta')
+  return { success: true }
+}
+
+export async function uploadLogoPdf(formData: FormData) {
+  const err = await assertPerfil('ADM')
+  if (err) return { error: err }
+
+  const file = formData.get('file') as File
+  if (!file || file.size === 0) return { error: 'Nenhum arquivo enviado' }
+
+  const ext = file.name.split('.').pop()
+  const filename = `logo-${Date.now()}.${ext}`
+
+  const adminClient = createAdminClient()
+  const buffer = Buffer.from(await file.arrayBuffer())
+
+  const { error } = await adminClient.storage
+    .from('pdf-assets')
+    .upload(filename, buffer, { contentType: file.type, upsert: true })
+
+  if (error) return { error: error.message }
+
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdf-assets/${filename}`
+  return { success: true, url }
+}
+
 // ── Reordenar produtos (drag-and-drop) ────────────────────────────────────────
 
 export async function reordenarProdutos(updates: { id: string; ordem: number }[]) {
