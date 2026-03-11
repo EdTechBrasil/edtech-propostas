@@ -20,7 +20,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
         num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
         num_temas_ano4, num_temas_ano5, num_temas_ano6,
         num_temas_ano7, num_temas_ano8, num_temas_ano9,
-        num_livros_conceitos, num_livros_praticas
+        num_livros_conceitos, num_livros_praticas, num_livros_guia
       `)
       .eq('id', id)
       .single<{
@@ -55,6 +55,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
         num_temas_ano9: number
         num_livros_conceitos: number
         num_livros_praticas: number
+        num_livros_guia: number
       }>(),
     supabase
       .from('proposta_produtos')

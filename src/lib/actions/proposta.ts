@@ -167,6 +167,8 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   // Edtech IA: livros de conceitos (1–4) e práticas (0–2)
   const num_livros_conceitos = hasEdtechIA ? Math.min(4, Math.max(1, Number(formData.get('livros_conceitos') || 1))) : 0
   const num_livros_praticas  = hasEdtechIA ? Math.min(2, Math.max(0, Number(formData.get('livros_praticas')  || 0))) : 0
+  // MPC: volumes do Guia do Professor (≥ 1)
+  const num_livros_guia = Math.max(1, Number(formData.get('livros_guia') || 1))
 
   let num_alunos: number, num_temas: number
   if (hasSeriesData) {
@@ -224,7 +226,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       num_alunos_ano7: alunos_ano7, num_alunos_ano8: alunos_ano8, num_alunos_ano9: alunos_ano9,
       num_temas_ano4: temas_ano4, num_temas_ano5: temas_ano5, num_temas_ano6: temas_ano6,
       num_temas_ano7: temas_ano7, num_temas_ano8: temas_ano8, num_temas_ano9: temas_ano9,
-      num_livros_conceitos, num_livros_praticas,
+      num_livros_conceitos, num_livros_praticas, num_livros_guia,
     })
     .eq('id', proposta_id)
 
@@ -260,6 +262,8 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
           ? (num_alunos + num_professores) * num_livros_conceitos
           : tc === 'PorAlunoEProfessorXLivroPraticas'
           ? (num_alunos + num_professores) * num_livros_praticas
+          : tc === 'PorProfessorXTema'
+          ? num_professores * num_temas * num_livros_guia
           : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
         return supabase.from('proposta_componentes')
           .update({ quantidade: qty })
@@ -385,7 +389,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
       num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3,
       num_alunos_ano4, num_alunos_ano5, num_alunos_ano6, num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
       num_temas_ano4, num_temas_ano5, num_temas_ano6, num_temas_ano7, num_temas_ano8, num_temas_ano9,
-      num_livros_conceitos, num_livros_praticas
+      num_livros_conceitos, num_livros_praticas, num_livros_guia
     `)
     .eq('id', proposta_id)
     .single<{
@@ -399,7 +403,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
       num_alunos_ano7: number; num_alunos_ano8: number; num_alunos_ano9: number
       num_temas_ano4: number; num_temas_ano5: number; num_temas_ano6: number
       num_temas_ano7: number; num_temas_ano8: number; num_temas_ano9: number
-      num_livros_conceitos: number; num_livros_praticas: number
+      num_livros_conceitos: number; num_livros_praticas: number; num_livros_guia: number
     }>()
 
   const numProf  = pubData?.num_professores ?? 0
@@ -417,6 +421,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
   }
   const numLivrosConceitos = pubData?.num_livros_conceitos ?? 1
   const numLivrosPraticas  = pubData?.num_livros_praticas  ?? 0
+  const numLivrosGuia      = pubData?.num_livros_guia      ?? 1
 
   const totalAlunoXTema =
     (pubData?.num_alunos_pre_i  ?? 0) * (pubData?.num_temas_pre_i  ?? 0) +
@@ -442,6 +447,7 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
       if (match) return parseInt(match[1])
     }
     if (tc === 'PorAlunoXTema') return totalAlunoXTema > 0 ? totalAlunoXTema : numAlun * numTemas
+    if (tc === 'PorProfessorXTema') return numProf * numTemas * numLivrosGuia
     if (tc === 'PorAlunoEProfessorXLivroConceitos') return (numAlun + numProf) * numLivrosConceitos
     if (tc === 'PorAlunoEProfessorXLivroPraticas')  return (numAlun + numProf) * numLivrosPraticas
     return calcQtd(tc, numProf, numAlun, numEsc, numTemas, numKits)
@@ -720,7 +726,7 @@ export async function duplicarProposta(proposta_id: string) {
       num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3,
       num_alunos_ano4, num_alunos_ano5, num_alunos_ano6, num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
       num_temas_ano4, num_temas_ano5, num_temas_ano6, num_temas_ano7, num_temas_ano8, num_temas_ano9,
-      num_livros_conceitos, num_livros_praticas
+      num_livros_conceitos, num_livros_praticas, num_livros_guia
     `)
     .eq('id', proposta_id)
     .single<any>()
@@ -767,6 +773,7 @@ export async function duplicarProposta(proposta_id: string) {
       num_temas_ano9: original.num_temas_ano9,
       num_livros_conceitos: original.num_livros_conceitos,
       num_livros_praticas: original.num_livros_praticas,
+      num_livros_guia: original.num_livros_guia,
       status: 'Rascunho',
     })
     .select('id')

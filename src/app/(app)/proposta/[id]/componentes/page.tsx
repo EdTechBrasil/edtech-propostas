@@ -17,7 +17,8 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       num_temas_pre_i, num_temas_pre_ii,
       num_temas_ano1, num_temas_ano2, num_temas_ano3,
       num_alunos_pre_i, num_alunos_pre_ii,
-      num_alunos_ano1, num_alunos_ano2, num_alunos_ano3
+      num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
+      num_livros_guia
     `)
     .eq('id', id)
     .single<{
@@ -40,6 +41,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       num_alunos_ano1: number
       num_alunos_ano2: number
       num_alunos_ano3: number
+      num_livros_guia: number
     }>()
 
   if (!proposta) notFound()
@@ -149,6 +151,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
             Ano2:  proposta.num_alunos_ano2   ?? 0,
             Ano3:  proposta.num_alunos_ano3   ?? 0,
           }}
+          numLivrosGuia={proposta.num_livros_guia ?? 1}
           produtos={produtosOrdenados as any}
         />
       )}

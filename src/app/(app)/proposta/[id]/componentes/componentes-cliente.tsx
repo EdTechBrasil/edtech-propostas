@@ -76,6 +76,7 @@ interface Props {
   seriesTapetes: string | null
   temasPorSerie: Record<string, number>
   alunosPorSerie: Record<string, number>
+  numLivrosGuia: number
   produtos: ProdutoProposta[]
 }
 
@@ -305,6 +306,7 @@ export function ComponentesCliente({
   seriesTapetes,
   temasPorSerie,
   alunosPorSerie,
+  numLivrosGuia,
   produtos,
 }: Props) {
   const [numKitsState, setNumKitsState] = useState(numKits)
@@ -382,8 +384,10 @@ export function ComponentesCliente({
       }
       return { text: 'Preencha Temas e Kits no Público para calcular', type: 'warn' }
     }
-    if (tipoCalculo === 'PorProfessorXTema' && numProfessores > 0 && numTemas > 0)
-      return { text: `Sugestão: qtd = professores × temas (${numProfessores} × ${numTemas} = ${numProfessores * numTemas})`, type: 'info' }
+    if (tipoCalculo === 'PorProfessorXTema' && numProfessores > 0 && numTemas > 0) {
+      const total = numProfessores * numTemas * numLivrosGuia
+      return { text: `${numProfessores} prof × ${numTemas} temas × ${numLivrosGuia} vol = ${total.toLocaleString('pt-BR')}`, type: 'info' }
+    }
     if (tipoCalculo === 'PorProfessorXTema' && (numProfessores === 0 || numTemas === 0))
       return { text: `Qtd estimada — preencha Professores e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorProfessor' && numProfessores > 0)

@@ -76,6 +76,7 @@ interface Proposta {
   num_temas_ano9: number
   num_livros_conceitos: number
   num_livros_praticas: number
+  num_livros_guia: number
 }
 
 function alunosField(p: Proposta, key: string): number {
@@ -149,6 +150,7 @@ export function PublicoCliente({
 
   const [livrosConceitos, setLivrosConceitos] = useState(proposta.num_livros_conceitos || 1)
   const [livrosPraticas,  setLivrosPraticas]  = useState(proposta.num_livros_praticas  || 0)
+  const [livrosGuia,      setLivrosGuia]      = useState(proposta.num_livros_guia      || 1)
 
   const orcamentoInfo = proposta.orcamento_alvo > 0 ? (
     <>
@@ -198,6 +200,8 @@ export function PublicoCliente({
                 <input type="hidden" name={`temas_${s.key}`}  value="0" />
               </span>
             ))}
+            {/* livros_guia: enviado pelo input quando temMPC, senão padrão 1 */}
+            {!temMPC && <input type="hidden" name="livros_guia" value="1" />}
 
             {/* Escolas + Professores (shared) */}
             <Card>
@@ -322,6 +326,25 @@ export function PublicoCliente({
                             <span className="text-xs text-slate-400">máx {s.maxTemas}</span>
                           </div>
                         ))}
+                      </div>
+                      <hr className="border-slate-100" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-slate-700">Guia do Professor</p>
+                        <div className="flex items-center gap-3">
+                          <Label htmlFor="livros_guia" className="text-sm text-slate-500 whitespace-nowrap">
+                            Volumes do Guia:
+                          </Label>
+                          <Input
+                            id="livros_guia"
+                            name="livros_guia"
+                            type="number"
+                            min="1"
+                            className="w-20 h-8"
+                            value={livrosGuia}
+                            onChange={e => setLivrosGuia(Math.max(1, Number(e.target.value) || 1))}
+                          />
+                          <span className="text-xs text-slate-400">qtd = professores × temas × volumes</span>
+                        </div>
                       </div>
                     </>
                   )}
@@ -642,6 +665,7 @@ export function PublicoCliente({
             ))}
             <input type="hidden" name="livros_conceitos" value="0" />
             <input type="hidden" name="livros_praticas"  value="0" />
+            <input type="hidden" name="livros_guia"      value="1" />
 
             <Card>
               <CardHeader>
