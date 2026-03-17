@@ -6,7 +6,7 @@ export default async function PropostaOrcamentoPage() {
 
   const { data: produtos } = await supabase
     .from('produtos')
-    .select('id, nome, tipo, descricao')
+    .select('id, nome, tipo, descricao, prioridade_padrao')
     .eq('ativo', true)
     .order('nome')
 

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { gerarPropostaOrcamento } from '@/lib/actions/proposta'
+import { gerarPropostaOrcamento, atualizarPrioridadePadrao } from '@/lib/actions/proposta'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,7 @@ type Produto = {
   nome: string
   tipo: string | null
   descricao: string | null
+  prioridade_padrao: number
 }
 
 type Segmento = {
@@ -85,7 +86,7 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
   // Step 2
   const [projetos, setProjetos] = useState<Record<string, ProjetoConfig>>(
     Object.fromEntries(
-      produtos.map(p => [p.id, { incluir: true, obrigatorio: false, prioridade: 3, cobertura_minima: 0 }])
+      produtos.map(p => [p.id, { incluir: true, obrigatorio: false, prioridade: p.prioridade_padrao ?? 3, cobertura_minima: 0 }])
     )
   )
 
@@ -420,6 +421,7 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
                                 max={5}
                                 value={cfg.prioridade}
                                 onChange={e => updateProjeto(produto.id, 'prioridade', Math.min(5, Math.max(1, parseInt(e.target.value) || 3)))}
+                                onBlur={() => atualizarPrioridadePadrao(produto.id, cfg.prioridade)}
                                 className="w-16 h-8 text-sm"
                               />
                             </div>

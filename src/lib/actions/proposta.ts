@@ -876,6 +876,13 @@ export async function reordenarProdutos(updates: { id: string; ordem: number }[]
   )
 }
 
+// ── Atualizar prioridade padrão de produto ────────────────────────────────────
+
+export async function atualizarPrioridadePadrao(produto_id: string, prioridade: number) {
+  const supabase = await createClient()
+  await supabase.from('produtos').update({ prioridade_padrao: prioridade }).eq('id', produto_id)
+}
+
 // ── Reordenar catálogo (componentes / serviços) ───────────────────────────────
 
 export async function reordenarCatalogo(
