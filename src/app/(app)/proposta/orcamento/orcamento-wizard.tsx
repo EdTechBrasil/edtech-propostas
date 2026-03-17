@@ -49,6 +49,7 @@ const BADGE_COLORS: Record<string, string> = {
   'IA': 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
   'Gamificação': 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
   'Robótica': 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+  'Socioemocional': 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
   'EJA': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
   'ENEM': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
   'Redação': 'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300',
