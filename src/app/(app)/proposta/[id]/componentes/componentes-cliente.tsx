@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { atualizarComponente, atualizarServico, atualizarNumKits, reordenarCatalogo } from '@/lib/actions/proposta'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/utils/format'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
@@ -309,6 +311,8 @@ export function ComponentesCliente({
   numLivrosGuia,
   produtos,
 }: Props) {
+  const router = useRouter()
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [numKitsState, setNumKitsState] = useState(numKits)
   const [kitsInput, setKitsInput] = useState(String(numKits))
   const [, startKitsTransition] = useTransition()
@@ -520,152 +524,197 @@ export function ComponentesCliente({
         </div>
       )}
 
-      <div className="space-y-6">
-        {produtos.map(pp => {
-          const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
-          const visibleComponentes = pp.componentes.filter(c => {
-            const tc = c.componente?.tipo_calculo ?? ''
-            if (TAPETE_TYPES.has(tc)) {
-              if (seriesTapetesState === null) return true
-              return seriesSplit.includes(TAPETE_KEYS[tc])
-            }
-            return true
+      {(() => {
+        // Pre-compute valid products (those with at least one visible item)
+        const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
+        const produtosValidos = produtos
+          .map(pp => {
+            const visibleComponentes = pp.componentes.filter(c => {
+              const tc = c.componente?.tipo_calculo ?? ''
+              if (TAPETE_TYPES.has(tc)) {
+                if (seriesTapetesState === null) return true
+                return seriesSplit.includes(TAPETE_KEYS[tc])
+              }
+              return true
+            })
+            if (visibleComponentes.length === 0 && pp.servicos.length === 0) return null
+            return { pp, visibleComponentes }
           })
-          if (visibleComponentes.length === 0 && pp.servicos.length === 0) return null
+          .filter((x): x is { pp: ProdutoProposta; visibleComponentes: Componente[] } => x !== null)
 
-          const countLivrosPAEPT = visibleComponentes.filter(
-            c => c.componente?.tipo_calculo === 'PorAlunoEProfessorXTema'
-          ).length
+        if (produtosValidos.length === 0) return null
 
-          const subtitleLivros = (() => {
-            if (countLivrosPAEPT === 0 || numTemas === 0 || (numAlunos + numProfessores) === 0) return null
-            const totAlun = numAlunos * numTemas * countLivrosPAEPT
-            const totProf = numProfessores * numTemas * countLivrosPAEPT
-            const total = totAlun + totProf
-            const fmt = (n: number) => n.toLocaleString('pt-BR')
-            return `${fmt(total)} livros (${fmt(totAlun)} alunos + ${fmt(totProf)} professores)`
-          })()
+        const safeIndex = Math.min(currentIndex, produtosValidos.length - 1)
+        const { pp, visibleComponentes } = produtosValidos[safeIndex]
 
-          // Reorder visibleComponentes by componenteOrdens
-          const compIds = componenteOrdens[pp.id]
-          const orderedComps = compIds
-            ? [...visibleComponentes].sort((a, b) => {
-                const ai = compIds.indexOf(a.componente?.id ?? '')
-                const bi = compIds.indexOf(b.componente?.id ?? '')
-                return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
-              })
-            : visibleComponentes
+        const countLivrosPAEPT = visibleComponentes.filter(
+          c => c.componente?.tipo_calculo === 'PorAlunoEProfessorXTema'
+        ).length
 
-          // Reorder servicos by servicoOrdens
-          const servIds = servicoOrdens[pp.id]
-          const orderedServicos = servIds
-            ? [...pp.servicos].sort((a, b) => {
-                const ai = servIds.indexOf(a.servico?.id ?? '')
-                const bi = servIds.indexOf(b.servico?.id ?? '')
-                return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
-              })
-            : pp.servicos
+        const subtitleLivros = (() => {
+          if (countLivrosPAEPT === 0 || numTemas === 0 || (numAlunos + numProfessores) === 0) return null
+          const totAlun = numAlunos * numTemas * countLivrosPAEPT
+          const totProf = numProfessores * numTemas * countLivrosPAEPT
+          const total = totAlun + totProf
+          const fmt = (n: number) => n.toLocaleString('pt-BR')
+          return `${fmt(total)} livros (${fmt(totAlun)} alunos + ${fmt(totProf)} professores)`
+        })()
 
-          return (
-            <Card key={pp.id}>
-              <CardHeader className="pb-3">
+        const compIds = componenteOrdens[pp.id]
+        const orderedComps = compIds
+          ? [...visibleComponentes].sort((a, b) => {
+              const ai = compIds.indexOf(a.componente?.id ?? '')
+              const bi = compIds.indexOf(b.componente?.id ?? '')
+              return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+            })
+          : visibleComponentes
+
+        const servIds = servicoOrdens[pp.id]
+        const orderedServicos = servIds
+          ? [...pp.servicos].sort((a, b) => {
+              const ai = servIds.indexOf(a.servico?.id ?? '')
+              const bi = servIds.indexOf(b.servico?.id ?? '')
+              return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+            })
+          : pp.servicos
+
+        return (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <CardTitle className="text-base flex items-center gap-2 flex-wrap">
                   {pp.produto?.nome}
                   <Badge variant="secondary" className="text-xs font-normal">
                     {visibleComponentes.length + pp.servicos.length} itens
                   </Badge>
                 </CardTitle>
-                {subtitleLivros && (
-                  <p className="text-sm text-slate-500 mt-0.5">{subtitleLivros}</p>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center text-xs text-slate-400 pb-2 gap-3">
-                  <span className="w-5 flex-shrink-0" />
-                  <span className="flex-1">Item</span>
-                  <span className="w-20 text-center">Qtd</span>
-                  <span className="w-28 text-center">Venda unit.</span>
-                  <span className="w-24 text-right">Total venda</span>
-                  <span className="w-14 text-right">Margem</span>
+                <span className="text-sm text-slate-400 flex-shrink-0">
+                  {safeIndex + 1} / {produtosValidos.length}
+                </span>
+              </div>
+              {subtitleLivros && (
+                <p className="text-sm text-slate-500 mt-0.5">{subtitleLivros}</p>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center text-xs text-slate-400 pb-2 gap-3">
+                <span className="w-5 flex-shrink-0" />
+                <span className="flex-1">Item</span>
+                <span className="w-20 text-center">Qtd</span>
+                <span className="w-28 text-center">Venda unit.</span>
+                <span className="w-24 text-right">Total venda</span>
+                <span className="w-14 text-right">Margem</span>
+              </div>
+
+              {orderedComps.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Componentes</p>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={e => handleDragEndComponentes(pp.id, visibleComponentes, e)}
+                  >
+                    <SortableContext
+                      items={orderedComps.map(c => c.componente?.id ?? c.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {orderedComps.map(c => {
+                        const state = items[c.id] ?? { qtd: c.quantidade, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
+                        const tipoCalculo = c.componente?.tipo_calculo ?? ''
+                        const sortableId = c.componente?.id ?? c.id
+                        return (
+                          <SortableItemRow
+                            key={c.id}
+                            sortableId={sortableId}
+                            nome={c.componente?.nome ?? '—'}
+                            categoria={c.componente?.categoria}
+                            qtd={state.qtd}
+                            valor={state.valor}
+                            custo={state.custo}
+                            hint={getHint(tipoCalculo)}
+                            onQtdChange={v => updateItem(c.id, { qtd: v })}
+                            onValorChange={v => updateItem(c.id, { valor: v })}
+                            onSave={() => atualizarComponente(c.id, propostaId, state.qtd, state.valor)}
+                          />
+                        )
+                      })}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+              )}
+
+              {orderedServicos.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-3">Serviços</p>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={e => handleDragEndServicos(pp.id, pp.servicos, e)}
+                  >
+                    <SortableContext
+                      items={orderedServicos.map(s => s.servico?.id ?? s.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {orderedServicos.map(s => {
+                        const state = items[s.id] ?? { qtd: s.quantidade, valor: s.valor_venda_unit, custo: s.custo_interno_unit }
+                        const tipoCalculo = s.servico?.tipo_calculo ?? ''
+                        const sortableId = s.servico?.id ?? s.id
+                        return (
+                          <SortableItemRow
+                            key={s.id}
+                            sortableId={sortableId}
+                            nome={s.servico?.nome ?? '—'}
+                            qtd={state.qtd}
+                            valor={state.valor}
+                            custo={state.custo}
+                            hint={getHint(tipoCalculo)}
+                            onQtdChange={v => updateItem(s.id, { qtd: v })}
+                            onValorChange={v => updateItem(s.id, { valor: v })}
+                            onSave={() => atualizarServico(s.id, propostaId, state.qtd, state.valor)}
+                          />
+                        )
+                      })}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+              )}
+
+              {/* Navigation footer */}
+              <div className="flex items-center justify-between pt-4 mt-4 border-t">
+                <Button
+                  variant="outline"
+                  disabled={safeIndex === 0}
+                  onClick={() => setCurrentIndex(i => i - 1)}
+                >
+                  ← Anterior
+                </Button>
+
+                <div className="flex gap-1">
+                  {produtosValidos.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentIndex(i)}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        i === safeIndex ? 'bg-primary' : 'bg-slate-200 hover:bg-slate-300'
+                      }`}
+                    />
+                  ))}
                 </div>
 
-                {orderedComps.length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Componentes</p>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={e => handleDragEndComponentes(pp.id, visibleComponentes, e)}
-                    >
-                      <SortableContext
-                        items={orderedComps.map(c => c.componente?.id ?? c.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {orderedComps.map(c => {
-                          const state = items[c.id] ?? { qtd: c.quantidade, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
-                          const tipoCalculo = c.componente?.tipo_calculo ?? ''
-                          const sortableId = c.componente?.id ?? c.id
-                          return (
-                            <SortableItemRow
-                              key={c.id}
-                              sortableId={sortableId}
-                              nome={c.componente?.nome ?? '—'}
-                              categoria={c.componente?.categoria}
-                              qtd={state.qtd}
-                              valor={state.valor}
-                              custo={state.custo}
-                              hint={getHint(tipoCalculo)}
-                              onQtdChange={v => updateItem(c.id, { qtd: v })}
-                              onValorChange={v => updateItem(c.id, { valor: v })}
-                              onSave={() => atualizarComponente(c.id, propostaId, state.qtd, state.valor)}
-                            />
-                          )
-                        })}
-                      </SortableContext>
-                    </DndContext>
-                  </div>
+                {safeIndex < produtosValidos.length - 1 ? (
+                  <Button onClick={() => setCurrentIndex(i => i + 1)}>
+                    Próximo →
+                  </Button>
+                ) : (
+                  <Button onClick={() => router.push(`/proposta/${propostaId}/descontos`)}>
+                    Continuar →
+                  </Button>
                 )}
-
-                {orderedServicos.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-3">Serviços</p>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={e => handleDragEndServicos(pp.id, pp.servicos, e)}
-                    >
-                      <SortableContext
-                        items={orderedServicos.map(s => s.servico?.id ?? s.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {orderedServicos.map(s => {
-                          const state = items[s.id] ?? { qtd: s.quantidade, valor: s.valor_venda_unit, custo: s.custo_interno_unit }
-                          const tipoCalculo = s.servico?.tipo_calculo ?? ''
-                          const sortableId = s.servico?.id ?? s.id
-                          return (
-                            <SortableItemRow
-                              key={s.id}
-                              sortableId={sortableId}
-                              nome={s.servico?.nome ?? '—'}
-                              qtd={state.qtd}
-                              valor={state.valor}
-                              custo={state.custo}
-                              hint={getHint(tipoCalculo)}
-                              onQtdChange={v => updateItem(s.id, { qtd: v })}
-                              onValorChange={v => updateItem(s.id, { valor: v })}
-                              onSave={() => atualizarServico(s.id, propostaId, state.qtd, state.valor)}
-                            />
-                          )
-                        })}
-                      </SortableContext>
-                    </DndContext>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })()}
 
     </div>
   )

@@ -156,12 +156,9 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
         />
       )}
 
-      <div className="flex justify-between mt-6">
+      <div className="flex mt-6">
         <Link href={`/proposta/${id}/produtos`}>
           <Button variant="outline">← Voltar</Button>
-        </Link>
-        <Link href={`/proposta/${id}/descontos`}>
-          <Button>Continuar →</Button>
         </Link>
       </div>
     </div>
