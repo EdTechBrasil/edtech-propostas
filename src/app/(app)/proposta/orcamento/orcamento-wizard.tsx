@@ -18,6 +18,15 @@ type Produto = {
   tipo: string | null
   descricao: string | null
   prioridade_padrao: number
+  series_atendidas: string[]
+}
+
+const SEGMENTO_SERIES: Record<string, string[]> = {
+  educacaoInfantil: ['creche', 'pre_i', 'pre_ii'],
+  anosIniciais:     ['ano1', 'ano2', 'ano3', 'ano4', 'ano5'],
+  anosFinais:       ['ano6', 'ano7', 'ano8', 'ano9'],
+  ensinoMedio:      ['em'],
+  eja:              ['eja'],
 }
 
 type Segmento = {
@@ -71,10 +80,11 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
   const [tolerancia, setTolerancia] = useState('2')
   const [objetivo, setObjetivo] = useState('BaterOrcamento')
   const [segmentos, setSegmentos] = useState<Record<string, Segmento>>({
-    anosIniciais: { ativo: false, escolas: '', alunos: '', professores: '' },
-    anosFinais:   { ativo: false, escolas: '', alunos: '', professores: '' },
-    ensinoMedio:  { ativo: false, escolas: '', alunos: '', professores: '' },
-    eja:          { ativo: false, escolas: '', alunos: '', professores: '' },
+    educacaoInfantil: { ativo: false, escolas: '', alunos: '', professores: '' },
+    anosIniciais:     { ativo: false, escolas: '', alunos: '', professores: '' },
+    anosFinais:       { ativo: false, escolas: '', alunos: '', professores: '' },
+    ensinoMedio:      { ativo: false, escolas: '', alunos: '', professores: '' },
+    eja:              { ativo: false, escolas: '', alunos: '', professores: '' },
   })
   const [formPresMin, setFormPresMin] = useState('')
   const [formPresMax, setFormPresMax] = useState('')
@@ -91,10 +101,11 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
   )
 
   const segmentosLabel: Record<string, string> = {
-    anosIniciais: 'Anos Iniciais (1º–5º)',
-    anosFinais:   'Anos Finais (6º–9º)',
-    ensinoMedio:  'Ensino Médio',
-    eja:          'EJA',
+    educacaoInfantil: 'Educação Infantil (Creche–Pré II)',
+    anosIniciais:     'Anos Iniciais (1º–5º)',
+    anosFinais:       'Anos Finais (6º–9º)',
+    ensinoMedio:      'Ensino Médio',
+    eja:              'EJA',
   }
 
   function updateSegmento(key: string, field: keyof Segmento, value: boolean | string) {
@@ -329,7 +340,20 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
           <div className="flex justify-end">
             <Button
               size="lg"
-              onClick={() => setStep(2)}
+              onClick={() => {
+                const activeSeries = Object.entries(segmentos)
+                  .filter(([, s]) => s.ativo)
+                  .flatMap(([seg]) => SEGMENTO_SERIES[seg] ?? [])
+                setProjetos(prev => {
+                  const updated = { ...prev }
+                  for (const p of produtos) {
+                    if (p.series_atendidas.length === 0) continue
+                    updated[p.id] = { ...updated[p.id], incluir: p.series_atendidas.some(s => activeSeries.includes(s)) }
+                  }
+                  return updated
+                })
+                setStep(2)
+              }}
               disabled={!canContinue()}
               className="gap-2"
             >
@@ -363,8 +387,19 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {produtos.map(produto => {
+              {(() => {
+                const activeSeries = Object.entries(segmentos)
+                  .filter(([, s]) => s.ativo)
+                  .flatMap(([seg]) => SEGMENTO_SERIES[seg] ?? [])
+
+                const indicados = produtos.filter(p =>
+                  p.series_atendidas.length === 0 || p.series_atendidas.some(s => activeSeries.includes(s))
+                )
+                const outros = produtos.filter(p =>
+                  p.series_atendidas.length > 0 && !p.series_atendidas.some(s => activeSeries.includes(s))
+                )
+
+                function renderProduto(produto: Produto, isOutro = false) {
                   const cfg = projetos[produto.id]
                   const badgeClass = produto.tipo ? (BADGE_COLORS[produto.tipo] ?? 'bg-slate-100 text-slate-700') : ''
                   return (
@@ -377,7 +412,6 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
                       }`}
                     >
                       <div className="flex flex-wrap items-start gap-3">
-                        {/* Toggle incluir */}
                         <div className="flex items-center gap-2 min-w-[100px]">
                           <Checkbox
                             id={`incluir-${produto.id}`}
@@ -389,7 +423,6 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
                           </Label>
                         </div>
 
-                        {/* Nome e badge */}
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium text-sm truncate">{produto.nome}</span>
@@ -398,10 +431,14 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
                                 {produto.tipo}
                               </span>
                             )}
+                            {isOutro && (
+                              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-500">
+                                fora do segmento
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        {/* Controles */}
                         {cfg.incluir && (
                           <div className="flex flex-wrap items-center gap-4">
                             <div className="flex items-center gap-2">
@@ -442,8 +479,24 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
                       </div>
                     </div>
                   )
-                })}
-              </div>
+                }
+
+                return (
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      {indicados.map(p => renderProduto(p, false))}
+                    </div>
+                    {outros.length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide pt-2 border-t">
+                          Fora dos segmentos selecionados
+                        </p>
+                        {outros.map(p => renderProduto(p, true))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
 
