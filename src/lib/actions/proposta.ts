@@ -903,6 +903,139 @@ export async function reordenarPropostas(updates: { id: string; ordem: number }[
   revalidatePath('/dashboard')
 }
 
+// ── Wizard: Gerar proposta por orçamento ─────────────────────────────────────
+
+export async function gerarPropostaOrcamento(input: {
+  orcamento_alvo: number
+  tolerancia_percent: number
+  objetivo: string
+  num_escolas: number
+  num_alunos: number
+  num_professores: number
+  formacao_presencial_min: number
+  formacao_presencial_max: number
+  formacao_ead_min: number
+  formacao_ead_max: number
+  assessoria_min: number
+  assessoria_max: number
+  produtos_selecionados: Array<{
+    produto_id: string
+    obrigatorio: boolean
+    prioridade: number
+  }>
+}): Promise<{ propostaId: string } | { error: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const {
+    orcamento_alvo, tolerancia_percent, objetivo,
+    num_escolas, num_alunos, num_professores,
+    formacao_presencial_min, formacao_presencial_max,
+    formacao_ead_min, formacao_ead_max,
+    assessoria_min, assessoria_max,
+    produtos_selecionados,
+  } = input
+
+  const limite_orcamento_max = orcamento_alvo * (1 + tolerancia_percent / 100)
+
+  // 1. Criar proposta com dados de público já preenchidos
+  const { data: proposta, error } = await supabase
+    .from('propostas')
+    .insert({
+      criado_por_usuario_id: user.id,
+      orcamento_alvo,
+      limite_orcamento_max,
+      status: 'Rascunho',
+      num_escolas,
+      num_alunos,
+      num_professores,
+      num_temas: 1,
+      num_kits: 5,
+      tolerancia_percent,
+      objetivo,
+      publico_descricao: `Escolas: ${num_escolas} | Alunos: ${num_alunos} | Professores: ${num_professores}`,
+    })
+    .select('id')
+    .single<{ id: string }>()
+
+  if (error || !proposta) return { error: `Erro ao criar proposta: ${error?.message ?? 'desconhecido'}` }
+
+  // 2. Adicionar produtos em ordem de prioridade (5 → 1)
+  const ordenados = [...produtos_selecionados].sort((a, b) => b.prioridade - a.prioridade)
+
+  for (const p of ordenados) {
+    const result = await adicionarProduto(proposta.id, p.produto_id)
+
+    if (p.obrigatorio && result && 'propostaProdutoId' in result) {
+      await Promise.all([
+        supabase
+          .from('proposta_componentes')
+          .update({ obrigatorio: true })
+          .eq('proposta_produto_id', result.propostaProdutoId),
+        supabase
+          .from('proposta_servicos')
+          .update({ obrigatorio: true })
+          .eq('proposta_produto_id', result.propostaProdutoId),
+      ])
+    }
+  }
+
+  // 3. Ajustar horas de formação/assessoria dentro dos limites min/max
+  if (
+    formacao_presencial_min > 0 || formacao_presencial_max < Infinity ||
+    formacao_ead_min > 0 || formacao_ead_max < Infinity ||
+    assessoria_min > 0 || assessoria_max < Infinity
+  ) {
+    const { data: servicos } = await supabase
+      .from('proposta_servicos')
+      .select('id, quantidade, servico:produto_servicos(nome)')
+      .eq('proposta_id', proposta.id)
+
+    if (servicos) {
+      const limiteUpdates = servicos
+        .map(s => {
+          const nome = ((s.servico as any)?.nome ?? '').toLowerCase()
+          let min = 0, max = Infinity
+
+          if (nome.includes('presencial')) {
+            min = formacao_presencial_min
+            max = formacao_presencial_max
+          } else if (nome.includes('ead') || nome.includes('online') || nome.includes('à distância')) {
+            min = formacao_ead_min
+            max = formacao_ead_max
+          } else if (nome.includes('assessoria') || nome.includes('acompanhamento')) {
+            min = assessoria_min
+            max = assessoria_max
+          } else {
+            return null
+          }
+
+          const clamped = Math.min(max === Infinity ? s.quantidade : max, Math.max(min, s.quantidade))
+          if (clamped === s.quantidade) return null
+
+          return supabase
+            .from('proposta_servicos')
+            .update({ quantidade: clamped })
+            .eq('id', s.id)
+        })
+        .filter(Boolean)
+
+      if (limiteUpdates.length > 0) await Promise.all(limiteUpdates)
+    }
+  }
+
+  // 4. Histórico
+  await registrarHistorico(
+    proposta.id,
+    user.id,
+    'Criacao',
+    `Geração automática por orçamento | R$ ${orcamento_alvo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Tolerância: ${tolerancia_percent}% | Objetivo: ${objetivo}`,
+  )
+
+  return { propostaId: proposta.id }
+}
+
 // ── Gerar PDF: salva dados + muda status + redireciona ─────────────────────────
 
 export async function gerarPDFProposta(proposta_id: string, formData: FormData) {
