@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { loginAction } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,18 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link'
 import { Loader2, BookOpen, Eye, EyeOff } from 'lucide-react'
 
-const MAX_TENTATIVAS = 5
-const BLOQUEIO_MS = 5 * 60 * 1000 // 5 minutos
-
 export default function LoginPage() {
   const router = useRouter()
-  const supabase = createClient()
 
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
   const [loading, setLoading] = useState(false)
-  const [tentativas, setTentativas] = useState(0)
   const [bloqueadoAte, setBloqueadoAte] = useState<number | null>(null)
   const [mostrarSenha, setMostrarSenha] = useState(false)
 
@@ -30,27 +25,13 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErro('')
-
-    if (estaBloqueado) {
-      const restante = Math.ceil((bloqueadoAte! - Date.now()) / 1000 / 60)
-      setErro(`Conta bloqueada temporariamente. Tente novamente em ${restante} minuto(s).`)
-      return
-    }
-
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
+    const result = await loginAction(email, senha)
 
-    if (error) {
-      const novasTentativas = tentativas + 1
-      setTentativas(novasTentativas)
-
-      if (novasTentativas >= MAX_TENTATIVAS) {
-        setBloqueadoAte(Date.now() + BLOQUEIO_MS)
-        setErro('Muitas tentativas inválidas. Acesso bloqueado por 5 minutos.')
-      } else {
-        setErro('Usuário ou senha inválidos.')
-      }
+    if ('error' in result) {
+      setErro(result.error)
+      if (result.bloqueadoAte) setBloqueadoAte(result.bloqueadoAte)
     } else {
       router.push('/dashboard')
       router.refresh()
@@ -112,6 +93,7 @@ export default function LoginPage() {
                     onClick={() => setMostrarSenha(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     tabIndex={-1}
+                    aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
                   >
                     {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -119,7 +101,7 @@ export default function LoginPage() {
               </div>
 
               {erro && (
-                <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive">
+                <div role="alert" className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive">
                   {erro}
                 </div>
               )}
