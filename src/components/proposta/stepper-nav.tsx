@@ -35,10 +35,10 @@ export function StepperNav({
   const current = getCurrentStep(pathname)
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+    <nav aria-label="Progresso da proposta" className="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
       {/* Mobile: indicador compacto */}
       <div className="flex md:hidden items-center gap-3 px-4 py-3">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" aria-hidden="true">
           {STEPS.map(s => (
             <div
               key={s.id}
@@ -51,10 +51,11 @@ export function StepperNav({
             />
           ))}
         </div>
-        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100" aria-hidden="true">
           {STEPS.find(s => s.id === current)?.label}
         </span>
-        <span className="ml-auto text-xs text-slate-400 dark:text-slate-500 tabular-nums">{current}/{STEPS.length}</span>
+        <span className="ml-auto text-xs text-slate-400 dark:text-slate-500 tabular-nums" aria-hidden="true">{current}/{STEPS.length}</span>
+        <span className="sr-only">Etapa {current} de {STEPS.length}: {STEPS.find(s => s.id === current)?.label}</span>
       </div>
 
       {/* Desktop: stepper completo */}
@@ -73,19 +74,23 @@ export function StepperNav({
           const circle = locked ? (
             <div
               className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-              title="Complete a etapa anterior primeiro"
+              aria-label={`${step.label} (bloqueada — complete a etapa anterior)`}
             >
-              <Lock className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+              <Lock className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" aria-hidden="true" />
             </div>
           ) : done ? (
             <Link
               href={href}
+              aria-label={`${step.label} (concluída)`}
               className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white hover:bg-primary/80 transition-colors"
             >
-              <Check className="w-4 h-4" />
+              <Check className="w-4 h-4" aria-hidden="true" />
             </Link>
           ) : active ? (
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-sm font-semibold">
+            <div
+              aria-current="step"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-sm font-semibold"
+            >
               {step.id}
             </div>
           ) : (
@@ -131,6 +136,6 @@ export function StepperNav({
           )
         })}
       </div>
-    </div>
+    </nav>
   )
 }

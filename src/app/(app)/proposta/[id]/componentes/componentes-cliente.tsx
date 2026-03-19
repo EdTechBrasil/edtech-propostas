@@ -167,7 +167,7 @@ function ItemRow({
       </div>
 
       {hint && (
-        <p className={`text-xs mt-1 ${hint.type === 'warn' ? 'text-amber-600' : 'text-blue-500'}`}>
+        <p role="status" aria-live="polite" className={`text-xs mt-1 ${hint.type === 'warn' ? 'text-amber-600' : 'text-blue-500'}`}>
           {hint.text}
         </p>
       )}

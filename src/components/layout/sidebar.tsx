@@ -81,6 +81,7 @@ export function Sidebar({
         <Link
           key={item.href}
           href={item.href}
+          aria-label={collapsed ? item.label : undefined}
           className={cn(
             'relative flex items-center rounded-lg text-sm font-medium transition-colors duration-150',
             collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5',
@@ -93,7 +94,7 @@ export function Sidebar({
           {ativo && !collapsed && (
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-indigo-600 dark:bg-indigo-400" />
           )}
-          <Icon className={cn(
+          <Icon aria-hidden="true" className={cn(
             'w-[18px] h-[18px] flex-shrink-0 transition-colors',
             ativo ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'
           )} />
@@ -191,10 +192,10 @@ export function Sidebar({
                 {usuario?.id && <NotificacoesBell usuarioId={usuario.id} />}
                 <button
                   onClick={signOut}
+                  aria-label="Sair"
                   className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-colors"
-                  title="Sair"
                 >
-                  <LogOut className="w-[15px] h-[15px]" />
+                  <LogOut className="w-[15px] h-[15px]" aria-hidden="true" />
                 </button>
               </div>
             </div>

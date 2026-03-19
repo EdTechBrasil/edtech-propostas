@@ -229,7 +229,7 @@ export function PropostasCliente({
             placeholder="Buscar propostas..."
             value={busca}
             onChange={e => setBusca(e.target.value)}
-            className="pl-9 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-full border-0 outline-none focus:ring-2 focus:ring-indigo-300 w-52 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            className="pl-9 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-full border-0 outline-none focus:ring-2 focus:ring-indigo-300 w-40 sm:w-52 placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
         <Link href="/proposta/nova">
@@ -280,23 +280,23 @@ export function PropostasCliente({
           <table className="w-full">
             <thead className="border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="w-8 px-2 py-3" />
-                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
+                <th scope="col" className="w-8 px-2 py-3" />
+                <th scope="col" className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Número
                 </th>
-                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
+                <th scope="col" className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Cliente
                 </th>
-                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
+                <th scope="col" className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Data
                 </th>
-                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
+                <th scope="col" className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Valor Total
                 </th>
-                <th className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
+                <th scope="col" className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Status
                 </th>
-                <th className="text-right text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
+                <th scope="col" className="text-right text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Ações
                 </th>
               </tr>

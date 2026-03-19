@@ -85,7 +85,7 @@ export function Comentarios({
           Enviar
         </Button>
       </form>
-      {erro && <p className="text-xs text-red-600 mt-1">{erro}</p>}
+      {erro && <p role="alert" className="text-xs text-red-600 mt-1">{erro}</p>}
     </div>
   )
 }

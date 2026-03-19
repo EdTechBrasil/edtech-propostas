@@ -129,7 +129,7 @@ export default async function HistoricoPage({ params }: { params: Promise<{ id: 
           {/* Linha vertical */}
           <div className="absolute left-[7px] top-2 bottom-2 w-px bg-slate-200" />
 
-          <div className="space-y-6">
+          <ol className="space-y-6 list-none" aria-label="Histórico de eventos">
             {(historico ?? []).map((ev: any, idx: number) => {
               const cfg = EVENTO_CONFIG[ev.tipo_evento] ?? { label: ev.tipo_evento, dot: 'bg-slate-400' }
               const data = ev.criado_em.slice(0, 10).split('-').reverse().join('/')
@@ -137,7 +137,7 @@ export default async function HistoricoPage({ params }: { params: Promise<{ id: 
               const isLast = idx === (historico ?? []).length - 1
 
               return (
-                <div key={ev.id} className="flex gap-4 pl-1">
+                <li key={ev.id} className="flex gap-4 pl-1">
                   {/* Dot */}
                   <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 mt-1 ring-2 ring-white ${cfg.dot} ${isLast ? 'ring-slate-200' : ''}`} />
 
@@ -159,10 +159,10 @@ export default async function HistoricoPage({ params }: { params: Promise<{ id: 
                       </div>
                     </div>
                   </div>
-                </div>
+                </li>
               )
             })}
-          </div>
+          </ol>
         </div>
       )}
 

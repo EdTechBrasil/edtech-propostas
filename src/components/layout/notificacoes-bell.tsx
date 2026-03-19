@@ -52,13 +52,20 @@ export function NotificacoesBell({ usuarioId }: { usuarioId: string }) {
     return () => { supabase.removeChannel(channel) }
   }, [usuarioId])
 
-  // Fechar ao clicar fora
+  // Fechar ao clicar fora ou pressionar Escape
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
   }, [])
 
   const unread = notifs.filter(n => !n.lida).length
@@ -72,19 +79,21 @@ export function NotificacoesBell({ usuarioId }: { usuarioId: string }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
+        aria-label="Notificações"
+        aria-expanded={open}
+        aria-haspopup="true"
         className="relative flex items-center justify-center w-8 h-8 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-        title="Notificações"
       >
-        <Bell className="w-4 h-4" />
+        <Bell className="w-4 h-4" aria-hidden="true" />
         {unread > 0 && (
-          <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+          <span aria-label={`${unread} notificações não lidas`} className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute bottom-0 left-full ml-2 max-md:left-0 max-md:bottom-full max-md:mb-2 max-md:ml-0 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+        <div role="dialog" aria-label="Notificações" className="absolute bottom-0 left-full ml-2 max-md:left-0 max-md:bottom-full max-md:mb-2 max-md:ml-0 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Notificações</p>
             {unread > 0 && (
