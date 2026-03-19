@@ -4,6 +4,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { assertPerfil } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { z } from 'zod'
+
+// ── Schemas de validação ──────────────────────────────────────────────────────
+
+const CreateUserSchema = z.object({
+  nome: z.string().min(1, 'Nome é obrigatório').max(255),
+  email: z.string().email('E-mail inválido'),
+  senha: z.string().min(8, 'Senha deve ter ao menos 8 caracteres'),
+  perfil: z.enum(['ADM', 'Gestor', 'Comercial'], { message: 'Perfil inválido' }),
+})
 
 // ── Usuários ──────────────────────────────────────────────────────────────────
 
@@ -11,16 +21,20 @@ export async function criarUsuario(formData: FormData) {
   const err = await assertPerfil('ADM')
   if (err) return { error: err }
 
-  const adminClient = createAdminClient()
+  const parsed = CreateUserSchema.safeParse({
+    nome: formData.get('nome'),
+    email: formData.get('email'),
+    senha: formData.get('senha'),
+    perfil: formData.get('perfil'),
+  })
 
-  const nome = formData.get('nome') as string
-  const email = formData.get('email') as string
-  const senha = formData.get('senha') as string
-  const perfil = formData.get('perfil') as string
-
-  if (!nome || !email || !senha || !perfil) {
-    return { error: 'Preencha todos os campos' }
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0]?.message ?? 'Dados inválidos' }
   }
+
+  const { nome, email, senha, perfil } = parsed.data
+
+  const adminClient = createAdminClient()
 
   const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
     email,

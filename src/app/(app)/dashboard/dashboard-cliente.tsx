@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/format'
+import { linkProposta } from '@/lib/constants'
 import {
   FileText, Clock, CheckCircle2, BarChart3,
 } from 'lucide-react'
@@ -14,16 +15,6 @@ type Proposta = {
   cliente_nome_instituicao: string | null
   criador_nome: string
   perfil_atual: string
-}
-
-function linkProposta(id: string, status: string) {
-  if (status === 'Aguardando_aprovacao' || status === 'Aprovada_excecao' || status === 'Pronta_pdf') {
-    return `/proposta/${id}/revisao`
-  }
-  if (status === 'Em_revisao') {
-    return `/proposta/${id}/cliente`
-  }
-  return `/proposta/${id}/publico`
 }
 
 function formatDataCurta(criado_em: string) {

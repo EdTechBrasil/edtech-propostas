@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/format'
 import { duplicarProposta, cancelarProposta, reordenarPropostas } from '@/lib/actions/proposta'
+import { linkProposta } from '@/lib/constants'
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
@@ -56,16 +57,6 @@ const FILTROS = [
   { value: 'Pronta_pdf',           label: 'Pronta' },
   { value: 'Cancelada',            label: 'Cancelada' },
 ]
-
-function linkProposta(id: string, status: string) {
-  if (status === 'Aguardando_aprovacao' || status === 'Aprovada_excecao' || status === 'Pronta_pdf') {
-    return `/proposta/${id}/revisao`
-  }
-  if (status === 'Em_revisao') {
-    return `/proposta/${id}/cliente`
-  }
-  return `/proposta/${id}/publico`
-}
 
 function numeroProposta(id: string, criado_em: string) {
   const ano = criado_em.slice(0, 4)
@@ -199,9 +190,14 @@ export function PropostasCliente({
 
   const podeVerGestor = usuario.perfil === 'Gestor' || usuario.perfil === 'ADM'
 
-  const filtradas = items
-    .filter(p => filtro === 'todos' || p.status === filtro)
-    .filter(p => !busca || (p.cliente_nome_instituicao ?? '').toLowerCase().includes(busca.toLowerCase()))
+  const filtradas = useMemo(
+    () => items.filter(p => {
+      const matchFiltro = filtro === 'todos' || p.status === filtro
+      const matchBusca = !busca || (p.cliente_nome_instituicao ?? '').toLowerCase().includes(busca.toLowerCase())
+      return matchFiltro && matchBusca
+    }),
+    [items, filtro, busca]
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -225,8 +221,10 @@ export function PropostasCliente({
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex-1">Minhas Propostas</h1>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" aria-hidden="true" />
+          <label htmlFor="busca-propostas" className="sr-only">Buscar propostas</label>
           <input
+            id="busca-propostas"
             type="text"
             placeholder="Buscar propostas..."
             value={busca}
@@ -249,6 +247,7 @@ export function PropostasCliente({
             key={f.value}
             type="button"
             onClick={() => setFiltro(f.value)}
+            aria-current={filtro === f.value ? 'page' : undefined}
             className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
               filtro === f.value
                 ? 'bg-indigo-600 text-white'
@@ -334,11 +333,17 @@ export function PropostasCliente({
 function CancelarBtn({ propostaId }: { propostaId: string }) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [erro, setErro] = useState('')
   const router = useRouter()
 
   function handleCancelar() {
+    setErro('')
     startTransition(async () => {
-      await cancelarProposta(propostaId)
+      const result = await cancelarProposta(propostaId)
+      if ('error' in result) {
+        setErro(result.error ?? 'Erro ao cancelar')
+        return
+      }
       setOpen(false)
       router.refresh()
     })
@@ -370,6 +375,9 @@ function CancelarBtn({ propostaId }: { propostaId: string }) {
               Esta ação não pode ser desfeita. A proposta ficará com status <strong>Cancelada</strong>.
             </DialogDescription>
           </DialogHeader>
+          {erro && (
+            <p className="text-sm text-destructive px-1">{erro}</p>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Voltar</Button>
             <Button

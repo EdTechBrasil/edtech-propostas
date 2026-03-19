@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { atualizarComponente, atualizarServico, atualizarNumKits, reordenarCatalogo } from '@/lib/actions/proposta'
+import { TAPETE_TYPES, TAPETE_KEYS, TAPETE_MULT } from '@/lib/constants'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,12 +26,6 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-
-// ─── Constantes de Tapetes ────────────────────────────────────────────────────
-
-const TAPETE_TYPES = new Set(['TapetePreI', 'TapetePreII', 'TapeteAno1', 'TapeteAno2', 'TapeteAno3'])
-const TAPETE_KEYS: Record<string, string> = { TapetePreI: 'PreI', TapetePreII: 'PreII', TapeteAno1: 'Ano1', TapeteAno2: 'Ano2', TapeteAno3: 'Ano3' }
-const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 11, TapeteAno1: 16, TapeteAno2: 16, TapeteAno3: 16 }
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -142,6 +137,7 @@ function ItemRow({
               onFocus={e => { setQtdFocused(true); e.target.select() }}
               onBlur={() => { setQtdFocused(false); startTransition(onSave) }}
               className="h-8 text-sm text-center"
+              aria-label={`Quantidade de ${nome}`}
               title="Quantidade"
             />
           </div>

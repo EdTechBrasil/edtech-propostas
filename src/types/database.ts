@@ -43,7 +43,12 @@ export type TipoCalculo =
   | 'PorEscolaXKit'
   | 'TapetePreI'
   | 'TapetePreII'
-  | 'Tapete1a3'
+  | 'TapeteAno1'
+  | 'TapeteAno2'
+  | 'TapeteAno3'
+  | 'PorAlunoEProfessorXLivroConceitos'
+  | 'PorAlunoEProfessorXLivroPraticas'
+  | 'Kit'
 
 export type TipoEventoProposta =
   | 'Criacao'
@@ -123,14 +128,43 @@ export interface Proposta {
   orcamento_alvo: number
   limite_orcamento_max: number | null
   desconto_global_percent: number
+  tolerancia_percent: number
+  objetivo: 'BaterOrcamento' | 'MaximizarMargem'
   repasse_tipo: TipoRepasse
   repasse_valor: number
   publico_descricao: string | null
   num_escolas: number
   num_alunos: number
   num_professores: number
+  num_temas: number
   num_kits: number
   series_tapetes: string | null
+  num_alunos_pre_i: number
+  num_alunos_pre_ii: number
+  num_alunos_ano1: number
+  num_alunos_ano2: number
+  num_alunos_ano3: number
+  num_alunos_ano4: number
+  num_alunos_ano5: number
+  num_alunos_ano6: number
+  num_alunos_ano7: number
+  num_alunos_ano8: number
+  num_alunos_ano9: number
+  num_temas_pre_i: number
+  num_temas_pre_ii: number
+  num_temas_ano1: number
+  num_temas_ano2: number
+  num_temas_ano3: number
+  num_temas_ano4: number
+  num_temas_ano5: number
+  num_temas_ano6: number
+  num_temas_ano7: number
+  num_temas_ano8: number
+  num_temas_ano9: number
+  num_livros_conceitos: number
+  num_livros_praticas: number
+  num_livros_guia: number
+  ordem: number | null
   cliente_nome_instituicao: string | null
   cliente_cnpj: string | null
   cliente_responsavel: string | null

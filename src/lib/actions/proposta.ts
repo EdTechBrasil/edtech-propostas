@@ -4,12 +4,39 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { notificarGestores } from './notificacoes'
+import { TAPETE_TYPES, TAPETE_KEYS, TAPETE_MULT } from '@/lib/constants'
+
+// ── Tipos auxiliares para joins do Supabase ───────────────────────────────────
+
+type CompRow = {
+  id: string
+  componente: { tipo_calculo: string; categoria: string } | null
+}
+
+type ServRow = {
+  id: string
+  servico: { tipo_calculo: string } | null
+}
+
+type CompDuplicar = {
+  produto_componente_id: string
+  quantidade: number
+  valor_venda_unit: number
+  custo_interno_unit: number
+  desconto_percent: number
+  obrigatorio: boolean
+}
+
+type ServDuplicar = {
+  produto_servico_id: string
+  quantidade: number
+  valor_venda_unit: number
+  custo_interno_unit: number
+  desconto_percent: number
+  obrigatorio: boolean
+}
 
 // ── Cálculo de quantidade sugerida ────────────────────────────────────────────
-
-const TAPETE_TYPES = new Set(['TapetePreI', 'TapetePreII', 'TapeteAno1', 'TapeteAno2', 'TapeteAno3'])
-const TAPETE_KEYS: Record<string, string> = { TapetePreI: 'PreI', TapetePreII: 'PreII', TapeteAno1: 'Ano1', TapeteAno2: 'Ano2', TapeteAno3: 'Ano3' }
-const TAPETE_MULT: Record<string, number> = { TapetePreI: 9, TapetePreII: 11, TapeteAno1: 16, TapeteAno2: 16, TapeteAno3: 16 }
 
 function calcQtd(
   tipoCalculo: string,
@@ -224,7 +251,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     .eq('id', proposta_id)
 
   // Recalcula quantidades de todos os componentes e serviços da proposta
-  const [{ data: comps }, { data: servs }] = await Promise.all([
+  const [{ data: compsRaw }, { data: servsRaw }] = await Promise.all([
     supabase
       .from('proposta_componentes')
       .select('id, componente:produto_componentes(tipo_calculo, categoria)')
@@ -235,16 +262,19 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       .eq('proposta_id', proposta_id),
   ])
 
+  const comps = compsRaw as CompRow[] | null
+  const servs = servsRaw as ServRow[] | null
+
   await Promise.all([
     ...(comps ?? [])
       .filter(c => {
-        const tc = (c.componente as any)?.tipo_calculo
-        const cat = (c.componente as any)?.categoria
+        const tc = c.componente?.tipo_calculo
+        const cat = c.componente?.categoria
         return tc !== 'Fixo' || cat === 'Kit'
       })
       .map(c => {
-        const tc = (c.componente as any)?.tipo_calculo ?? 'Fixo'
-        const cat = (c.componente as any)?.categoria ?? ''
+        const tc = c.componente?.tipo_calculo ?? 'Fixo'
+        const cat = c.componente?.categoria ?? ''
         const qty = TAPETE_TYPES.has(tc)
           ? (seriesList.includes(TAPETE_KEYS[tc]) ? TAPETE_MULT[tc] * num_kits : 0)
           : cat === 'Kit' && tc === 'Fixo'
@@ -263,9 +293,9 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
           .eq('id', c.id)
       }),
     ...(servs ?? [])
-      .filter(s => (s.servico as any)?.tipo_calculo !== 'Fixo')
+      .filter(s => s.servico?.tipo_calculo !== 'Fixo')
       .map(s => {
-        const tc = (s.servico as any)?.tipo_calculo ?? 'Fixo'
+        const tc = s.servico?.tipo_calculo ?? 'Fixo'
         return supabase.from('proposta_servicos')
           .update({ quantidade: calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits) })
           .eq('id', s.id)
@@ -326,18 +356,20 @@ export async function atualizarNumKits(proposta_id: string, num_kits: number) {
 
   await supabase.from('propostas').update({ num_kits }).eq('id', proposta_id)
 
-  const { data: comps } = await supabase
+  const { data: compsRaw2 } = await supabase
     .from('proposta_componentes')
     .select('id, componente:produto_componentes(tipo_calculo)')
     .eq('proposta_id', proposta_id)
 
-  const updates = (comps ?? [])
+  const comps2 = compsRaw2 as CompRow[] | null
+
+  const updates = (comps2 ?? [])
     .filter(c => {
-      const tc = (c.componente as any)?.tipo_calculo
-      return tc === 'PorEscolaXKit' || (TAPETE_TYPES.has(tc) && series_set.has(TAPETE_KEYS[tc]))
+      const tc = c.componente?.tipo_calculo
+      return tc === 'PorEscolaXKit' || (tc != null && TAPETE_TYPES.has(tc) && series_set.has(TAPETE_KEYS[tc]))
     })
     .map(c => {
-      const tc = (c.componente as any)?.tipo_calculo
+      const tc = c.componente?.tipo_calculo ?? ''
       const qty = TAPETE_TYPES.has(tc)
         ? calcQtd(tc, 0, 0, num_escolas, 0, num_kits)
         : novaQtd
@@ -549,48 +581,52 @@ export async function atualizarServico(
 
 // ── Step 5: Descontos ─────────────────────────────────────────────────────────
 
+const clampPercent = (v: number) => Math.max(0, Math.min(100, v))
+
 export async function atualizarDescontos(proposta_id: string, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const desconto_global = Number(formData.get('desconto_global') || 0)
+  const desconto_global = clampPercent(Number(formData.get('desconto_global') || 0))
 
   await supabase
     .from('propostas')
     .update({ desconto_global_percent: desconto_global })
     .eq('id', proposta_id)
 
-  // Atualiza desconto por produto
+  // Busca produtos e todos os componentes de uma vez (evita N+1)
   const { data: produtos } = await supabase
     .from('proposta_produtos')
     .select('id')
     .eq('proposta_id', proposta_id)
 
-  if (produtos) {
+  if (produtos && produtos.length > 0) {
+    const produtoIds = produtos.map(pp => pp.id)
+    const { data: allComps } = await supabase
+      .from('proposta_componentes')
+      .select('id, proposta_produto_id')
+      .in('proposta_produto_id', produtoIds)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updates: PromiseLike<any>[] = []
+
     for (const pp of produtos) {
-      const desconto_produto = Number(formData.get(`desconto_produto_${pp.id}`) || 0)
-      await supabase
-        .from('proposta_produtos')
-        .update({ desconto_percent: desconto_produto })
-        .eq('id', pp.id)
+      const desconto_produto = clampPercent(Number(formData.get(`desconto_produto_${pp.id}`) || 0))
+      updates.push(
+        supabase.from('proposta_produtos').update({ desconto_percent: desconto_produto }).eq('id', pp.id)
+      )
 
-      // Atualiza desconto por componente
-      const { data: comps } = await supabase
-        .from('proposta_componentes')
-        .select('id')
-        .eq('proposta_produto_id', pp.id)
-
-      if (comps) {
-        for (const comp of comps) {
-          const desconto_comp = Number(formData.get(`desconto_comp_${comp.id}`) || 0)
-          await supabase
-            .from('proposta_componentes')
-            .update({ desconto_percent: desconto_comp })
-            .eq('id', comp.id)
-        }
+      const compsForProduct = (allComps ?? []).filter(c => c.proposta_produto_id === pp.id)
+      for (const comp of compsForProduct) {
+        const desconto_comp = clampPercent(Number(formData.get(`desconto_comp_${comp.id}`) || 0))
+        updates.push(
+          supabase.from('proposta_componentes').update({ desconto_percent: desconto_comp }).eq('id', comp.id)
+        )
       }
     }
+
+    await Promise.all(updates)
   }
 
   await registrarHistorico(proposta_id, user.id, 'AlterarDesconto', `Desconto global: ${desconto_global}%`)
@@ -767,56 +803,62 @@ export async function duplicarProposta(proposta_id: string) {
     .eq('proposta_id', proposta_id)
 
   if (produtos && produtos.length > 0) {
-    for (const pp of produtos) {
-      const { data: novaPP } = await supabase
-        .from('proposta_produtos')
-        .insert({ proposta_id: nova.id, produto_id: pp.produto_id, desconto_percent: pp.desconto_percent })
-        .select('id')
-        .single<{ id: string }>()
+    await Promise.all(
+      produtos.map(async (pp) => {
+        const { data: novaPP } = await supabase
+          .from('proposta_produtos')
+          .insert({ proposta_id: nova.id, produto_id: pp.produto_id, desconto_percent: pp.desconto_percent })
+          .select('id')
+          .single<{ id: string }>()
 
-      if (!novaPP) continue
+        if (!novaPP) return
 
-      const [{ data: comps }, { data: servs }] = await Promise.all([
-        supabase
-          .from('proposta_componentes')
-          .select('produto_componente_id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio')
-          .eq('proposta_produto_id', pp.id),
-        supabase
-          .from('proposta_servicos')
-          .select('produto_servico_id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio')
-          .eq('proposta_produto_id', pp.id),
-      ])
+        const [{ data: compsRaw }, { data: servsRaw }] = await Promise.all([
+          supabase
+            .from('proposta_componentes')
+            .select('produto_componente_id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio')
+            .eq('proposta_produto_id', pp.id),
+          supabase
+            .from('proposta_servicos')
+            .select('produto_servico_id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio')
+            .eq('proposta_produto_id', pp.id),
+        ])
 
-      if (comps && comps.length > 0) {
-        await supabase.from('proposta_componentes').insert(
-          comps.map((c: any) => ({
-            proposta_id: nova.id,
-            proposta_produto_id: novaPP.id,
-            produto_componente_id: c.produto_componente_id,
-            quantidade: c.quantidade,
-            valor_venda_unit: c.valor_venda_unit,
-            custo_interno_unit: c.custo_interno_unit,
-            desconto_percent: c.desconto_percent,
-            obrigatorio: c.obrigatorio,
-          }))
-        )
-      }
+        const comps = compsRaw as CompDuplicar[] | null
+        const servs = servsRaw as ServDuplicar[] | null
 
-      if (servs && servs.length > 0) {
-        await supabase.from('proposta_servicos').insert(
-          servs.map((s: any) => ({
-            proposta_id: nova.id,
-            proposta_produto_id: novaPP.id,
-            produto_servico_id: s.produto_servico_id,
-            quantidade: s.quantidade,
-            valor_venda_unit: s.valor_venda_unit,
-            custo_interno_unit: s.custo_interno_unit,
-            desconto_percent: s.desconto_percent,
-            obrigatorio: s.obrigatorio,
-          }))
-        )
-      }
-    }
+        await Promise.all([
+          comps && comps.length > 0
+            ? supabase.from('proposta_componentes').insert(
+                comps.map(c => ({
+                  proposta_id: nova.id,
+                  proposta_produto_id: novaPP.id,
+                  produto_componente_id: c.produto_componente_id,
+                  quantidade: c.quantidade,
+                  valor_venda_unit: c.valor_venda_unit,
+                  custo_interno_unit: c.custo_interno_unit,
+                  desconto_percent: c.desconto_percent,
+                  obrigatorio: c.obrigatorio,
+                }))
+              )
+            : Promise.resolve(),
+          servs && servs.length > 0
+            ? supabase.from('proposta_servicos').insert(
+                servs.map(s => ({
+                  proposta_id: nova.id,
+                  proposta_produto_id: novaPP.id,
+                  produto_servico_id: s.produto_servico_id,
+                  quantidade: s.quantidade,
+                  valor_venda_unit: s.valor_venda_unit,
+                  custo_interno_unit: s.custo_interno_unit,
+                  desconto_percent: s.desconto_percent,
+                  obrigatorio: s.obrigatorio,
+                }))
+              )
+            : Promise.resolve(),
+        ])
+      })
+    )
   }
 
   await registrarHistorico(nova.id, user.id, 'Criacao', `Duplicada da proposta #${proposta_id.slice(0, 8)}`)
@@ -1002,7 +1044,7 @@ export async function gerarPropostaOrcamento(input: {
     if (servicos) {
       const limiteUpdates = servicos
         .map(s => {
-          const nome = ((s.servico as any)?.nome ?? '').toLowerCase()
+          const nome = ((s.servico as { nome?: string } | null)?.nome ?? '').toLowerCase()
           let min = 0, max = Infinity
 
           if (nome.includes('presencial')) {

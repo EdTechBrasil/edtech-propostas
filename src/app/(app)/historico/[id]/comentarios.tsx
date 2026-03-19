@@ -66,7 +66,9 @@ export function Comentarios({
       )}
 
       <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+        <label htmlFor="comentario-texto" className="sr-only">Adicionar comentário</label>
         <textarea
+          id="comentario-texto"
           value={texto}
           onChange={e => setTexto(e.target.value)}
           placeholder="Adicionar um comentário..."
