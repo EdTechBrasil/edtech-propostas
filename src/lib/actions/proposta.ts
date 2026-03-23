@@ -588,7 +588,16 @@ export async function atualizarDescontos(proposta_id: string, formData: FormData
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const desconto_global = clampPercent(Number(formData.get('desconto_global') || 0))
+  const { data: config } = await supabase
+    .from('configuracao_financeira')
+    .select('desconto_max_percent')
+    .eq('ativo', true)
+    .single<{ desconto_max_percent: number }>()
+
+  const desconto_max = config?.desconto_max_percent ?? 20
+  const clampDesconto = (v: number) => Math.max(0, Math.min(desconto_max, v))
+
+  const desconto_global = clampDesconto(Number(formData.get('desconto_global') || 0))
 
   await supabase
     .from('propostas')
@@ -612,14 +621,14 @@ export async function atualizarDescontos(proposta_id: string, formData: FormData
     const updates: PromiseLike<any>[] = []
 
     for (const pp of produtos) {
-      const desconto_produto = clampPercent(Number(formData.get(`desconto_produto_${pp.id}`) || 0))
+      const desconto_produto = clampDesconto(Number(formData.get(`desconto_produto_${pp.id}`) || 0))
       updates.push(
         supabase.from('proposta_produtos').update({ desconto_percent: desconto_produto }).eq('id', pp.id)
       )
 
       const compsForProduct = (allComps ?? []).filter(c => c.proposta_produto_id === pp.id)
       for (const comp of compsForProduct) {
-        const desconto_comp = clampPercent(Number(formData.get(`desconto_comp_${comp.id}`) || 0))
+        const desconto_comp = clampDesconto(Number(formData.get(`desconto_comp_${comp.id}`) || 0))
         updates.push(
           supabase.from('proposta_componentes').update({ desconto_percent: desconto_comp }).eq('id', comp.id)
         )
@@ -972,6 +981,11 @@ export async function gerarPropostaOrcamento(input: {
     obrigatorio: boolean
     prioridade: number
   }>
+  segmentos?: {
+    educacaoInfantil?: number
+    anosIniciais?: number
+    anosFinais?: number
+  }
 }): Promise<{ propostaId: string } | { error: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -984,9 +998,26 @@ export async function gerarPropostaOrcamento(input: {
     formacao_ead_min, formacao_ead_max,
     assessoria_min, assessoria_max,
     produtos_selecionados,
+    segmentos,
   } = input
 
   const limite_orcamento_max = orcamento_alvo * (1 + tolerancia_percent / 100)
+
+  // Distribuir alunos dos segmentos pelas séries correspondentes
+  const eiAlunos = segmentos?.educacaoInfantil ?? 0
+  const aiAlunos = segmentos?.anosIniciais ?? 0
+  const afAlunos = segmentos?.anosFinais ?? 0
+
+  const pre_i  = Math.round(eiAlunos / 2)
+  const pre_ii = eiAlunos - pre_i
+
+  const aiPer = Math.round(aiAlunos / 5)
+  const ano1 = aiPer, ano2 = aiPer, ano3 = aiPer, ano4 = aiPer
+  const ano5 = aiAlunos - 4 * aiPer
+
+  const afPer = Math.round(afAlunos / 4)
+  const ano6 = afPer, ano7 = afPer, ano8 = afPer
+  const ano9 = afAlunos - 3 * afPer
 
   // 1. Criar proposta com dados de público já preenchidos
   const { data: proposta, error } = await supabase
@@ -1004,6 +1035,17 @@ export async function gerarPropostaOrcamento(input: {
       tolerancia_percent,
       objetivo,
       publico_descricao: `Escolas: ${num_escolas} | Alunos: ${num_alunos} | Professores: ${num_professores}`,
+      num_alunos_pre_i: pre_i,
+      num_alunos_pre_ii: pre_ii,
+      num_alunos_ano1: ano1,
+      num_alunos_ano2: ano2,
+      num_alunos_ano3: ano3,
+      num_alunos_ano4: ano4,
+      num_alunos_ano5: ano5,
+      num_alunos_ano6: ano6,
+      num_alunos_ano7: ano7,
+      num_alunos_ano8: ano8,
+      num_alunos_ano9: ano9,
     })
     .select('id')
     .single<{ id: string }>()

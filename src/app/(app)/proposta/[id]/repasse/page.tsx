@@ -10,11 +10,18 @@ export default async function RepassePage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: proposta } = await supabase
-    .from('propostas')
-    .select('id, repasse_tipo, repasse_valor')
-    .eq('id', id)
-    .single<{ id: string; repasse_tipo: string; repasse_valor: number }>()
+  const [{ data: proposta }, { data: financeiro }] = await Promise.all([
+    supabase
+      .from('propostas')
+      .select('id, repasse_tipo, repasse_valor')
+      .eq('id', id)
+      .single<{ id: string; repasse_tipo: string; repasse_valor: number }>(),
+    supabase
+      .from('proposta_financeiro')
+      .select('receita_bruta')
+      .eq('proposta_id', id)
+      .single<{ receita_bruta: number }>(),
+  ])
 
   if (!proposta) notFound()
 
@@ -47,6 +54,7 @@ export default async function RepassePage({ params }: { params: Promise<{ id: st
             <RepasseCliente
               tipoInicial={proposta.repasse_tipo}
               valorInicial={proposta.repasse_valor}
+              receitaBruta={financeiro?.receita_bruta ?? 0}
             />
             <div className="flex justify-between mt-6">
               <Link href={`/proposta/${id}/descontos`}>

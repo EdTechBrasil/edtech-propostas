@@ -52,7 +52,8 @@ export default async function RevisaoPage({ params }: { params: Promise<{ id: st
 
   const perfil = usuario?.perfil ?? 'Comercial'
   const podeVerFinanceiro = perfil === 'Gestor' || perfil === 'ADM'
-  const margem = financeiro?.margem_percent ?? 0
+  const margemRaw = financeiro?.margem_percent ?? 0
+  const margem = isFinite(margemRaw) ? margemRaw : 0
   const margem_minima = config?.margem_minima_percent ?? 12
   const margemOk = margem >= margem_minima
   const aguardandoAprovacao = proposta.status === 'Aguardando_aprovacao'

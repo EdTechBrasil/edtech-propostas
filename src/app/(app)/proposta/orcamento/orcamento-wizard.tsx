@@ -176,6 +176,11 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
         assessoria_min: parseInt(assessMin || '0', 10),
         assessoria_max: parseInt(assessMax || '0', 10) || Infinity,
         produtos_selecionados,
+        segmentos: {
+          educacaoInfantil: parseInt(segmentos.educacaoInfantil?.alunos || '0', 10),
+          anosIniciais: parseInt(segmentos.anosIniciais?.alunos || '0', 10),
+          anosFinais: parseInt(segmentos.anosFinais?.alunos || '0', 10),
+        },
       })
 
       if ('error' in result) {
