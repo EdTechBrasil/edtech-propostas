@@ -173,6 +173,11 @@ export function PublicoCliente({
   const hasSeriesMode = temMPC || temCoding || temCriaCode
   const hasAnySpecialMode = hasSeriesMode || temEdtechIA
 
+  // Validação: quando há produto com séries, ao menos uma série deve ter alunos preenchidos
+  const algumaSerieSalva = Object.values(checked).some(v => v) &&
+    Object.entries(checked).some(([k, v]) => v && Number(alunos[k] || 0) > 0)
+  const seriesObrigatorias = hasSeriesMode && !algumaSerieSalva
+
   return (
     <div>
       <div className="mb-6">
@@ -697,9 +702,14 @@ export function PublicoCliente({
           </>
         )}
 
+        {seriesObrigatorias && (
+          <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
+            Selecione ao menos uma série e informe o número de alunos para continuar.
+          </div>
+        )}
         <div className="flex justify-between">
           <BackButton />
-          <Button type="submit">Continuar →</Button>
+          <Button type="submit" disabled={seriesObrigatorias}>Continuar →</Button>
         </div>
       </form>
     </div>

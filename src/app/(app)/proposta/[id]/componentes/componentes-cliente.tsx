@@ -86,6 +86,7 @@ function ItemRow({
   valor,
   custo,
   hint,
+  obrigatorio,
   dragHandleProps,
   onQtdChange,
   onValorChange,
@@ -97,6 +98,7 @@ function ItemRow({
   valor: number
   custo: number
   hint: { text: string; type: 'info' | 'warn' } | null
+  obrigatorio?: boolean
   dragHandleProps?: React.HTMLAttributes<HTMLElement>
   onQtdChange: (v: number) => void
   onValorChange: (v: number) => void
@@ -113,8 +115,10 @@ function ItemRow({
     margemItem >= 12    ? 'text-amber-500' :
     'text-red-500'
 
+  const alertaObrigatorio = obrigatorio && qtd === 0
+
   return (
-    <div className="py-3 border-b border-slate-100 last:border-0">
+    <div className={`py-3 border-b last:border-0 ${alertaObrigatorio ? 'border-red-300 bg-red-50/40 dark:bg-red-950/10 rounded px-2' : 'border-slate-100'}`}>
       <div className="flex items-center gap-3">
         {dragHandleProps && (
           <DragHandle {...dragHandleProps} className="opacity-0 group-hover:opacity-100 flex-shrink-0" />
@@ -123,6 +127,7 @@ function ItemRow({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-slate-800 truncate">{nome}</span>
             {categoria && <Badge variant="outline" className="text-xs">{categoria}</Badge>}
+            {alertaObrigatorio && <Badge className="text-xs bg-red-100 text-red-700 border-red-200">Obrigatório · Qtd 0</Badge>}
           </div>
         </div>
 
@@ -396,14 +401,20 @@ export function ComponentesCliente({
     if (tipoCalculo === 'PorEscola' && numEscolas > 0)
       return { text: `Sugestão: qtd = nº de escolas (${numEscolas})`, type: 'info' }
     if (tipoCalculo === 'PorAlunoXTema') {
-      const MPC_SERIES = [
+      const ALL_HINT_SERIES = [
         { key: 'PreI',  label: 'Pré I'    },
         { key: 'PreII', label: 'Pré II'   },
-        { key: 'Ano1',  label: '1ª série' },
-        { key: 'Ano2',  label: '2ª série' },
-        { key: 'Ano3',  label: '3ª série' },
+        { key: 'Ano1',  label: '1º ano'   },
+        { key: 'Ano2',  label: '2º ano'   },
+        { key: 'Ano3',  label: '3º ano'   },
+        { key: 'Ano4',  label: '4º ano'   },
+        { key: 'Ano5',  label: '5º ano'   },
+        { key: 'Ano6',  label: '6º ano'   },
+        { key: 'Ano7',  label: '7º ano'   },
+        { key: 'Ano8',  label: '8º ano'   },
+        { key: 'Ano9',  label: '9º ano'   },
       ]
-      const linhas = MPC_SERIES
+      const linhas = ALL_HINT_SERIES
         .map(s => ({ ...s, a: alunosPorSerie[s.key] ?? 0, t: temasPorSerie[s.key] ?? 0 }))
         .filter(s => s.a > 0 && s.t > 0)
       if (linhas.length === 0)
@@ -628,6 +639,7 @@ export function ComponentesCliente({
                             valor={state.valor}
                             custo={state.custo}
                             hint={getHint(tipoCalculo)}
+                            obrigatorio={c.obrigatorio}
                             onQtdChange={v => updateItem(c.id, { qtd: v })}
                             onValorChange={v => updateItem(c.id, { valor: v })}
                             onSave={() => atualizarComponente(c.id, propostaId, state.qtd, state.valor)}

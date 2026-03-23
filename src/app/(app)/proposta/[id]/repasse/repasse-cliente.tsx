@@ -55,6 +55,7 @@ export function RepasseCliente({ tipoInicial, valorInicial }: { tipoInicial: str
               name="repasse_valor"
               type="number"
               min="0"
+              max={tipo === 'Percentual' ? 100 : undefined}
               step={tipo === 'Fixo' ? '0.01' : '0.1'}
               defaultValue={valorInicial}
               className="text-right"

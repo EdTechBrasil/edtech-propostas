@@ -52,7 +52,7 @@ function calcQtd(
   if (tipoCalculo === 'PorAlunoXTema'          && numAlun > 0 && numTemas > 0) return numAlun * numTemas
   if (tipoCalculo === 'PorProfessorXTema'      && numProf > 0 && numTemas > 0) return numProf * numTemas
   if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlun > 0 || numProf > 0) && numTemas > 0) return (numAlun + numProf) * numTemas
-  if (tipoCalculo === 'Kit'                    && numEsc  > 0) return numEsc * 5
+  if (tipoCalculo === 'Kit'                    && numEsc  > 0 && numKits > 0) return numEsc * numKits
   if (tipoCalculo === 'PorEscolaXKit'          && numEsc  > 0 && numKits > 0) return numEsc * numKits
   if (TAPETE_TYPES.has(tipoCalculo)) {
     return numKits > 0 ? TAPETE_MULT[tipoCalculo] * numKits : 0
@@ -278,7 +278,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
         const qty = TAPETE_TYPES.has(tc)
           ? (seriesList.includes(TAPETE_KEYS[tc]) ? TAPETE_MULT[tc] * num_kits : 0)
           : cat === 'Kit' && tc === 'Fixo'
-          ? num_escolas * 5
+          ? num_escolas * num_kits
           : tc === 'PorAlunoXTema'
           ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
           : tc === 'PorAlunoEProfessorXLivroConceitos'

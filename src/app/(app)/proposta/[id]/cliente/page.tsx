@@ -10,6 +10,7 @@ import Link from 'next/link'
 
 export default async function ClientePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const hoje = new Date().toISOString().split('T')[0]
   const supabase = await createClient()
 
   const { data: proposta } = await supabase
@@ -72,6 +73,9 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                   name="cnpj"
                   placeholder="00.000.000/0000-00"
                   defaultValue={proposta.cliente_cnpj ?? ''}
+                  pattern="\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}"
+                  title="Formato: 00.000.000/0000-00"
+                  maxLength={18}
                   required
                 />
               </div>
@@ -117,6 +121,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                   name="validade"
                   type="date"
                   defaultValue={proposta.validade_proposta ?? ''}
+                  min={hoje}
                   required
                 />
               </div>

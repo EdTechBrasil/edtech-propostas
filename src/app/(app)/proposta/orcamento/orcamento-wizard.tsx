@@ -292,7 +292,12 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-slate-500">Professores</Label>
+                          <Label className="text-xs text-slate-500">
+                            Professores
+                            {seg.ativo && parseInt(seg.professores || '0', 10) === 0 && (
+                              <span className="ml-1 text-amber-500">⚠</span>
+                            )}
+                          </Label>
                           <Input
                             type="number"
                             min={0}
@@ -307,6 +312,11 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
                 )
               })}
             </CardContent>
+            {Object.values(segmentos).some(s => s.ativo && parseInt(s.professores || '0', 10) === 0) && (
+              <div className="px-6 pb-4 text-xs text-amber-600">
+                ⚠ Professores não informados — produtos com Guia do Professor ficarão com quantidade estimada no /Público.
+              </div>
+            )}
           </Card>
 
           <Card>
