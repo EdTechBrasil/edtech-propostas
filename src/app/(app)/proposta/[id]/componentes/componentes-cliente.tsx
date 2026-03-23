@@ -388,12 +388,36 @@ export function ComponentesCliente({
       }
       return { text: 'Preencha Kits no Público para calcular', type: 'warn' }
     }
-    if (tipoCalculo === 'PorProfessorXTema' && numProfessores > 0 && numTemas > 0) {
-      const total = numProfessores * numTemas * numLivrosGuia
-      return { text: `${numProfessores} prof × ${numTemas} temas × ${numLivrosGuia} vol = ${total.toLocaleString('pt-BR')}`, type: 'info' }
+    if (tipoCalculo === 'PorProfessorXTema') {
+      if (numProfessores === 0)
+        return { text: 'Qtd estimada — preencha Professores e Temas no Público', type: 'warn' }
+      const ALL_HINT_SERIES = [
+        { key: 'PreI',  label: 'Pré I'  },
+        { key: 'PreII', label: 'Pré II' },
+        { key: 'Ano1',  label: '1º ano' },
+        { key: 'Ano2',  label: '2º ano' },
+        { key: 'Ano3',  label: '3º ano' },
+        { key: 'Ano4',  label: '4º ano' },
+        { key: 'Ano5',  label: '5º ano' },
+        { key: 'Ano6',  label: '6º ano' },
+        { key: 'Ano7',  label: '7º ano' },
+        { key: 'Ano8',  label: '8º ano' },
+        { key: 'Ano9',  label: '9º ano' },
+      ]
+      const linhas = ALL_HINT_SERIES
+        .map(s => ({ ...s, t: temasPorSerie[s.key] ?? 0, a: alunosPorSerie[s.key] ?? 0 }))
+        .filter(s => s.t > 0 && s.a > 0)
+      if (linhas.length > 0) {
+        const total = linhas.reduce((sum, s) => sum + numProfessores * s.t, 0) * numLivrosGuia
+        const partes = linhas.map(s => `${s.label}: ${numProfessores} × ${s.t} = ${numProfessores * s.t}`).join(' | ')
+        return { text: `${partes} | Total: ${total.toLocaleString('pt-BR')}`, type: 'info' }
+      }
+      if (numTemas > 0) {
+        const total = numProfessores * numTemas * numLivrosGuia
+        return { text: `${numProfessores} prof × ${numTemas} temas × ${numLivrosGuia} vol = ${total.toLocaleString('pt-BR')}`, type: 'info' }
+      }
+      return { text: 'Qtd estimada — preencha Professores e Temas no Público', type: 'warn' }
     }
-    if (tipoCalculo === 'PorProfessorXTema' && (numProfessores === 0 || numTemas === 0))
-      return { text: `Qtd estimada — preencha Professores e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorProfessor' && numProfessores > 0)
       return { text: `Sugestão: qtd = nº de professores (${numProfessores})`, type: 'info' }
     if (tipoCalculo === 'PorAluno' && numAlunos > 0)

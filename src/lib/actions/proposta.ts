@@ -215,6 +215,21 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     alunos_ano4   * temas_ano4   + alunos_ano5   * temas_ano5   + alunos_ano6 * temas_ano6 +
     alunos_ano7   * temas_ano7   + alunos_ano8   * temas_ano8   + alunos_ano9 * temas_ano9
 
+  // Pre-computed total for PorProfessorXTema: sum(num_professores × temas_série) for each active series
+  const totalProfessorXTema = num_professores > 0 ? (
+    (temas_pre_i  > 0 && alunos_pre_i  > 0 ? num_professores * temas_pre_i  : 0) +
+    (temas_pre_ii > 0 && alunos_pre_ii > 0 ? num_professores * temas_pre_ii : 0) +
+    (temas_ano1   > 0 && alunos_ano1   > 0 ? num_professores * temas_ano1   : 0) +
+    (temas_ano2   > 0 && alunos_ano2   > 0 ? num_professores * temas_ano2   : 0) +
+    (temas_ano3   > 0 && alunos_ano3   > 0 ? num_professores * temas_ano3   : 0) +
+    (temas_ano4   > 0 && alunos_ano4   > 0 ? num_professores * temas_ano4   : 0) +
+    (temas_ano5   > 0 && alunos_ano5   > 0 ? num_professores * temas_ano5   : 0) +
+    (temas_ano6   > 0 && alunos_ano6   > 0 ? num_professores * temas_ano6   : 0) +
+    (temas_ano7   > 0 && alunos_ano7   > 0 ? num_professores * temas_ano7   : 0) +
+    (temas_ano8   > 0 && alunos_ano8   > 0 ? num_professores * temas_ano8   : 0) +
+    (temas_ano9   > 0 && alunos_ano9   > 0 ? num_professores * temas_ano9   : 0)
+  ) : 0
+
   // series_tapetes: séries com alunos > 0 (para tapetes MPC)
   const seriesList: string[] = []
   if (alunos_pre_i  > 0) seriesList.push('PreI')
@@ -286,7 +301,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
           : tc === 'PorAlunoEProfessorXLivroPraticas'
           ? (num_alunos + num_professores) * num_livros_praticas
           : tc === 'PorProfessorXTema'
-          ? num_professores * num_temas * num_livros_guia
+          ? (hasSeriesData && totalProfessorXTema > 0 ? totalProfessorXTema * num_livros_guia : num_professores * num_temas * num_livros_guia)
           : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
         return supabase.from('proposta_componentes')
           .update({ quantidade: qty })
