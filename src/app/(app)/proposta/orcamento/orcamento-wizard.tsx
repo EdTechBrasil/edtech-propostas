@@ -133,8 +133,9 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
 
   function canContinue(): boolean {
     if (!orcamentoDisplay) return false
-    const algumAtivo = Object.values(segmentos).some(s => s.ativo)
-    return algumAtivo
+    const ativos = Object.values(segmentos).filter(s => s.ativo)
+    if (ativos.length === 0) return false
+    return ativos.every(s => parseInt(s.escolas || '0', 10) > 0 && parseInt(s.alunos || '0', 10) > 0)
   }
 
   async function handleGerar() {
@@ -182,7 +183,7 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
         return
       }
 
-      router.push(`/proposta/${result.propostaId}/componentes`)
+      router.push(`/proposta/${result.propostaId}/publico`)
     })
   }
 
@@ -337,6 +338,18 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
               </div>
             </CardContent>
           </Card>
+
+          {(() => {
+            const ativos = Object.values(segmentos).filter(s => s.ativo)
+            const faltaCampos = ativos.some(
+              s => parseInt(s.escolas || '0', 10) === 0 || parseInt(s.alunos || '0', 10) === 0
+            )
+            return ativos.length > 0 && faltaCampos ? (
+              <p className="text-sm text-amber-600 dark:text-amber-400 text-right">
+                Preencha Escolas e Alunos em todos os segmentos ativos para continuar
+              </p>
+            ) : null
+          })()}
 
           <div className="flex justify-end">
             <Button
