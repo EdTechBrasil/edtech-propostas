@@ -87,11 +87,11 @@ export function OrcamentoWizard({ produtos }: { produtos: Produto[] }) {
     ensinoMedio:      { ativo: false, escolas: '', alunos: '', professores: '' },
     eja:              { ativo: false, escolas: '', alunos: '', professores: '' },
   })
-  const [formPresMin, setFormPresMin] = useState('')
+  const [formPresMin, setFormPresMin] = useState('8')
   const [formPresMax, setFormPresMax] = useState('')
-  const [formEadMin, setFormEadMin] = useState('')
+  const [formEadMin, setFormEadMin] = useState('10')
   const [formEadMax, setFormEadMax] = useState('')
-  const [assessMin, setAssessMin] = useState('')
+  const [assessMin, setAssessMin] = useState('10')
   const [assessMax, setAssessMax] = useState('')
 
   // Step 2
