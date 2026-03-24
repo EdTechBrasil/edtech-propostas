@@ -178,6 +178,23 @@ export function PublicoCliente({
     Object.entries(checked).some(([k, v]) => v && Number(alunos[k] || 0) > 0)
   const seriesObrigatorias = hasSeriesMode && !algumaSerieSalva
 
+  // Validação: séries com alunos preenchidos mas temas = 0 (bloqueia submit)
+  const temasMpcFaltando = temMPC
+    ? MPC_SERIES.filter(s =>
+        checked[s.key] && Number(alunos[s.key] || 0) > 0 && Number(temas[s.key] || 0) === 0
+      )
+    : []
+  const temasCodingFaltando = temCoding
+    ? codingSeries.filter(s =>
+        checked[s.key] && Number(alunos[s.key] || 0) > 0 && Number(temas[s.key] || 0) === 0
+      )
+    : []
+  const temasFaltando = temasMpcFaltando.length > 0 || temasCodingFaltando.length > 0
+  const seriesFaltandoNomes = [
+    ...temasMpcFaltando.map(s => s.label),
+    ...temasCodingFaltando.map(s => s.label),
+  ].join(', ')
+
   return (
     <div>
       <div className="mb-6">
@@ -707,9 +724,15 @@ export function PublicoCliente({
             Selecione ao menos uma série e informe o número de alunos para continuar.
           </div>
         )}
+        {temasFaltando && (
+          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <span className="font-medium">Temas obrigatórios não preenchidos:</span>{' '}
+            {seriesFaltandoNomes}. Informe o número de temas para cada série antes de continuar.
+          </div>
+        )}
         <div className="flex justify-between">
           <BackButton />
-          <Button type="submit" disabled={seriesObrigatorias}>Continuar →</Button>
+          <Button type="submit" disabled={seriesObrigatorias || temasFaltando}>Continuar →</Button>
         </div>
       </form>
     </div>
