@@ -22,6 +22,15 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
       .select(`
         id, status, orcamento_alvo,
         publico_descricao, repasse_tipo, repasse_valor,
+        num_escolas, num_professores, num_alunos,
+        num_alunos_pre_i, num_alunos_pre_ii,
+        num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
+        num_alunos_ano4, num_alunos_ano5, num_alunos_ano6,
+        num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
+        num_temas_pre_i, num_temas_pre_ii,
+        num_temas_ano1, num_temas_ano2, num_temas_ano3,
+        num_temas_ano4, num_temas_ano5, num_temas_ano6,
+        num_temas_ano7, num_temas_ano8, num_temas_ano9,
         cliente_nome_instituicao, cliente_cnpj,
         cliente_responsavel, cliente_email, cliente_cidade,
         validade_proposta, criado_em,
@@ -168,10 +177,54 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         </div>
 
         {/* Scope */}
-        {proposta.publico_descricao && (
+        {proposta.num_escolas > 0 && (
           <div className="mb-8">
             <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Escopo / Público-alvo</h2>
-            <p className="text-sm text-slate-700 bg-slate-50 rounded-lg px-4 py-3">{proposta.publico_descricao}</p>
+            <div className="bg-slate-50 rounded-lg px-4 py-3 text-sm text-slate-700">
+              {/* Linha de totais globais */}
+              <div className="flex gap-6 mb-3 pb-3 border-b border-slate-200 font-medium text-slate-800">
+                <span>Escolas: <strong>{proposta.num_escolas}</strong></span>
+                <span>Professores: <strong>{proposta.num_professores}</strong></span>
+                <span>Total de alunos: <strong>{proposta.num_alunos}</strong></span>
+              </div>
+              {/* Detalhamento por série */}
+              {(() => {
+                const series = [
+                  { label: 'Pré I',   alunos: proposta.num_alunos_pre_i,  temas: proposta.num_temas_pre_i  },
+                  { label: 'Pré II',  alunos: proposta.num_alunos_pre_ii, temas: proposta.num_temas_pre_ii },
+                  { label: '1º ano',  alunos: proposta.num_alunos_ano1,   temas: proposta.num_temas_ano1   },
+                  { label: '2º ano',  alunos: proposta.num_alunos_ano2,   temas: proposta.num_temas_ano2   },
+                  { label: '3º ano',  alunos: proposta.num_alunos_ano3,   temas: proposta.num_temas_ano3   },
+                  { label: '4º ano',  alunos: proposta.num_alunos_ano4,   temas: proposta.num_temas_ano4   },
+                  { label: '5º ano',  alunos: proposta.num_alunos_ano5,   temas: proposta.num_temas_ano5   },
+                  { label: '6º ano',  alunos: proposta.num_alunos_ano6,   temas: proposta.num_temas_ano6   },
+                  { label: '7º ano',  alunos: proposta.num_alunos_ano7,   temas: proposta.num_temas_ano7   },
+                  { label: '8º ano',  alunos: proposta.num_alunos_ano8,   temas: proposta.num_temas_ano8   },
+                  { label: '9º ano',  alunos: proposta.num_alunos_ano9,   temas: proposta.num_temas_ano9   },
+                ].filter(s => (s.alunos ?? 0) > 0)
+                if (series.length === 0) return null
+                return (
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-slate-400">
+                        <th className="text-left py-1 font-medium w-24">Série</th>
+                        <th className="text-center py-1 font-medium w-20">Alunos</th>
+                        <th className="text-center py-1 font-medium w-20">Temas</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {series.map(s => (
+                        <tr key={s.label}>
+                          <td className="py-1 text-slate-600">{s.label}</td>
+                          <td className="py-1 text-center text-slate-700 font-medium">{s.alunos}</td>
+                          <td className="py-1 text-center text-slate-500">{(s.temas ?? 0) > 0 ? s.temas : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
+              })()}
+            </div>
           </div>
         )}
 

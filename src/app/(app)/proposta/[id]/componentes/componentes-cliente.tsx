@@ -365,7 +365,7 @@ export function ComponentesCliente({
   const hasKitGlobal = produtos.some(pp =>
     pp.componentes.some(c => {
       const tc = c.componente?.tipo_calculo ?? ''
-      return tc === 'PorEscolaXKit' || TAPETE_TYPES.has(tc)
+      return tc === 'Kit' || tc === 'PorEscolaXKit' || TAPETE_TYPES.has(tc)
     })
   )
 

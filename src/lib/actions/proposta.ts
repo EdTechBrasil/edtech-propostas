@@ -189,6 +189,38 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     }
   }
 
+  // Preservar séries não cobertas pelo formulário atual (ex: wizard pré-populou AF, mas form só tem MPC)
+  if (hasSeriesData) {
+    const { data: seriesExistentes } = await supabase
+      .from('propostas')
+      .select('num_alunos_pre_i, num_alunos_pre_ii, num_alunos_ano1, num_alunos_ano2, num_alunos_ano3, num_alunos_ano4, num_alunos_ano5, num_alunos_ano6, num_alunos_ano7, num_alunos_ano8, num_alunos_ano9')
+      .eq('id', proposta_id)
+      .single<any>()
+
+    if (seriesExistentes) {
+      // Se o form não cobre as séries MPC (pre_i..ano3), preservar os valores existentes
+      if (!hasMpc && !hasCriaCode) {
+        alunos_pre_i  = seriesExistentes.num_alunos_pre_i  ?? 0
+        alunos_pre_ii = seriesExistentes.num_alunos_pre_ii ?? 0
+        alunos_ano1   = seriesExistentes.num_alunos_ano1   ?? 0
+        alunos_ano2   = seriesExistentes.num_alunos_ano2   ?? 0
+        alunos_ano3   = seriesExistentes.num_alunos_ano3   ?? 0
+      }
+      // Se o form não cobre as séries Coding (ano4..ano9), preservar os valores existentes
+      if (!hasCoding) {
+        // ano4-ano5: só preservar se CriaCode também não os preencheu
+        if (!hasCriaCode) {
+          alunos_ano4 = seriesExistentes.num_alunos_ano4 ?? 0
+          alunos_ano5 = seriesExistentes.num_alunos_ano5 ?? 0
+        }
+        alunos_ano6 = seriesExistentes.num_alunos_ano6 ?? 0
+        alunos_ano7 = seriesExistentes.num_alunos_ano7 ?? 0
+        alunos_ano8 = seriesExistentes.num_alunos_ano8 ?? 0
+        alunos_ano9 = seriesExistentes.num_alunos_ano9 ?? 0
+      }
+    }
+  }
+
   // Edtech IA: livros de conceitos (1–4) e práticas (0–2)
   const num_livros_conceitos = hasEdtechIA ? Math.min(4, Math.max(1, Number(formData.get('livros_conceitos') || 1))) : 0
   const num_livros_praticas  = hasEdtechIA ? Math.min(2, Math.max(0, Number(formData.get('livros_praticas')  || 0))) : 0
