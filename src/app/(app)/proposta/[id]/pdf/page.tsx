@@ -49,7 +49,8 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
           servico:produto_servicos(nome)
         )
       `)
-      .eq('proposta_id', id),
+      .eq('proposta_id', id)
+      .order('criado_em', { ascending: true }),
     supabase
       .from('configuracao_pdf')
       .select('empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado, template_pdf_url')
@@ -178,7 +179,12 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         <div className="mb-8">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Composição da Proposta</h2>
           <div className="space-y-6">
-            {(produtos ?? []).map((pp: any) => (
+            {(produtos ?? [])
+              .filter((pp: any) =>
+                (pp.componentes ?? []).some((c: any) => c.quantidade > 0) ||
+                (pp.servicos ?? []).some((s: any) => s.quantidade > 0)
+              )
+              .map((pp: any) => (
               <div key={pp.id}>
                 <div className="flex items-center justify-between mb-2">
                   <p className="font-semibold text-slate-900">{pp.produto?.nome}</p>
