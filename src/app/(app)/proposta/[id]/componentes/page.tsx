@@ -71,6 +71,10 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
     `)
     .eq('proposta_id', id)
 
+  const temMPC = (produtosProposta ?? []).some(pp =>
+    (pp.produto as any)?.nome?.toLowerCase().includes('primeiro')
+  )
+
   const produtosOrdenados = (produtosProposta ?? []).map(pp => ({
     ...pp,
     componentes: [...(pp.componentes as any[])].sort(
@@ -152,6 +156,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
             Ano3:  proposta.num_alunos_ano3   ?? 0,
           }}
           numLivrosGuia={proposta.num_livros_guia ?? 1}
+          temMPC={temMPC}
           produtos={produtosOrdenados as any}
         />
       )}

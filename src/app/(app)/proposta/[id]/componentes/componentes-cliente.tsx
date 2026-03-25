@@ -70,6 +70,7 @@ interface Props {
   numEscolas: number
   numTemas: number
   numKits: number
+  temMPC: boolean
   seriesTapetes: string | null
   temasPorSerie: Record<string, number>
   alunosPorSerie: Record<string, number>
@@ -306,6 +307,7 @@ export function ComponentesCliente({
   numEscolas,
   numTemas,
   numKits,
+  temMPC,
   seriesTapetes,
   temasPorSerie,
   alunosPorSerie,
@@ -362,9 +364,7 @@ export function ComponentesCliente({
     setItems(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
   }
 
-  const hasKitGlobal = produtos.some(pp =>
-    pp.componentes.some(c => TAPETE_TYPES.has(c.componente?.tipo_calculo ?? ''))
-  )
+  const hasKitGlobal = temMPC
 
   // Cálculos ao vivo
   const receitaBruta = Object.values(items).reduce((sum, i) => sum + i.qtd * i.valor, 0)
