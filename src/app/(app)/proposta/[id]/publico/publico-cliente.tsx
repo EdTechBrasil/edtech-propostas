@@ -109,6 +109,9 @@ export function PublicoCliente({
   temEdtechIA,
   temCriaCode,
   servicosFormacao,
+  mpcPpId,
+  mpcNumEscolas = 0,
+  flatProds = [],
 }: {
   proposta: Proposta
   temMPC: boolean
@@ -116,6 +119,9 @@ export function PublicoCliente({
   temEdtechIA: boolean
   temCriaCode: boolean
   servicosFormacao: { presencial: ServicoFormacao | null; ead: ServicoFormacao | null; assessoria: ServicoFormacao | null }
+  mpcPpId?: string
+  mpcNumEscolas?: number
+  flatProds?: { pp_id: string; nome: string; num_escolas: number }[]
 }) {
   const action = atualizarPublico.bind(null, proposta.id)
 
@@ -172,6 +178,8 @@ export function PublicoCliente({
   const temFormacao = servicosFormacao.presencial || servicosFormacao.ead || servicosFormacao.assessoria
   const hasSeriesMode = temMPC || temCoding || temCriaCode
   const hasAnySpecialMode = hasSeriesMode || temEdtechIA
+  // Escolas ficam dentro do card de cada produto quando MPC ou flat prods estão presentes
+  const needsPerProductEscola = (temMPC && !!mpcPpId) || flatProds.length > 0
 
   // Validação: quando há produto com séries, ao menos uma série deve ter alunos preenchidos
   const algumaSerieSalva = Object.values(checked).some(v => v) &&
@@ -229,18 +237,20 @@ export function PublicoCliente({
                 <CardTitle>Estrutura do público</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="escolas">Escolas</Label>
-                    <Input
-                      id="escolas"
-                      name="escolas"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      defaultValue={proposta.num_escolas || ''}
-                    />
-                  </div>
+                <div className={`grid gap-4 ${needsPerProductEscola ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {!needsPerProductEscola && (
+                    <div className="space-y-2">
+                      <Label htmlFor="escolas">Escolas</Label>
+                      <Input
+                        id="escolas"
+                        name="escolas"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        defaultValue={proposta.num_escolas || ''}
+                      />
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="professores">Professores</Label>
                     <Input
@@ -273,6 +283,20 @@ export function PublicoCliente({
                       </span>
                     )
                   ))}
+
+                  {mpcPpId && (
+                    <div className="space-y-2">
+                      <Label htmlFor={`escolas_pp_${mpcPpId}`}>Escolas</Label>
+                      <Input
+                        id={`escolas_pp_${mpcPpId}`}
+                        name={`escolas_pp_${mpcPpId}`}
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        defaultValue={mpcNumEscolas || ''}
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -577,6 +601,28 @@ export function PublicoCliente({
                 </CardContent>
               </Card>
             )}
+
+            {/* Produtos flat (EJA Brasil, etc.) — escolas por produto */}
+            {flatProds.map(pp => (
+              <Card key={pp.pp_id}>
+                <CardHeader>
+                  <CardTitle>{pp.nome}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor={`escolas_pp_${pp.pp_id}`}>Escolas</Label>
+                    <Input
+                      id={`escolas_pp_${pp.pp_id}`}
+                      name={`escolas_pp_${pp.pp_id}`}
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      defaultValue={pp.num_escolas || ''}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
 
             {/* Formação e Assessoria */}
             {temFormacao && (

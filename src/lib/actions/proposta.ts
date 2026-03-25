@@ -123,7 +123,16 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const num_escolas     = Number(formData.get('escolas') || 0)
+  // Per-product escola counts (escolas_pp_{proposta_produto_id})
+  const escolasPorPP: Record<string, number> = {}
+  for (const [key, val] of formData.entries()) {
+    if (key.startsWith('escolas_pp_')) {
+      escolasPorPP[key.replace('escolas_pp_', '')] = Number(val) || 0
+    }
+  }
+  const num_escolas = Object.keys(escolasPorPP).length > 0
+    ? Object.values(escolasPorPP).reduce((s, v) => s + v, 0)
+    : Number(formData.get('escolas') || 0)
   const num_professores = Number(formData.get('professores') || 0)
   const hasMpc      = formData.get('has_mpc')        === 'true'
   const hasCoding   = formData.get('has_coding')     === 'true'
@@ -297,57 +306,69 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     })
     .eq('id', proposta_id)
 
-  // Recalcula quantidades de todos os componentes e serviços da proposta
-  const [{ data: compsRaw }, { data: servsRaw }] = await Promise.all([
-    supabase
-      .from('proposta_componentes')
-      .select('id, componente:produto_componentes(tipo_calculo, categoria)')
-      .eq('proposta_id', proposta_id),
-    supabase
-      .from('proposta_servicos')
-      .select('id, servico:produto_servicos(tipo_calculo)')
-      .eq('proposta_id', proposta_id),
-  ])
+  // Salvar escolas por produto
+  if (Object.keys(escolasPorPP).length > 0) {
+    await Promise.all(
+      Object.entries(escolasPorPP).map(([ppId, esc]) =>
+        supabase.from('proposta_produtos').update({ num_escolas: esc }).eq('id', ppId)
+      )
+    )
+  } else {
+    // Modo legado: atualiza todos os produtos com o total global
+    await supabase.from('proposta_produtos').update({ num_escolas }).eq('proposta_id', proposta_id)
+  }
 
-  const comps = compsRaw as CompRow[] | null
-  const servs = servsRaw as ServRow[] | null
+  // Recalcula quantidades agrupando por produto (usa num_escolas por produto)
+  const { data: ppRows } = await supabase
+    .from('proposta_produtos')
+    .select(`
+      id, num_escolas,
+      componentes:proposta_componentes(id, componente:produto_componentes(tipo_calculo, categoria)),
+      servicos:proposta_servicos(id, servico:produto_servicos(tipo_calculo))
+    `)
+    .eq('proposta_id', proposta_id)
 
-  await Promise.all([
-    ...(comps ?? [])
-      .filter(c => {
-        const tc = c.componente?.tipo_calculo
-        const cat = c.componente?.categoria
-        return tc !== 'Fixo' || cat === 'Kit'
-      })
-      .map(c => {
-        const tc = c.componente?.tipo_calculo ?? 'Fixo'
-        const cat = c.componente?.categoria ?? ''
-        const qty = TAPETE_TYPES.has(tc)
-          ? (seriesList.includes(TAPETE_KEYS[tc]) ? TAPETE_MULT[tc] * num_kits : 0)
-          : cat === 'Kit' && tc === 'Fixo'
-          ? num_escolas * num_kits
-          : tc === 'PorAlunoXTema'
-          ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
-          : tc === 'PorAlunoEProfessorXLivroConceitos'
-          ? (num_alunos + num_professores) * num_livros_conceitos
-          : tc === 'PorAlunoEProfessorXLivroPraticas'
-          ? (num_alunos + num_professores) * num_livros_praticas
-          : tc === 'PorProfessorXTema'
-          ? (hasSeriesData && totalProfessorXTema > 0 ? totalProfessorXTema * num_livros_guia : num_professores * num_temas * num_livros_guia)
-          : calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits)
-        return supabase.from('proposta_componentes')
-          .update({ quantidade: qty })
-          .eq('id', c.id)
-      }),
-    ...(servs ?? [])
-      .filter(s => s.servico?.tipo_calculo !== 'Fixo')
-      .map(s => {
-        const tc = s.servico?.tipo_calculo ?? 'Fixo'
-        return supabase.from('proposta_servicos')
-          .update({ quantidade: calcQtd(tc, num_professores, num_alunos, num_escolas, num_temas, num_kits) })
-          .eq('id', s.id)
-      }),
-  ])
+  await Promise.all(
+    (ppRows ?? []).flatMap(pp => {
+      const ppEsc = escolasPorPP[(pp as any).id] ?? (pp as any).num_escolas ?? num_escolas
+      const comps = (pp as any).componentes as CompRow[]
+      const servs = (pp as any).servicos as ServRow[]
+      return [
+        ...comps
+          .filter(c => {
+            const tc = c.componente?.tipo_calculo
+            const cat = c.componente?.categoria
+            return tc !== 'Fixo' || cat === 'Kit'
+          })
+          .map(c => {
+            const tc = c.componente?.tipo_calculo ?? 'Fixo'
+            const cat = c.componente?.categoria ?? ''
+            const qty = TAPETE_TYPES.has(tc)
+              ? (seriesList.includes(TAPETE_KEYS[tc]) ? TAPETE_MULT[tc] * num_kits : 0)
+              : cat === 'Kit' && tc === 'Fixo'
+              ? ppEsc * num_kits
+              : tc === 'PorAlunoXTema'
+              ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
+              : tc === 'PorAlunoEProfessorXLivroConceitos'
+              ? (num_alunos + num_professores) * num_livros_conceitos
+              : tc === 'PorAlunoEProfessorXLivroPraticas'
+              ? (num_alunos + num_professores) * num_livros_praticas
+              : tc === 'PorProfessorXTema'
+              ? (hasSeriesData && totalProfessorXTema > 0 ? totalProfessorXTema * num_livros_guia : num_professores * num_temas * num_livros_guia)
+              : calcQtd(tc, num_professores, num_alunos, ppEsc, num_temas, num_kits)
+            return supabase.from('proposta_componentes').update({ quantidade: qty }).eq('id', c.id)
+          }),
+        ...servs
+          .filter(s => s.servico?.tipo_calculo !== 'Fixo')
+          .map(s => {
+            const tc = s.servico?.tipo_calculo ?? 'Fixo'
+            return supabase.from('proposta_servicos')
+              .update({ quantidade: calcQtd(tc, num_professores, num_alunos, ppEsc, num_temas, num_kits) })
+              .eq('id', s.id)
+          }),
+      ]
+    })
+  )
 
   // Atualiza horas de formação/assessoria (MPC)
   const formacaoUpdates: any[] = []

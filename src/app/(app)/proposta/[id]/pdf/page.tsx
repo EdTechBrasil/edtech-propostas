@@ -47,6 +47,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
       .from('proposta_produtos')
       .select(`
         id,
+        num_escolas,
         desconto_percent,
         produto:produtos(nome, descricao),
         componentes:proposta_componentes(
@@ -210,29 +211,47 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
                 })
 
                 const flatRows = flatProds.filter(() => proposta.num_alunos > 0)
-                  .map((pp: any) => ({ label: pp.produto?.nome ?? '', alunos: proposta.num_alunos, temas: null }))
+                  .map((pp: any) => ({
+                    label: pp.produto?.nome ?? '',
+                    alunos: proposta.num_alunos,
+                    temas: null as number | null,
+                    escolas: ((pp.num_escolas ?? 0) > 0 ? pp.num_escolas : proposta.num_escolas) as number | null,
+                  }))
 
-                const allRows = [...series, ...flatRows]
+                const seriesRows = series.map(s => ({ ...s, escolas: null as number | null }))
+                const mpcProdPdf = (produtos ?? []).find((pp: any) => pp.produto?.nome?.includes('Primeiro'))
+                const mpcEscolas = (mpcProdPdf as any)?.num_escolas > 0 ? (mpcProdPdf as any).num_escolas : null
+
+                const allRows = [...seriesRows, ...flatRows]
                 if (allRows.length === 0) return null
                 return (
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="text-slate-400">
-                        <th className="text-left py-1 font-medium w-24">Série</th>
-                        <th className="text-center py-1 font-medium w-20">Alunos</th>
-                        <th className="text-center py-1 font-medium w-20">Temas</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {allRows.map(s => (
-                        <tr key={s.label}>
-                          <td className="py-1 text-slate-600">{s.label}</td>
-                          <td className="py-1 text-center text-slate-700 font-medium">{s.alunos}</td>
-                          <td className="py-1 text-center text-slate-500">{s.temas != null && s.temas > 0 ? s.temas : '—'}</td>
+                  <>
+                    {mpcEscolas && seriesRows.length > 0 && (
+                      <p className="text-xs text-slate-500 mb-1">
+                        Meu Primeiro Código — {mpcEscolas} escola{mpcEscolas !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-slate-400">
+                          <th className="text-left py-1 font-medium w-24">Série</th>
+                          <th className="text-center py-1 font-medium w-20">Alunos</th>
+                          <th className="text-center py-1 font-medium w-16">Temas</th>
+                          <th className="text-center py-1 font-medium w-20">Escolas</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {allRows.map(s => (
+                          <tr key={s.label}>
+                            <td className="py-1 text-slate-600">{s.label}</td>
+                            <td className="py-1 text-center text-slate-700 font-medium">{s.alunos ?? '—'}</td>
+                            <td className="py-1 text-center text-slate-500">{s.temas != null && s.temas > 0 ? s.temas : '—'}</td>
+                            <td className="py-1 text-center text-slate-500">{s.escolas != null && s.escolas > 0 ? s.escolas : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
                 )
               })()}
             </div>

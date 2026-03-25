@@ -59,7 +59,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       }>(),
     supabase
       .from('proposta_produtos')
-      .select('produto:produtos(nome)')
+      .select('id, num_escolas, produto:produtos(nome)')
       .eq('proposta_id', id),
     supabase
       .from('proposta_servicos')
@@ -75,6 +75,15 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
   const temCriaCode   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Cria+Code'))
   const temCodigoIA   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('O Código IA'))
 
+  const SERIES_PRODUCT_NAMES = ['Primeiro', 'Coding', 'Cria+Code', 'Inteligência Artificial', 'O Código IA']
+  const mpcProd = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Primeiro'))
+  const flatProds = (prods ?? [])
+    .filter(p => {
+      const nome: string = (p.produto as any)?.nome ?? ''
+      return !SERIES_PRODUCT_NAMES.some(n => nome.includes(n))
+    })
+    .map(p => ({ pp_id: (p as any).id, nome: (p.produto as any)?.nome ?? '', num_escolas: (p as any).num_escolas ?? 0 }))
+
   const servicoPresencial = (allServicos ?? []).find(s =>
     (s.servico as any)?.nome?.toLowerCase().includes('presencial')) ?? null
   const servicoEAD = (allServicos ?? []).find(s =>
@@ -88,5 +97,17 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
     assessoria: servicoAssessoria ? { id: servicoAssessoria.id, quantidade: servicoAssessoria.quantidade, valor_venda_unit: servicoAssessoria.valor_venda_unit } : null,
   }
 
-  return <PublicoCliente proposta={proposta} temMPC={temMPC} temCoding={temCoding} temEdtechIA={temEdtechIA} temCriaCode={temCriaCode || temCodigoIA} servicosFormacao={servicosFormacao} />
+  return (
+    <PublicoCliente
+      proposta={proposta}
+      temMPC={temMPC}
+      temCoding={temCoding}
+      temEdtechIA={temEdtechIA}
+      temCriaCode={temCriaCode || temCodigoIA}
+      servicosFormacao={servicosFormacao}
+      mpcPpId={(mpcProd as any)?.id}
+      mpcNumEscolas={(mpcProd as any)?.num_escolas ?? 0}
+      flatProds={flatProds}
+    />
+  )
 }
