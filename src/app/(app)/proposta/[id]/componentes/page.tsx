@@ -139,7 +139,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
           numAlunos={proposta.num_alunos ?? 0}
           numEscolas={proposta.num_escolas ?? 0}
           numTemas={proposta.num_temas ?? 0}
-          numKits={proposta.num_kits ?? 7}
+          numKits={proposta.num_kits > 5 ? proposta.num_kits : 7}
           seriesTapetes={proposta.series_tapetes ?? null}
           temasPorSerie={{
             PreI:  proposta.num_temas_pre_i  ?? 0,
