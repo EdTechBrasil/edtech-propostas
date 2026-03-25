@@ -333,7 +333,14 @@ export function ComponentesCliente({
         initial[c.id] = { qtd: c.quantidade, valor: c.valor_venda_unit, custo: c.custo_interno_unit }
       }
       for (const s of pp.servicos) {
-        initial[s.id] = { qtd: s.quantidade, valor: s.valor_venda_unit || (s.servico?.valor_venda_base ?? 0), custo: s.custo_interno_unit }
+        let qtd = s.quantidade
+        if (qtd <= 1) {
+          const nome = s.servico?.nome?.toLowerCase() ?? ''
+          if (nome.includes('presencial')) qtd = 8
+          else if (nome.includes('ead')) qtd = 10
+          else if (nome.includes('assessoria')) qtd = 10
+        }
+        initial[s.id] = { qtd, valor: s.valor_venda_unit || (s.servico?.valor_venda_base ?? 0), custo: s.custo_interno_unit }
       }
     }
     return initial
