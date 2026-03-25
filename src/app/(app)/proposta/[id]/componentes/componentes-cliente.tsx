@@ -364,7 +364,10 @@ export function ComponentesCliente({
     setItems(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
   }
 
-  const hasKitGlobal = temMPC
+  const hasKitGlobal = temMPC &&
+    (produtos[currentIndex]?.componentes ?? []).some(
+      c => TAPETE_TYPES.has(c.componente?.tipo_calculo ?? '')
+    )
 
   // Cálculos ao vivo
   const receitaBruta = Object.values(items).reduce((sum, i) => sum + i.qtd * i.valor, 0)
