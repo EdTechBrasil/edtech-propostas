@@ -209,43 +209,30 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
                   return !seriesNomes.some(n => nome.includes(n))
                 })
 
-                if (series.length === 0 && flatProds.length === 0) return null
+                const flatRows = flatProds.filter(() => proposta.num_alunos > 0)
+                  .map((pp: any) => ({ label: pp.produto?.nome ?? '', alunos: proposta.num_alunos, temas: null }))
+
+                const allRows = [...series, ...flatRows]
+                if (allRows.length === 0) return null
                 return (
-                  <>
-                    {series.length > 0 && (
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="text-slate-400">
-                            <th className="text-left py-1 font-medium w-24">Série</th>
-                            <th className="text-center py-1 font-medium w-20">Alunos</th>
-                            <th className="text-center py-1 font-medium w-20">Temas</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {series.map(s => (
-                            <tr key={s.label}>
-                              <td className="py-1 text-slate-600">{s.label}</td>
-                              <td className="py-1 text-center text-slate-700 font-medium">{s.alunos}</td>
-                              <td className="py-1 text-center text-slate-500">{(s.temas ?? 0) > 0 ? s.temas : '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                    {flatProds.length > 0 && proposta.num_alunos > 0 && (
-                      <div className={`space-y-1 text-xs${series.length > 0 ? ' mt-3 pt-3 border-t border-slate-200' : ''}`}>
-                        {flatProds.map((pp: any) => (
-                          <div key={pp.id} className="flex gap-4 text-slate-600">
-                            <span className="font-medium text-slate-700">{pp.produto?.nome}</span>
-                            <span>{proposta.num_alunos} alunos</span>
-                            {proposta.num_escolas > 0 && (
-                              <span>{proposta.num_escolas} escola{proposta.num_escolas !== 1 ? 's' : ''}</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-slate-400">
+                        <th className="text-left py-1 font-medium w-24">Série</th>
+                        <th className="text-center py-1 font-medium w-20">Alunos</th>
+                        <th className="text-center py-1 font-medium w-20">Temas</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {allRows.map(s => (
+                        <tr key={s.label}>
+                          <td className="py-1 text-slate-600">{s.label}</td>
+                          <td className="py-1 text-center text-slate-700 font-medium">{s.alunos}</td>
+                          <td className="py-1 text-center text-slate-500">{s.temas != null && s.temas > 0 ? s.temas : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )
               })()}
             </div>
