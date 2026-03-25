@@ -363,10 +363,7 @@ export function ComponentesCliente({
   }
 
   const hasKitGlobal = produtos.some(pp =>
-    pp.componentes.some(c => {
-      const tc = c.componente?.tipo_calculo ?? ''
-      return tc === 'Kit' || tc === 'PorEscolaXKit' || TAPETE_TYPES.has(tc)
-    })
+    pp.componentes.some(c => TAPETE_TYPES.has(c.componente?.tipo_calculo ?? ''))
   )
 
   // Cálculos ao vivo

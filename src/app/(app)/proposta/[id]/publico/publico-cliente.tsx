@@ -599,7 +599,7 @@ export function PublicoCliente({
                           type="number"
                           min="0"
                           placeholder="Ex: 26 (opcional)"
-                          defaultValue={servicosFormacao.presencial.quantidade > 1 ? servicosFormacao.presencial.quantidade : ''}
+                          defaultValue={servicosFormacao.presencial.quantidade > 1 ? servicosFormacao.presencial.quantidade : 8}
                         />
                         {servicosFormacao.presencial.valor_venda_unit > 0 && (
                           <p className="text-xs text-slate-500">{formatCurrency(servicosFormacao.presencial.valor_venda_unit)} por hora</p>
@@ -616,7 +616,7 @@ export function PublicoCliente({
                           type="number"
                           min="0"
                           placeholder="Ex: 20 (opcional)"
-                          defaultValue={servicosFormacao.ead.quantidade > 1 ? servicosFormacao.ead.quantidade : ''}
+                          defaultValue={servicosFormacao.ead.quantidade > 1 ? servicosFormacao.ead.quantidade : 10}
                         />
                         {servicosFormacao.ead.valor_venda_unit > 0 && (
                           <p className="text-xs text-slate-500">{formatCurrency(servicosFormacao.ead.valor_venda_unit)} por hora</p>
@@ -633,7 +633,7 @@ export function PublicoCliente({
                           type="number"
                           min="0"
                           placeholder="Ex: 20 (opcional)"
-                          defaultValue={servicosFormacao.assessoria.quantidade > 1 ? servicosFormacao.assessoria.quantidade : ''}
+                          defaultValue={servicosFormacao.assessoria.quantidade > 1 ? servicosFormacao.assessoria.quantidade : 10}
                         />
                         {servicosFormacao.assessoria.valor_venda_unit > 0 && (
                           <p className="text-xs text-slate-500">{formatCurrency(servicosFormacao.assessoria.valor_venda_unit)} por hora</p>
