@@ -22,7 +22,8 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
       num_alunos_ano4, num_alunos_ano5, num_alunos_ano6,
       num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
-      num_livros_guia
+      num_livros_guia,
+      num_alunos_edtech_ia
     `)
     .eq('id', id)
     .single<{
@@ -58,6 +59,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       num_alunos_ano8: number
       num_alunos_ano9: number
       num_livros_guia: number
+      num_alunos_edtech_ia: number
     }>()
 
   if (!proposta) notFound()
@@ -153,6 +155,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
           limiteOrcamento={proposta.limite_orcamento_max ?? 0}
           numProfessores={proposta.num_professores ?? 0}
           numAlunos={proposta.num_alunos ?? 0}
+          numAlunosEdtechIA={proposta.num_alunos_edtech_ia ?? 0}
           numEscolas={proposta.num_escolas ?? 0}
           numTemas={proposta.num_temas ?? 0}
           numKits={proposta.num_kits ?? 5}

@@ -256,6 +256,20 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   // MPC: volumes do Guia do Professor (≥ 1)
   const num_livros_guia = Math.max(1, Number(formData.get('livros_guia') || 1))
 
+  // EdTech IA: alunos próprios (campo separado para não conflitar com num_alunos global)
+  let num_alunos_edtech_ia = 0
+  if (hasEdtechIA) {
+    num_alunos_edtech_ia = Number(formData.get('alunos_edtech_ia') || 0)
+  } else {
+    // Preservar valor existente se EdTech IA não está no formulário atual
+    const { data: iaExist } = await supabase
+      .from('propostas')
+      .select('num_alunos_edtech_ia')
+      .eq('id', proposta_id)
+      .single<{ num_alunos_edtech_ia: number }>()
+    num_alunos_edtech_ia = iaExist?.num_alunos_edtech_ia ?? 0
+  }
+
   let num_alunos: number, num_temas: number
   if (hasSeriesData) {
     num_alunos = alunos_pre_i + alunos_pre_ii + alunos_ano1 + alunos_ano2 + alunos_ano3
@@ -269,6 +283,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     num_temas  = Number(formData.get('temas') || 0)
   }
 
+  // ── Totais globais (fallback para produtos sem séries definidas) ──────────────
   // Pre-computed total for PorAlunoXTema: sum(alunos_série × temas_série) all series
   const totalAlunoXTema =
     alunos_pre_i  * temas_pre_i  + alunos_pre_ii * temas_pre_ii +
@@ -290,6 +305,37 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     (temas_ano8   > 0 && alunos_ano8   > 0 ? num_professores * temas_ano8   : 0) +
     (temas_ano9   > 0 && alunos_ano9   > 0 ? num_professores * temas_ano9   : 0)
   ) : 0
+
+  // ── Totais por produto ────────────────────────────────────────────────────────
+  // MPC: PreI, PreII, Ano1-3 apenas
+  const totalAlunoXTema_mpc =
+    alunos_pre_i * temas_pre_i + alunos_pre_ii * temas_pre_ii +
+    alunos_ano1  * temas_ano1  + alunos_ano2   * temas_ano2   + alunos_ano3 * temas_ano3
+  const totalProfessorXTema_mpc = num_professores > 0 ? (
+    (temas_pre_i  > 0 && alunos_pre_i  > 0 ? num_professores * temas_pre_i  : 0) +
+    (temas_pre_ii > 0 && alunos_pre_ii > 0 ? num_professores * temas_pre_ii : 0) +
+    (temas_ano1   > 0 && alunos_ano1   > 0 ? num_professores * temas_ano1   : 0) +
+    (temas_ano2   > 0 && alunos_ano2   > 0 ? num_professores * temas_ano2   : 0) +
+    (temas_ano3   > 0 && alunos_ano3   > 0 ? num_professores * temas_ano3   : 0)
+  ) : 0
+
+  // Coding: Ano4-9 (Ano3 só se MPC não está presente)
+  const totalAlunoXTema_coding =
+    (!hasMpc ? alunos_ano3 * temas_ano3 : 0) +
+    alunos_ano4 * temas_ano4 + alunos_ano5 * temas_ano5 + alunos_ano6 * temas_ano6 +
+    alunos_ano7 * temas_ano7 + alunos_ano8 * temas_ano8 + alunos_ano9 * temas_ano9
+  const totalProfessorXTema_coding = num_professores > 0 ? (
+    (!hasMpc && temas_ano3 > 0 && alunos_ano3 > 0 ? num_professores * temas_ano3 : 0) +
+    (temas_ano4 > 0 && alunos_ano4 > 0 ? num_professores * temas_ano4 : 0) +
+    (temas_ano5 > 0 && alunos_ano5 > 0 ? num_professores * temas_ano5 : 0) +
+    (temas_ano6 > 0 && alunos_ano6 > 0 ? num_professores * temas_ano6 : 0) +
+    (temas_ano7 > 0 && alunos_ano7 > 0 ? num_professores * temas_ano7 : 0) +
+    (temas_ano8 > 0 && alunos_ano8 > 0 ? num_professores * temas_ano8 : 0) +
+    (temas_ano9 > 0 && alunos_ano9 > 0 ? num_professores * temas_ano9 : 0)
+  ) : 0
+
+  // CRIA+CODE: Ano1-5 (temas = 0, só usado para PorAluno)
+  const numAlunos_criacode = alunos_ano1 + alunos_ano2 + alunos_ano3 + alunos_ano4 + alunos_ano5
 
   // series_tapetes: séries com alunos > 0 (para tapetes MPC)
   const seriesList: string[] = []
@@ -323,6 +369,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       num_temas_ano4: temas_ano4, num_temas_ano5: temas_ano5, num_temas_ano6: temas_ano6,
       num_temas_ano7: temas_ano7, num_temas_ano8: temas_ano8, num_temas_ano9: temas_ano9,
       num_livros_conceitos, num_livros_praticas, num_livros_guia,
+      num_alunos_edtech_ia,
     })
     .eq('id', proposta_id)
 
@@ -343,6 +390,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     .from('proposta_produtos')
     .select(`
       id, num_escolas,
+      produto:produtos(nome),
       componentes:proposta_componentes(id, componente:produto_componentes(tipo_calculo, categoria)),
       servicos:proposta_servicos(id, servico:produto_servicos(tipo_calculo))
     `)
@@ -353,6 +401,24 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       const ppEsc = escolasPorPP[(pp as any).id] ?? (pp as any).num_escolas ?? num_escolas
       const comps = (pp as any).componentes as CompRow[]
       const servs = (pp as any).servicos as ServRow[]
+
+      // Determina contexto por produto para usar totais corretos
+      const prodNome: string = (pp as any).produto?.nome ?? ''
+      const isMPC      = prodNome.toLowerCase().includes('primeiro')
+      const isCoding   = prodNome.toLowerCase().includes('coding')
+      const isCriaCode = prodNome.toLowerCase().includes('cria')
+      const isEdtechIA = prodNome.toLowerCase().includes('intelig')
+
+      const localTotalAlunoXTema = isMPC ? totalAlunoXTema_mpc
+        : isCoding ? totalAlunoXTema_coding
+        : totalAlunoXTema
+      const localTotalProfXTema = isMPC ? totalProfessorXTema_mpc
+        : isCoding ? totalProfessorXTema_coding
+        : totalProfessorXTema
+      const localNumAlunos = isCriaCode ? numAlunos_criacode
+        : isEdtechIA ? num_alunos_edtech_ia
+        : num_alunos
+
       return [
         ...comps
           .filter(c => {
@@ -368,14 +434,14 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
               : cat === 'Kit' && tc === 'Fixo'
               ? ppEsc * num_kits
               : tc === 'PorAlunoXTema'
-              ? (hasSeriesData ? totalAlunoXTema : num_alunos * num_temas)
+              ? (hasSeriesData ? localTotalAlunoXTema : localNumAlunos * num_temas)
               : tc === 'PorAlunoEProfessorXLivroConceitos'
-              ? (num_alunos + num_professores) * num_livros_conceitos
+              ? (localNumAlunos + num_professores) * num_livros_conceitos
               : tc === 'PorAlunoEProfessorXLivroPraticas'
-              ? (num_alunos + num_professores) * num_livros_praticas
+              ? (localNumAlunos + num_professores) * num_livros_praticas
               : tc === 'PorProfessorXTema'
-              ? (hasSeriesData && totalProfessorXTema > 0 ? totalProfessorXTema * num_livros_guia : num_professores * num_temas * num_livros_guia)
-              : calcQtd(tc, num_professores, num_alunos, ppEsc, num_temas, num_kits)
+              ? (hasSeriesData && localTotalProfXTema > 0 ? localTotalProfXTema * num_livros_guia : num_professores * num_temas * num_livros_guia)
+              : calcQtd(tc, num_professores, localNumAlunos, ppEsc, num_temas, num_kits)
             return supabase.from('proposta_componentes').update({ quantidade: qty }).eq('id', c.id)
           }),
         ...servs
@@ -383,7 +449,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
           .map(s => {
             const tc = s.servico?.tipo_calculo ?? 'Fixo'
             return supabase.from('proposta_servicos')
-              .update({ quantidade: calcQtd(tc, num_professores, num_alunos, ppEsc, num_temas, num_kits) })
+              .update({ quantidade: calcQtd(tc, num_professores, localNumAlunos, ppEsc, num_temas, num_kits) })
               .eq('id', s.id)
           }),
       ]

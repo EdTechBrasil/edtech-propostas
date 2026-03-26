@@ -77,6 +77,7 @@ interface Proposta {
   num_livros_conceitos: number
   num_livros_praticas: number
   num_livros_guia: number
+  num_alunos_edtech_ia: number
 }
 
 function alunosField(p: Proposta, key: string): number {
@@ -553,11 +554,11 @@ export function PublicoCliente({
                       <Label htmlFor="alunos_ia">Alunos</Label>
                       <Input
                         id="alunos_ia"
-                        name="alunos"
+                        name="alunos_edtech_ia"
                         type="number"
                         min="0"
                         placeholder="0"
-                        defaultValue={proposta.num_alunos || ''}
+                        defaultValue={proposta.num_alunos_edtech_ia || ''}
                       />
                     </div>
                   </div>

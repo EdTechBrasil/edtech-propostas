@@ -67,6 +67,7 @@ interface Props {
   limiteOrcamento: number
   numProfessores: number
   numAlunos: number
+  numAlunosEdtechIA: number
   numEscolas: number
   numTemas: number
   numKits: number
@@ -304,6 +305,7 @@ export function ComponentesCliente({
   limiteOrcamento,
   numProfessores,
   numAlunos,
+  numAlunosEdtechIA,
   numEscolas,
   numTemas,
   numKits,
@@ -381,8 +383,39 @@ export function ComponentesCliente({
   const custoTotal   = Object.values(items).reduce((sum, i) => sum + i.qtd * i.custo, 0)
   const margem       = receitaBruta > 0 ? ((receitaBruta - custoTotal) / receitaBruta) * 100 : 0
 
+  // Determina séries e num_alunos local pelo nome do produto
+  function getLocalContext(prodNome: string) {
+    const nome = prodNome.toLowerCase()
+    const isMPC      = nome.includes('primeiro')
+    const isCoding   = nome.includes('coding')
+    const isCriaCode = nome.includes('cria')
+    const isEdtechIA = nome.includes('intelig')
+
+    const MPC_SERIES    = ['PreI', 'PreII', 'Ano1', 'Ano2', 'Ano3']
+    const CODING_SERIES = [...(isCoding && !produtos.some(p => (p.produto?.nome ?? '').toLowerCase().includes('primeiro')) ? ['Ano3'] : []),
+                           'Ano4', 'Ano5', 'Ano6', 'Ano7', 'Ano8', 'Ano9']
+    const CRIA_SERIES   = ['Ano1', 'Ano2', 'Ano3', 'Ano4', 'Ano5']
+
+    const seriesKeys = isMPC ? MPC_SERIES : isCoding ? CODING_SERIES : isCriaCode ? CRIA_SERIES : null
+    const localTemas = seriesKeys
+      ? Object.fromEntries(seriesKeys.map(k => [k, temasPorSerie[k] ?? 0]))
+      : temasPorSerie
+    const localAlunos = seriesKeys
+      ? Object.fromEntries(seriesKeys.map(k => [k, alunosPorSerie[k] ?? 0]))
+      : alunosPorSerie
+    const localNumAlunos = isCriaCode
+      ? CRIA_SERIES.reduce((sum, k) => sum + (alunosPorSerie[k] ?? 0), 0)
+      : isEdtechIA
+      ? numAlunosEdtechIA
+      : numAlunos
+
+    return { localTemas, localAlunos, localNumAlunos }
+  }
+
   // Hint de quantidade por tipo de cálculo
-  function getHint(tipoCalculo: string): { text: string; type: 'info' | 'warn' } | null {
+  function getHint(tipoCalculo: string, prodNome = ''): { text: string; type: 'info' | 'warn' } | null {
+    const { localTemas, localAlunos, localNumAlunos } = getLocalContext(prodNome)
+
     if (TAPETE_TYPES.has(tipoCalculo)) {
       const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
       const key = TAPETE_KEYS[tipoCalculo]
@@ -412,7 +445,7 @@ export function ComponentesCliente({
         { key: 'Ano9',  label: '9º ano' },
       ]
       const linhas = ALL_HINT_SERIES
-        .map(s => ({ ...s, t: temasPorSerie[s.key] ?? 0, a: alunosPorSerie[s.key] ?? 0 }))
+        .map(s => ({ ...s, t: localTemas[s.key] ?? 0, a: localAlunos[s.key] ?? 0 }))
         .filter(s => s.t > 0 && s.a > 0)
       if (linhas.length > 0) {
         const total = linhas.reduce((sum, s) => sum + numProfessores * s.t, 0) * numLivrosGuia
@@ -427,8 +460,8 @@ export function ComponentesCliente({
     }
     if (tipoCalculo === 'PorProfessor' && numProfessores > 0)
       return { text: `Sugestão: qtd = nº de professores (${numProfessores})`, type: 'info' }
-    if (tipoCalculo === 'PorAluno' && numAlunos > 0)
-      return { text: `Sugestão: qtd = nº de alunos (${numAlunos})`, type: 'info' }
+    if (tipoCalculo === 'PorAluno' && localNumAlunos > 0)
+      return { text: `Sugestão: qtd = nº de alunos (${localNumAlunos.toLocaleString('pt-BR')})`, type: 'info' }
     if (tipoCalculo === 'PorEscola' && numEscolas > 0)
       return { text: `Sugestão: qtd = nº de escolas (${numEscolas})`, type: 'info' }
     if (tipoCalculo === 'PorAlunoXTema') {
@@ -446,7 +479,7 @@ export function ComponentesCliente({
         { key: 'Ano9',  label: '9º ano'   },
       ]
       const linhas = ALL_HINT_SERIES
-        .map(s => ({ ...s, a: alunosPorSerie[s.key] ?? 0, t: temasPorSerie[s.key] ?? 0 }))
+        .map(s => ({ ...s, a: localAlunos[s.key] ?? 0, t: localTemas[s.key] ?? 0 }))
         .filter(s => s.a > 0 && s.t > 0)
       if (linhas.length === 0)
         return { text: 'Qtd estimada — preencha Alunos e Temas no Público', type: 'warn' }
@@ -454,15 +487,15 @@ export function ComponentesCliente({
       const partes = linhas.map(s => `${s.label}: ${s.a} × ${s.t} = ${s.a * s.t}`).join(' | ')
       return { text: `${partes} | Total: ${total.toLocaleString('pt-BR')}`, type: 'info' }
     }
-    if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos > 0 || numProfessores > 0) && numTemas > 0)
-      return { text: `${(numAlunos * numTemas).toLocaleString('pt-BR')} para Alunos + ${(numProfessores * numTemas).toLocaleString('pt-BR')} para Professores`, type: 'info' }
+    if (tipoCalculo === 'PorAlunoEProfessorXTema' && (localNumAlunos > 0 || numProfessores > 0) && numTemas > 0)
+      return { text: `${(localNumAlunos * numTemas).toLocaleString('pt-BR')} para Alunos + ${(numProfessores * numTemas).toLocaleString('pt-BR')} para Professores`, type: 'info' }
     if (tipoCalculo === 'PorProfessor' && numProfessores === 0)
       return { text: `Qtd estimada — preencha Professores no Público`, type: 'warn' }
-    if (tipoCalculo === 'PorAluno' && numAlunos === 0)
+    if (tipoCalculo === 'PorAluno' && localNumAlunos === 0)
       return { text: `Qtd estimada — preencha Alunos no Público`, type: 'warn' }
     if (tipoCalculo === 'PorEscola' && numEscolas === 0)
       return { text: `Qtd estimada — preencha Escolas no Público`, type: 'warn' }
-    if (tipoCalculo === 'PorAlunoEProfessorXTema' && (numAlunos === 0 || numTemas === 0))
+    if (tipoCalculo === 'PorAlunoEProfessorXTema' && (localNumAlunos === 0 || numTemas === 0))
       return { text: `Qtd estimada — preencha Alunos, Professores e Temas no Público`, type: 'warn' }
     if (tipoCalculo === 'PorEscolaXKit' && numEscolas > 0 && numKitsState > 0)
       return { text: `${numEscolas} escolas × ${numKitsState} kits = ${numEscolas * numKitsState}`, type: 'info' }
@@ -669,7 +702,7 @@ export function ComponentesCliente({
                             qtd={state.qtd}
                             valor={state.valor}
                             custo={state.custo}
-                            hint={getHint(tipoCalculo)}
+                            hint={getHint(tipoCalculo, pp.produto?.nome ?? '')}
                             obrigatorio={c.obrigatorio}
                             onQtdChange={v => updateItem(c.id, { qtd: v })}
                             onValorChange={v => updateItem(c.id, { valor: v })}
@@ -706,7 +739,7 @@ export function ComponentesCliente({
                             qtd={state.qtd}
                             valor={state.valor}
                             custo={state.custo}
-                            hint={getHint(tipoCalculo)}
+                            hint={getHint(tipoCalculo, pp.produto?.nome ?? '')}
                             onQtdChange={v => updateItem(s.id, { qtd: v })}
                             onValorChange={v => updateItem(s.id, { valor: v })}
                             onSave={() => atualizarServico(s.id, propostaId, state.qtd, state.valor)}
