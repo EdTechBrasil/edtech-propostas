@@ -71,8 +71,16 @@ type Produto = {
   nome: string
   descricao: string | null
   ativo: boolean
+  series: string[]
   componentes: Componente[]
   servicos: Servico[]
+}
+
+const SERIES = ['PreI', 'PreII', 'Ano1', 'Ano2', 'Ano3', 'Ano4', 'Ano5', 'Ano6', 'Ano7', 'Ano8', 'Ano9']
+const SERIES_LABEL: Record<string, string> = {
+  PreI: 'Pré I', PreII: 'Pré II',
+  Ano1: '1º', Ano2: '2º', Ano3: '3º', Ano4: '4º', Ano5: '5º',
+  Ano6: '6º', Ano7: '7º', Ano8: '8º', Ano9: '9º',
 }
 
 const CATEGORIAS = ['LicencaAluno', 'LicencaProfessor', 'Kit', 'Livro', 'Tema', 'Pagina', 'Credito', 'ItemFixo', 'Plataforma']
@@ -385,6 +393,15 @@ function ProdutoCard({ produto }: { produto: Produto }) {
         <button type="button" onClick={() => setExpandido(!expandido)} className="flex-1 text-left">
           <p className={`font-semibold ${produto.ativo ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>{produto.nome}</p>
           {produto.descricao && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{produto.descricao}</p>}
+          {produto.series.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {produto.series.map(s => (
+                <span key={s} className="text-[10px] font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900 rounded px-1.5 py-0.5">
+                  {SERIES_LABEL[s] ?? s}
+                </span>
+              ))}
+            </div>
+          )}
         </button>
 
         <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{totalItens} itens</span>
@@ -416,6 +433,19 @@ function ProdutoCard({ produto }: { produto: Produto }) {
               <div className="space-y-2">
                 <Label>Descrição</Label>
                 <Input name="descricao" defaultValue={produto.descricao ?? ''} />
+              </div>
+              <div className="space-y-2">
+                <Label>Séries atendidas</Label>
+                <div className="flex flex-wrap gap-2">
+                  {SERIES.map(s => (
+                    <label key={s} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                      <input type="checkbox" name="series" value={s}
+                        defaultChecked={produto.series.includes(s)}
+                        className="h-3.5 w-3.5 rounded border-gray-300" />
+                      {SERIES_LABEL[s]}
+                    </label>
+                  ))}
+                </div>
               </div>
               {erroEdit && <p className="text-sm text-red-600">{erroEdit}</p>}
               <DialogFooter>
@@ -698,6 +728,18 @@ export function ProdutosAdminCliente({ produtos: produtosIniciais }: { produtos:
               <div className="space-y-2">
                 <Label>Descrição</Label>
                 <Input name="descricao" placeholder="Breve descrição (opcional)" />
+              </div>
+              <div className="space-y-2">
+                <Label>Séries atendidas</Label>
+                <div className="flex flex-wrap gap-2">
+                  {SERIES.map(s => (
+                    <label key={s} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                      <input type="checkbox" name="series" value={s}
+                        className="h-3.5 w-3.5 rounded border-gray-300" />
+                      {SERIES_LABEL[s]}
+                    </label>
+                  ))}
+                </div>
               </div>
               {erro && <p className="text-sm text-red-600">{erro}</p>}
               <DialogFooter>

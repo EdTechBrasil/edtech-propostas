@@ -121,6 +121,7 @@ export async function criarProduto(formData: FormData) {
   const adminClient = createAdminClient()
   const nome = formData.get('nome') as string
   const descricao = formData.get('descricao') as string
+  const series = formData.getAll('series') as string[]
   if (!nome) return { error: 'Nome é obrigatório' }
   const { data, error } = await adminClient
     .from('produtos')
@@ -128,6 +129,11 @@ export async function criarProduto(formData: FormData) {
     .select('id')
     .single<{ id: string }>()
   if (error || !data) return { error: error?.message ?? 'Erro ao criar produto' }
+  if (series.length > 0) {
+    await adminClient
+      .from('produto_series')
+      .insert(series.map(serie => ({ produto_id: data.id, serie })))
+  }
   revalidatePath('/admin/produtos')
   return { success: true, id: data.id }
 }
@@ -139,11 +145,19 @@ export async function atualizarProduto(produto_id: string, formData: FormData) {
   const adminClient = createAdminClient()
   const nome = formData.get('nome') as string
   const descricao = formData.get('descricao') as string
+  const series = formData.getAll('series') as string[]
   const { error } = await adminClient
     .from('produtos')
     .update({ nome, descricao: descricao || null })
     .eq('id', produto_id)
   if (error) return { error: error.message }
+  // Atualiza séries: remove todas e reinsere as marcadas
+  await adminClient.from('produto_series').delete().eq('produto_id', produto_id)
+  if (series.length > 0) {
+    await adminClient
+      .from('produto_series')
+      .insert(series.map(serie => ({ produto_id, serie })))
+  }
   revalidatePath('/admin/produtos')
   return { success: true }
 }
