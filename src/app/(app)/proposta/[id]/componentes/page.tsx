@@ -16,8 +16,12 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       num_professores, num_alunos, num_escolas, num_temas, num_kits, series_tapetes,
       num_temas_pre_i, num_temas_pre_ii,
       num_temas_ano1, num_temas_ano2, num_temas_ano3,
+      num_temas_ano4, num_temas_ano5, num_temas_ano6,
+      num_temas_ano7, num_temas_ano8, num_temas_ano9,
       num_alunos_pre_i, num_alunos_pre_ii,
       num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
+      num_alunos_ano4, num_alunos_ano5, num_alunos_ano6,
+      num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
       num_livros_guia
     `)
     .eq('id', id)
@@ -36,11 +40,23 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       num_temas_ano1: number
       num_temas_ano2: number
       num_temas_ano3: number
+      num_temas_ano4: number
+      num_temas_ano5: number
+      num_temas_ano6: number
+      num_temas_ano7: number
+      num_temas_ano8: number
+      num_temas_ano9: number
       num_alunos_pre_i: number
       num_alunos_pre_ii: number
       num_alunos_ano1: number
       num_alunos_ano2: number
       num_alunos_ano3: number
+      num_alunos_ano4: number
+      num_alunos_ano5: number
+      num_alunos_ano6: number
+      num_alunos_ano7: number
+      num_alunos_ano8: number
+      num_alunos_ano9: number
       num_livros_guia: number
     }>()
 
@@ -139,7 +155,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
           numAlunos={proposta.num_alunos ?? 0}
           numEscolas={proposta.num_escolas ?? 0}
           numTemas={proposta.num_temas ?? 0}
-          numKits={proposta.num_kits > 5 ? proposta.num_kits : 7}
+          numKits={proposta.num_kits ?? 5}
           seriesTapetes={proposta.series_tapetes ?? null}
           temasPorSerie={{
             PreI:  proposta.num_temas_pre_i  ?? 0,
@@ -147,6 +163,12 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
             Ano1:  proposta.num_temas_ano1   ?? 0,
             Ano2:  proposta.num_temas_ano2   ?? 0,
             Ano3:  proposta.num_temas_ano3   ?? 0,
+            Ano4:  proposta.num_temas_ano4   ?? 0,
+            Ano5:  proposta.num_temas_ano5   ?? 0,
+            Ano6:  proposta.num_temas_ano6   ?? 0,
+            Ano7:  proposta.num_temas_ano7   ?? 0,
+            Ano8:  proposta.num_temas_ano8   ?? 0,
+            Ano9:  proposta.num_temas_ano9   ?? 0,
           }}
           alunosPorSerie={{
             PreI:  proposta.num_alunos_pre_i  ?? 0,
@@ -154,6 +176,12 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
             Ano1:  proposta.num_alunos_ano1   ?? 0,
             Ano2:  proposta.num_alunos_ano2   ?? 0,
             Ano3:  proposta.num_alunos_ano3   ?? 0,
+            Ano4:  proposta.num_alunos_ano4   ?? 0,
+            Ano5:  proposta.num_alunos_ano5   ?? 0,
+            Ano6:  proposta.num_alunos_ano6   ?? 0,
+            Ano7:  proposta.num_alunos_ano7   ?? 0,
+            Ano8:  proposta.num_alunos_ano8   ?? 0,
+            Ano9:  proposta.num_alunos_ano9   ?? 0,
           }}
           numLivrosGuia={proposta.num_livros_guia ?? 1}
           temMPC={temMPC}

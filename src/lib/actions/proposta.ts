@@ -202,7 +202,16 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   if (hasSeriesData) {
     const { data: seriesExistentes } = await supabase
       .from('propostas')
-      .select('num_alunos_pre_i, num_alunos_pre_ii, num_alunos_ano1, num_alunos_ano2, num_alunos_ano3, num_alunos_ano4, num_alunos_ano5, num_alunos_ano6, num_alunos_ano7, num_alunos_ano8, num_alunos_ano9')
+      .select(`
+        num_alunos_pre_i, num_alunos_pre_ii,
+        num_alunos_ano1, num_alunos_ano2, num_alunos_ano3,
+        num_alunos_ano4, num_alunos_ano5, num_alunos_ano6,
+        num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
+        num_temas_pre_i, num_temas_pre_ii,
+        num_temas_ano1, num_temas_ano2, num_temas_ano3,
+        num_temas_ano4, num_temas_ano5, num_temas_ano6,
+        num_temas_ano7, num_temas_ano8, num_temas_ano9
+      `)
       .eq('id', proposta_id)
       .single<any>()
 
@@ -214,6 +223,11 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
         alunos_ano1   = seriesExistentes.num_alunos_ano1   ?? 0
         alunos_ano2   = seriesExistentes.num_alunos_ano2   ?? 0
         alunos_ano3   = seriesExistentes.num_alunos_ano3   ?? 0
+        temas_pre_i   = seriesExistentes.num_temas_pre_i   ?? 0
+        temas_pre_ii  = seriesExistentes.num_temas_pre_ii  ?? 0
+        temas_ano1    = seriesExistentes.num_temas_ano1    ?? 0
+        temas_ano2    = seriesExistentes.num_temas_ano2    ?? 0
+        temas_ano3    = seriesExistentes.num_temas_ano3    ?? 0
       }
       // Se o form não cobre as séries Coding (ano4..ano9), preservar os valores existentes
       if (!hasCoding) {
@@ -221,11 +235,17 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
         if (!hasCriaCode) {
           alunos_ano4 = seriesExistentes.num_alunos_ano4 ?? 0
           alunos_ano5 = seriesExistentes.num_alunos_ano5 ?? 0
+          temas_ano4  = seriesExistentes.num_temas_ano4  ?? 0
+          temas_ano5  = seriesExistentes.num_temas_ano5  ?? 0
         }
         alunos_ano6 = seriesExistentes.num_alunos_ano6 ?? 0
         alunos_ano7 = seriesExistentes.num_alunos_ano7 ?? 0
         alunos_ano8 = seriesExistentes.num_alunos_ano8 ?? 0
         alunos_ano9 = seriesExistentes.num_alunos_ano9 ?? 0
+        temas_ano6  = seriesExistentes.num_temas_ano6  ?? 0
+        temas_ano7  = seriesExistentes.num_temas_ano7  ?? 0
+        temas_ano8  = seriesExistentes.num_temas_ano8  ?? 0
+        temas_ano9  = seriesExistentes.num_temas_ano9  ?? 0
       }
     }
   }
