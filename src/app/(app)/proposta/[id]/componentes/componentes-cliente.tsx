@@ -133,7 +133,7 @@ function ItemRow({
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-20">
+          <div className="w-28">
             <Input
               type="number"
               min="0"
@@ -148,7 +148,7 @@ function ItemRow({
             />
           </div>
           <span className="text-slate-400 text-sm">×</span>
-          <div className="w-28">
+          <div className="w-32">
             <Input
               type="text"
               inputMode="decimal"
@@ -163,10 +163,10 @@ function ItemRow({
               title="Valor venda unitário"
             />
           </div>
-          <span className="text-sm font-semibold text-slate-700 w-24 text-right" title="Total venda">
+          <span className="text-sm font-semibold text-slate-700 w-32 text-right" title="Total venda">
             {formatCurrency(total)}
           </span>
-          <span className={`text-sm font-medium w-14 text-right ${margemCor}`} title="Margem por item">
+          <span className={`text-sm font-medium w-16 text-right ${margemCor}`} title="Margem por item">
             {margemItem !== null ? `${margemItem.toFixed(1)}%` : ''}
           </span>
         </div>
