@@ -122,7 +122,7 @@ export function PublicoCliente({
   servicosFormacao: { presencial: ServicoFormacao | null; ead: ServicoFormacao | null; assessoria: ServicoFormacao | null }
   mpcPpId?: string
   mpcNumEscolas?: number
-  flatProds?: { pp_id: string; nome: string; num_escolas: number }[]
+  flatProds?: { pp_id: string; nome: string; num_escolas: number; num_alunos: number; tipoPublico: 'PorAluno' | 'PorEscola' }[]
 }) {
   const action = atualizarPublico.bind(null, proposta.id)
 
@@ -603,24 +603,39 @@ export function PublicoCliente({
               </Card>
             )}
 
-            {/* Produtos flat (EJA Brasil, etc.) — escolas por produto */}
+            {/* Produtos flat (Codmos, Seppo, EJA, etc.) */}
             {flatProds.map(pp => (
               <Card key={pp.pp_id}>
                 <CardHeader>
                   <CardTitle>{pp.nome}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor={`escolas_pp_${pp.pp_id}`}>Escolas</Label>
-                    <Input
-                      id={`escolas_pp_${pp.pp_id}`}
-                      name={`escolas_pp_${pp.pp_id}`}
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      defaultValue={pp.num_escolas || ''}
-                    />
-                  </div>
+                  {pp.tipoPublico === 'PorAluno' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor={`alunos_pp_${pp.pp_id}`}>Usuários (Alunos + Professores)</Label>
+                      <Input
+                        id={`alunos_pp_${pp.pp_id}`}
+                        name={`alunos_pp_${pp.pp_id}`}
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        defaultValue={pp.num_alunos || ''}
+                      />
+                      <p className="text-xs text-slate-500">Quantidade total de licenças (alunos e professores somados)</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor={`escolas_pp_${pp.pp_id}`}>Escolas</Label>
+                      <Input
+                        id={`escolas_pp_${pp.pp_id}`}
+                        name={`escolas_pp_${pp.pp_id}`}
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        defaultValue={pp.num_escolas || ''}
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

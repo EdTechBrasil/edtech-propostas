@@ -61,7 +61,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       }>(),
     supabase
       .from('proposta_produtos')
-      .select('id, num_escolas, produto:produtos(nome)')
+      .select('id, num_escolas, num_alunos, produto:produtos(nome), componentes:proposta_componentes(componente:produto_componentes(tipo_calculo))')
       .eq('proposta_id', id),
     supabase
       .from('proposta_servicos')
@@ -84,7 +84,20 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       const nome: string = (p.produto as any)?.nome ?? ''
       return !SERIES_PRODUCT_NAMES.some(n => nome.includes(n))
     })
-    .map(p => ({ pp_id: (p as any).id, nome: (p.produto as any)?.nome ?? '', num_escolas: (p as any).num_escolas ?? 0 }))
+    .map(p => {
+      const comps: any[] = (p as any).componentes ?? []
+      const tipoCalcs: string[] = comps.map((c: any) => c.componente?.tipo_calculo ?? '')
+      const isPorAluno = tipoCalcs.some(tc => tc === 'PorAluno' || tc === 'PorProfessor')
+      const isPorEscola = tipoCalcs.some(tc => tc === 'PorEscola' || tc === 'PorEscolaXKit')
+      const tipoPublico: 'PorAluno' | 'PorEscola' = (!isPorEscola && isPorAluno) ? 'PorAluno' : 'PorEscola'
+      return {
+        pp_id: (p as any).id,
+        nome: (p.produto as any)?.nome ?? '',
+        num_escolas: (p as any).num_escolas ?? 0,
+        num_alunos: (p as any).num_alunos ?? 0,
+        tipoPublico,
+      }
+    })
 
   const servicoPresencial = (allServicos ?? []).find(s =>
     (s.servico as any)?.nome?.toLowerCase().includes('presencial')) ?? null

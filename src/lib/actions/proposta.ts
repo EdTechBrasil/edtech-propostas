@@ -130,6 +130,13 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       escolasPorPP[key.replace('escolas_pp_', '')] = Number(val) || 0
     }
   }
+  // Per-product aluno counts para produtos PorAluno (Codmos, Seppo, etc.)
+  const alunosPorPP: Record<string, number> = {}
+  for (const [key, val] of formData.entries()) {
+    if (key.startsWith('alunos_pp_')) {
+      alunosPorPP[key.replace('alunos_pp_', '')] = Number(val) || 0
+    }
+  }
   const num_escolas = Object.keys(escolasPorPP).length > 0
     ? Object.values(escolasPorPP).reduce((s, v) => s + v, 0)
     : Number(formData.get('escolas') || 0)
@@ -384,12 +391,20 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     // Modo legado: atualiza todos os produtos com o total global
     await supabase.from('proposta_produtos').update({ num_escolas }).eq('proposta_id', proposta_id)
   }
+  // Salvar alunos por produto (Codmos, Seppo, etc.)
+  if (Object.keys(alunosPorPP).length > 0) {
+    await Promise.all(
+      Object.entries(alunosPorPP).map(([ppId, al]) =>
+        supabase.from('proposta_produtos').update({ num_alunos: al }).eq('id', ppId)
+      )
+    )
+  }
 
   // Recalcula quantidades agrupando por produto (usa num_escolas por produto)
   const { data: ppRows } = await supabase
     .from('proposta_produtos')
     .select(`
-      id, num_escolas,
+      id, num_escolas, num_alunos,
       produto:produtos(nome),
       componentes:proposta_componentes(id, componente:produto_componentes(tipo_calculo, categoria)),
       servicos:proposta_servicos(id, servico:produto_servicos(tipo_calculo))
@@ -415,8 +430,11 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
       const localTotalProfXTema = isMPC ? totalProfessorXTema_mpc
         : isCoding ? totalProfessorXTema_coding
         : totalProfessorXTema
+      const ppNumAlunos = alunosPorPP[(pp as any).id] ?? ((pp as any).num_alunos ?? 0)
+      const isFlat = !isMPC && !isCoding && !isCriaCode && !isEdtechIA
       const localNumAlunos = isCriaCode ? numAlunos_criacode
         : isEdtechIA ? num_alunos_edtech_ia
+        : (isFlat && ppNumAlunos > 0) ? ppNumAlunos
         : num_alunos
 
       return [
