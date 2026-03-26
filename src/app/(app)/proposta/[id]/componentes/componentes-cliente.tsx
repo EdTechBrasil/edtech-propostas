@@ -51,6 +51,7 @@ interface Servico {
 
 interface ProdutoProposta {
   id: string
+  num_alunos: number
   produto: { nome: string } | null
   componentes: Componente[]
   servicos: Servico[]
@@ -384,7 +385,7 @@ export function ComponentesCliente({
   const margem       = receitaBruta > 0 ? ((receitaBruta - custoTotal) / receitaBruta) * 100 : 0
 
   // Determina séries e num_alunos local pelo nome do produto
-  function getLocalContext(prodNome: string) {
+  function getLocalContext(prodNome: string, ppNumAlunos = 0) {
     const nome = prodNome.toLowerCase()
     const isMPC      = nome.includes('primeiro')
     const isCoding   = nome.includes('coding')
@@ -404,7 +405,8 @@ export function ComponentesCliente({
       ? Object.fromEntries(seriesKeys.map(k => [k, alunosPorSerie[k] ?? 0]))
       : alunosPorSerie
     const localNumAlunos = isCriaCode
-      ? CRIA_SERIES.reduce((sum, k) => sum + (alunosPorSerie[k] ?? 0), 0)
+      // ppNumAlunos tem prioridade (campo próprio) — fallback soma séries
+      ? (ppNumAlunos > 0 ? ppNumAlunos : CRIA_SERIES.reduce((sum, k) => sum + (alunosPorSerie[k] ?? 0), 0))
       : isEdtechIA
       ? numAlunosEdtechIA
       : numAlunos
@@ -413,8 +415,8 @@ export function ComponentesCliente({
   }
 
   // Hint de quantidade por tipo de cálculo
-  function getHint(tipoCalculo: string, prodNome = ''): { text: string; type: 'info' | 'warn' } | null {
-    const { localTemas, localAlunos, localNumAlunos } = getLocalContext(prodNome)
+  function getHint(tipoCalculo: string, prodNome = '', ppNumAlunos = 0): { text: string; type: 'info' | 'warn' } | null {
+    const { localTemas, localAlunos, localNumAlunos } = getLocalContext(prodNome, ppNumAlunos)
 
     if (TAPETE_TYPES.has(tipoCalculo)) {
       const seriesSplit = (seriesTapetesState ?? '').split(',').filter(Boolean)
@@ -702,7 +704,7 @@ export function ComponentesCliente({
                             qtd={state.qtd}
                             valor={state.valor}
                             custo={state.custo}
-                            hint={getHint(tipoCalculo, pp.produto?.nome ?? '')}
+                            hint={getHint(tipoCalculo, pp.produto?.nome ?? '', pp.num_alunos ?? 0)}
                             obrigatorio={c.obrigatorio}
                             onQtdChange={v => updateItem(c.id, { qtd: v })}
                             onValorChange={v => updateItem(c.id, { valor: v })}
@@ -739,7 +741,7 @@ export function ComponentesCliente({
                             qtd={state.qtd}
                             valor={state.valor}
                             custo={state.custo}
-                            hint={getHint(tipoCalculo, pp.produto?.nome ?? '')}
+                            hint={getHint(tipoCalculo, pp.produto?.nome ?? '', pp.num_alunos ?? 0)}
                             onQtdChange={v => updateItem(s.id, { qtd: v })}
                             onValorChange={v => updateItem(s.id, { valor: v })}
                             onSave={() => atualizarServico(s.id, propostaId, state.qtd, state.valor)}

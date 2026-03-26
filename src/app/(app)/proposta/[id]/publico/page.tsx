@@ -78,7 +78,8 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
   const temCodigoIA   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('O Código IA'))
 
   const SERIES_PRODUCT_NAMES = ['Primeiro', 'Coding', 'Cria+Code', 'Inteligência Artificial', 'O Código IA']
-  const mpcProd = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Primeiro'))
+  const mpcProd      = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Primeiro'))
+  const criaCodeProd = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Cria+Code') || (p.produto as any)?.nome?.includes('O Código IA'))
   const flatProds = (prods ?? [])
     .filter(p => {
       const nome: string = (p.produto as any)?.nome ?? ''
@@ -122,6 +123,8 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       servicosFormacao={servicosFormacao}
       mpcPpId={(mpcProd as any)?.id}
       mpcNumEscolas={(mpcProd as any)?.num_escolas ?? 0}
+      criaCodePpId={(criaCodeProd as any)?.id}
+      criaCodeNumAlunos={(criaCodeProd as any)?.num_alunos ?? 0}
       flatProds={flatProds}
     />
   )

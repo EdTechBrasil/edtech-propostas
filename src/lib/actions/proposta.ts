@@ -432,7 +432,9 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
         : totalProfessorXTema
       const ppNumAlunos = alunosPorPP[(pp as any).id] ?? ((pp as any).num_alunos ?? 0)
       const isFlat = !isMPC && !isCoding && !isCriaCode && !isEdtechIA
-      const localNumAlunos = isCriaCode ? numAlunos_criacode
+      const localNumAlunos = isCriaCode
+        // ppNumAlunos tem prioridade (campo próprio CRIA+CODE) — fallback para soma de séries
+        ? (ppNumAlunos > 0 ? ppNumAlunos : numAlunos_criacode)
         : isEdtechIA ? num_alunos_edtech_ia
         : (isFlat && ppNumAlunos > 0) ? ppNumAlunos
         : num_alunos

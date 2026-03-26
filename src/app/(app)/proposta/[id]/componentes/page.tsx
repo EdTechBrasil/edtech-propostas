@@ -77,6 +77,7 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
       id,
       produto_id,
       desconto_percent,
+      num_alunos,
       produto:produtos(nome),
       componentes:proposta_componentes(
         id, quantidade, valor_venda_unit, custo_interno_unit, desconto_percent, obrigatorio,

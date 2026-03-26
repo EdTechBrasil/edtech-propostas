@@ -112,6 +112,8 @@ export function PublicoCliente({
   servicosFormacao,
   mpcPpId,
   mpcNumEscolas = 0,
+  criaCodePpId,
+  criaCodeNumAlunos = 0,
   flatProds = [],
 }: {
   proposta: Proposta
@@ -122,6 +124,8 @@ export function PublicoCliente({
   servicosFormacao: { presencial: ServicoFormacao | null; ead: ServicoFormacao | null; assessoria: ServicoFormacao | null }
   mpcPpId?: string
   mpcNumEscolas?: number
+  criaCodePpId?: string
+  criaCodeNumAlunos?: number
   flatProds?: { pp_id: string; nome: string; num_escolas: number; num_alunos: number; tipoPublico: 'PorAluno' | 'PorEscola' }[]
 }) {
   const action = atualizarPublico.bind(null, proposta.id)
@@ -479,13 +483,30 @@ export function PublicoCliente({
             {temCriaCode && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Séries Atendidas (1º ao 5º Ano)</CardTitle>
+                  <CardTitle>Cria+Code — Público</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Cria+Code não usa temas — zerar todos */}
                   {CRIACODE_SERIES.map(s => (
                     <input key={s.key} type="hidden" name={`temas_${s.key}`} value="0" />
                   ))}
+
+                  {/* Quando MPC+Coding cobrem todos os anos, exibe campo único de alunos */}
+                  {criaCodeSeries.length === 0 && criaCodePpId && (
+                    <div className="space-y-2">
+                      <Label htmlFor="alunos_criacode">Total de Alunos (1º ao 5º Ano)</Label>
+                      <Input
+                        id="alunos_criacode"
+                        name={`alunos_pp_${criaCodePpId}`}
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        defaultValue={criaCodeNumAlunos || ''}
+                      />
+                      <p className="text-xs text-slate-500">Informe a quantidade de alunos atendidos pelo Cria+Code (Ano 1–5)</p>
+                    </div>
+                  )}
+
                   {/* Hidden inputs for unchecked Cria+Code series */}
                   {criaCodeSeries.map(s => (
                     !checked[s.key] && (
