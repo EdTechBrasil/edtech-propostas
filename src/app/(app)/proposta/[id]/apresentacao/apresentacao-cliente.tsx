@@ -247,7 +247,7 @@ export function ApresentacaoCliente({
 
       {/* ── Painel direito: preview ───────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 p-6">
-        <div className="max-w-[680px] mx-auto bg-white rounded-xl shadow-lg overflow-hidden font-sans">
+        <div className="max-w-[794px] mx-auto bg-white rounded-xl shadow-lg overflow-hidden font-sans">
 
           {/* Cabeçalho do documento */}
           <div className="px-10 pt-10 pb-6 border-b border-slate-100">
@@ -354,7 +354,8 @@ export function ApresentacaoCliente({
                         <p className="text-sm font-semibold text-slate-800">{pp.nome}</p>
                         <p className="text-sm font-bold text-slate-700">{formatCurrency(pp.totalProduto)}</p>
                       </div>
-                      <table className="w-full text-xs border border-slate-200 rounded-lg overflow-hidden">
+                      <div className="overflow-x-auto rounded-lg border border-slate-200">
+                      <table className="w-full text-xs min-w-[480px]">
                         <thead>
                           <tr className="bg-slate-50 text-slate-400">
                             <th className="text-left px-3 py-1.5 font-medium">Item</th>
@@ -379,6 +380,7 @@ export function ApresentacaoCliente({
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                   ))}
 
