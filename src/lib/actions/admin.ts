@@ -91,23 +91,31 @@ export async function salvarConfiguracaoFinanceira(formData: FormData) {
 
   const adminClient = createAdminClient()
 
-  // Tenta atualizar todas as linhas ativas
-  const { count } = await adminClient
+  const { data: rows } = await adminClient
     .from('configuracao_financeira')
-    .select('id', { count: 'exact', head: true })
+    .select('id')
     .eq('ativo', true)
+    .limit(1)
 
-  if ((count ?? 0) > 0) {
-    const { error } = await adminClient
+  const existente = rows?.[0] as { id: string } | undefined
+
+  if (existente) {
+    await adminClient
       .from('configuracao_financeira')
       .update({ margem_minima_percent, margem_global_max_percent, desconto_max_percent })
-      .eq('ativo', true)
-    if (error) return { error: error.message }
+      .eq('id', existente.id)
   } else {
-    const { error } = await adminClient
+    const supabase = await (await import('@/lib/supabase/server')).createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    await adminClient
       .from('configuracao_financeira')
-      .insert({ margem_minima_percent, margem_global_max_percent, desconto_max_percent, ativo: true })
-    if (error) return { error: error.message }
+      .insert({
+        margem_minima_percent,
+        margem_global_max_percent,
+        desconto_max_percent,
+        ativo: true,
+        criado_por_usuario_id: user!.id,
+      })
   }
 
   revalidatePath('/admin/configuracoes')
