@@ -21,7 +21,20 @@ type InitialData = {
   termos: string
 }
 
-type InvestimentoItem = { nome: string; total: number }
+type InvestimentoItemDetalhe = {
+  nome: string
+  categoria: string
+  quantidade: number
+  valorUnit: number
+  total: number
+  tipo: 'componente' | 'servico'
+}
+
+type InvestimentoProduto = {
+  nome: string
+  itens: InvestimentoItemDetalhe[]
+  totalProduto: number
+}
 
 export function ApresentacaoCliente({
   propostaId,
@@ -30,7 +43,7 @@ export function ApresentacaoCliente({
   empresaNome,
   empresaSubtitulo,
   logoUrl,
-  investimentoItens,
+  investimentoProdutos,
   totalLiquido,
   initialData,
 }: {
@@ -40,7 +53,7 @@ export function ApresentacaoCliente({
   empresaNome: string
   empresaSubtitulo: string
   logoUrl: string | null
-  investimentoItens: InvestimentoItem[]
+  investimentoProdutos: InvestimentoProduto[]
   totalLiquido: number
   initialData: InitialData
 }) {
@@ -332,19 +345,46 @@ export function ApresentacaoCliente({
             )}
 
             {/* 05. Investimento */}
-            {investimentoItens.length > 0 && (
+            {investimentoProdutos.length > 0 && (
               <PreviewSection number="05" title="Investimento">
-                <div className="rounded-xl bg-slate-800 px-6 py-5 text-white">
-                  <div className="space-y-2 mb-4">
-                    {investimentoItens.map((item, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm">
-                        <span className="text-slate-300">{item.nome}</span>
-                        <span className="font-medium">{formatCurrency(item.total)}</span>
+                <div className="space-y-4">
+                  {investimentoProdutos.map((pp, i) => (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-sm font-semibold text-slate-800">{pp.nome}</p>
+                        <p className="text-sm font-bold text-slate-700">{formatCurrency(pp.totalProduto)}</p>
                       </div>
-                    ))}
-                  </div>
-                  <div className="border-t border-slate-600 pt-4 flex items-center justify-between">
-                    <span className="font-semibold text-white">Total do Projeto</span>
+                      <table className="w-full text-xs border border-slate-200 rounded-lg overflow-hidden">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-400">
+                            <th className="text-left px-3 py-1.5 font-medium">Item</th>
+                            <th className="text-center px-2 py-1.5 font-medium w-12">Qtd</th>
+                            <th className="text-right px-3 py-1.5 font-medium w-24">Unit</th>
+                            <th className="text-right px-3 py-1.5 font-medium w-24">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {pp.itens.map((item, j) => (
+                            <tr key={j} className={item.tipo === 'servico' ? 'bg-blue-50/40' : ''}>
+                              <td className="px-3 py-1.5 text-slate-700">
+                                {item.nome}
+                                {item.categoria && item.tipo === 'servico' && (
+                                  <span className="ml-1.5 text-[10px] text-blue-400">serviço</span>
+                                )}
+                              </td>
+                              <td className="px-2 py-1.5 text-center text-slate-500">{item.quantidade}</td>
+                              <td className="px-3 py-1.5 text-right text-slate-600">{formatCurrency(item.valorUnit)}</td>
+                              <td className="px-3 py-1.5 text-right font-medium text-slate-800">{formatCurrency(item.total)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+
+                  {/* Total geral */}
+                  <div className="rounded-xl bg-slate-800 px-5 py-4 text-white flex items-center justify-between">
+                    <span className="font-semibold">Total do Projeto</span>
                     <span className="text-xl font-black text-yellow-400">{formatCurrency(totalLiquido)}</span>
                   </div>
                 </div>

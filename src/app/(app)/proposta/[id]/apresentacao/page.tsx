@@ -34,8 +34,14 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
         id,
         desconto_percent,
         produto:produtos(nome),
-        componentes:proposta_componentes(quantidade, valor_venda_unit, desconto_percent),
-        servicos:proposta_servicos(quantidade, valor_venda_unit, desconto_percent)
+        componentes:proposta_componentes(
+          id, quantidade, valor_venda_unit, desconto_percent,
+          componente:produto_componentes(nome, categoria)
+        ),
+        servicos:proposta_servicos(
+          id, quantidade, valor_venda_unit, desconto_percent,
+          servico:produto_servicos(nome)
+        )
       `)
       .eq('proposta_id', id)
       .order('criado_em', { ascending: true }),
@@ -48,21 +54,36 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
 
   if (!proposta) notFound()
 
-  // Calcula total por produto
-  const investimentoItens = (produtos ?? [])
+  // Monta dados completos de investimento por produto
+  const investimentoProdutos = (produtos ?? [])
     .map((pp: any) => {
-      const comp = (pp.componentes ?? []).reduce(
-        (acc: number, c: any) => acc + c.quantidade * c.valor_venda_unit * (1 - (c.desconto_percent ?? 0) / 100),
-        0
-      )
-      const serv = (pp.servicos ?? []).reduce(
-        (acc: number, s: any) => acc + s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100),
-        0
-      )
-      const total = (comp + serv) * (1 - (pp.desconto_percent ?? 0) / 100)
-      return { nome: pp.produto?.nome ?? '', total }
+      const fatorProd = 1 - (pp.desconto_percent ?? 0) / 100
+      const itens = [
+        ...(pp.componentes ?? [])
+          .filter((c: any) => c.quantidade > 0)
+          .map((c: any) => ({
+            nome: c.componente?.nome ?? '',
+            categoria: c.componente?.categoria ?? '',
+            quantidade: c.quantidade,
+            valorUnit: c.valor_venda_unit,
+            total: c.quantidade * c.valor_venda_unit * (1 - (c.desconto_percent ?? 0) / 100) * fatorProd,
+            tipo: 'componente' as const,
+          })),
+        ...(pp.servicos ?? [])
+          .filter((s: any) => s.quantidade > 0)
+          .map((s: any) => ({
+            nome: s.servico?.nome ?? '',
+            categoria: 'Serviço',
+            quantidade: s.quantidade,
+            valorUnit: s.valor_venda_unit,
+            total: s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100) * fatorProd,
+            tipo: 'servico' as const,
+          })),
+      ]
+      const totalProduto = itens.reduce((acc, i) => acc + i.total, 0)
+      return { nome: pp.produto?.nome ?? '', itens, totalProduto }
     })
-    .filter((item: any) => item.total > 0)
+    .filter((pp: any) => pp.totalProduto > 0)
 
   const dataEmissao = new Date(proposta.criado_em ?? Date.now()).toLocaleDateString('pt-BR')
 
@@ -74,7 +95,7 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
       empresaNome={configPdf?.empresa_nome ?? 'EdTech Brasil'}
       empresaSubtitulo={configPdf?.proposta_subtitulo ?? 'Tecnologia Educacional'}
       logoUrl={configPdf?.logo_url ?? null}
-      investimentoItens={investimentoItens}
+      investimentoProdutos={investimentoProdutos}
       totalLiquido={financeiro?.receita_liquida ?? 0}
       initialData={{
         titulo: proposta.apresentacao_titulo ?? '',
