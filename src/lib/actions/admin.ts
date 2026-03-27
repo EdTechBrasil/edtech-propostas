@@ -403,6 +403,29 @@ export async function uploadLogoPdf(formData: FormData) {
   if (error) return { error: error.message }
 
   const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdf-assets/${filename}`
+
+  // Salva logo_url direto no banco — não depende de clicar "Salvar template"
+  const { data: existente } = await adminClient
+    .from('configuracao_pdf')
+    .select('id')
+    .eq('ativo', true)
+    .single<{ id: string }>()
+
+  if (existente) {
+    await adminClient.from('configuracao_pdf').update({ logo_url: url }).eq('id', existente.id)
+  } else {
+    const { data: usuario } = await adminClient.auth.getUser()
+    await adminClient.from('configuracao_pdf').insert({
+      logo_url: url,
+      empresa_nome: 'EdTech Brasil',
+      proposta_titulo: 'PROPOSTA COMERCIAL',
+      proposta_subtitulo: 'Tecnologia Educacional',
+      ativo: true,
+      criado_por_usuario_id: usuario.user?.id,
+    })
+  }
+
+  revalidatePath('/admin/template-pdf')
   return { success: true, url }
 }
 
