@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { formatCurrency } from '@/utils/format'
 import { PrintTrigger, PrintButton, PrintLink, PrintTriggerManual } from './print-trigger'
 import { PdfTemplateBackground } from './pdf-template-background'
+import { DocumentoApresentacao } from '../apresentacao/documento-apresentacao'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
@@ -99,6 +100,34 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
     return (comp + serv) * (1 - (pp.desconto_percent ?? 0) / 100)
   }
 
+  // Monta dados de investimento para o DocumentoApresentacao
+  const investimentoProdutos = (produtos ?? [])
+    .map((pp: any) => {
+      const fator = 1 - (pp.desconto_percent ?? 0) / 100
+      const itens = [
+        ...(pp.componentes ?? []).filter((c: any) => c.quantidade > 0).map((c: any) => ({
+          nome: c.componente?.nome ?? '',
+          categoria: c.componente?.categoria ?? '',
+          quantidade: c.quantidade,
+          valorUnit: c.valor_venda_unit,
+          total: c.quantidade * c.valor_venda_unit * (1 - (c.desconto_percent ?? 0) / 100) * fator,
+          tipo: 'componente' as const,
+        })),
+        ...(pp.servicos ?? []).filter((s: any) => s.quantidade > 0).map((s: any) => ({
+          nome: s.servico?.nome ?? '',
+          categoria: 'Serviço',
+          quantidade: s.quantidade,
+          valorUnit: s.valor_venda_unit,
+          total: s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100) * fator,
+          tipo: 'servico' as const,
+        })),
+      ]
+      return { nome: pp.produto?.nome ?? '', itens, totalProduto: itens.reduce((a, i) => a + i.total, 0) }
+    })
+    .filter((pp: any) => pp.totalProduto > 0)
+
+  const temApresentacao = !!(proposta.apresentacao_titulo || proposta.apresentacao_introducao)
+
   return (
     <>
       {/* Print CSS */}
@@ -106,12 +135,14 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         @media print {
           body * { visibility: hidden; }
           .pdf-content, .pdf-content * { visibility: visible; }
+          .documento-apresentacao, .documento-apresentacao * { visibility: visible; }
           .pdf-content { position: absolute; left: 0; top: 0; width: 100%; }
+          .documento-apresentacao { position: absolute; left: 0; top: 0; width: 100%; }
           .no-print { display: none !important; }
         }
         @page {
           size: A4;
-          margin: 20mm 18mm;
+          margin: 15mm 18mm;
         }
       `}</style>
       {configPdf?.css_customizado && (
@@ -144,7 +175,33 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         )}
       </div>
 
-      {/* PDF Content */}
+      {/* Documento de Apresentação (WYSIWYG com o preview) */}
+      {temApresentacao && (
+        <div className="max-w-[794px] mx-auto my-6 shadow-sm">
+          <DocumentoApresentacao
+            empresaNome={configPdf?.empresa_nome ?? 'EdTech Brasil'}
+            empresaSubtitulo={configPdf?.proposta_subtitulo ?? 'Tecnologia Educacional'}
+            logoUrl={configPdf?.logo_url ?? null}
+            dataEmissao={dataEmissao}
+            titulo={proposta.apresentacao_titulo ?? ''}
+            clienteNome={proposta.cliente_nome_instituicao ?? ''}
+            introducao={proposta.apresentacao_introducao ?? undefined}
+            objetivos={(proposta.apresentacao_objetivos as string[]) ?? undefined}
+            solucoes={(proposta.apresentacao_solucoes as any[]) ?? undefined}
+            cronograma={(proposta.apresentacao_cronograma as any[]) ?? undefined}
+            termos={proposta.apresentacao_termos ?? undefined}
+            investimentoProdutos={investimentoProdutos}
+            totalLiquido={financeiro?.receita_liquida ?? 0}
+            clienteCnpj={proposta.cliente_cnpj ?? undefined}
+            clienteResponsavel={proposta.cliente_responsavel ?? undefined}
+            clienteEmail={proposta.cliente_email ?? undefined}
+            clienteCidade={proposta.cliente_cidade ?? undefined}
+            dataValidade={proposta.validade_proposta ?? undefined}
+          />
+        </div>
+      )}
+
+      {/* PDF Content (layout técnico — sempre exibido) */}
       <div className="pdf-content p-8 max-w-4xl mx-auto font-sans text-slate-800">
 
         {/* Header */}
