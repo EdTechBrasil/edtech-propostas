@@ -54,7 +54,7 @@ export default async function ConfiguracoesFinanceiras() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={salvarConfiguracaoFinanceira} className="space-y-6">
+          <form action={salvarConfiguracaoFinanceira as any} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="margem_minima_percent">Margem mínima aceitável (%)</Label>
               <p className="text-xs text-slate-400 dark:text-slate-500">
