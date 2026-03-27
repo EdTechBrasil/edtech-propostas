@@ -83,19 +83,8 @@ export function DocumentoApresentacao({
         {/* Identidade + Data */}
         <div className="flex items-start justify-between mb-8">
           <div className="flex items-center gap-3">
-            {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={empresaNome} className="h-10 object-contain" />
-            ) : (
-              <div className="flex items-center -space-x-1.5">
-                <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-bold shadow-sm z-10">
-                  {empresaNome.charAt(0).toLowerCase()}
-                </div>
-                <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white text-sm font-bold shadow-sm">
-                  {empresaNome.charAt(1)?.toLowerCase() ?? 'd'}
-                </div>
-              </div>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoUrl || '/logo_edtech.png'} alt={empresaNome} className="h-10 object-contain" />
             <div>
               <p className="font-bold text-slate-900 text-sm leading-none tracking-tight">{empresaNome}</p>
               <p className="text-[11px] text-slate-400 mt-0.5 uppercase tracking-wider">{empresaSubtitulo}</p>
