@@ -87,6 +87,58 @@ export function TemplatePdfCliente({ config, propostaExemploId }: { config: Conf
   return (
     <form action={handleSubmit} className="space-y-6">
 
+      {/* Logo — destaque */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Logo da empresa</CardTitle>
+          <CardDescription>Aparece no cabeçalho da apresentação e do PDF.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-4">
+            {logoUrl ? (
+              <div className="relative w-40 h-16 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+              </div>
+            ) : (
+              <div className="w-40 h-16 rounded-md border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-xs text-slate-400">
+                Sem logo
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => logoFileRef.current?.click()}
+                disabled={uploadandoLogo}
+                className="gap-2"
+              >
+                {uploadandoLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploadandoLogo ? 'Enviando…' : logoUrl ? 'Trocar logo' : 'Enviar logo'}
+              </Button>
+              {logoUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-400 text-xs"
+                  onClick={() => setLogoUrl('')}
+                >
+                  Remover
+                </Button>
+              )}
+              {uploadErroLogo && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {uploadErroLogo}
+                </p>
+              )}
+            </div>
+          </div>
+          <input ref={logoFileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+        </CardContent>
+      </Card>
+
       {/* Template PDF — ação principal */}
       <Card className="border-2 border-indigo-100 bg-indigo-50/30">
         <CardHeader>
@@ -190,52 +242,7 @@ export function TemplatePdfCliente({ config, propostaExemploId }: { config: Conf
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Logo da empresa</Label>
-                <div className="flex items-center gap-4">
-                  {logoUrl ? (
-                    <div className="relative w-32 h-16 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
-                    </div>
-                  ) : (
-                    <div className="w-32 h-16 rounded-md border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-xs text-slate-400">
-                      Sem logo
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => logoFileRef.current?.click()}
-                      disabled={uploadandoLogo}
-                      className="gap-2"
-                    >
-                      {uploadandoLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      {uploadandoLogo ? 'Enviando…' : 'Enviar logo'}
-                    </Button>
-                    {logoUrl && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-400 text-xs"
-                        onClick={() => setLogoUrl('')}
-                      >
-                        Remover logo
-                      </Button>
-                    )}
-                    {uploadErroLogo && (
-                      <p className="text-xs text-red-500 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> {uploadErroLogo}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <input ref={logoFileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                <input type="hidden" name="logo_url" value={logoUrl} />
-              </div>
+              <input type="hidden" name="logo_url" value={logoUrl} />
             </CardContent>
           </Card>
 
