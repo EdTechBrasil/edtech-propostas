@@ -5,7 +5,7 @@ import { salvarApresentacao } from '@/lib/actions/proposta'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Plus, Trash2, FileText, ArrowLeft } from 'lucide-react'
+import { Loader2, Plus, Trash2, FileText, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { DocumentoApresentacao } from './documento-apresentacao'
 
@@ -36,6 +36,34 @@ type InvestimentoProduto = {
   totalProduto: number
 }
 
+// ── Modelos de conteúdo EdTech ─────────────────────────────────────────────────
+
+const MODELO_OBJETIVOS = [
+  'Modernizar a infraestrutura tecnológica pedagógica',
+  'Aumentar o engajamento e desempenho dos alunos',
+  'Oferecer ferramentas de gestão para coordenadores e professores',
+  'Integrar conteúdo digital ao currículo existente',
+  'Capacitar educadores para uso das novas tecnologias',
+]
+
+const MODELO_SOLUCOES: Solucao[] = [
+  { titulo: 'Plataforma Digital de Aprendizagem', descricao: 'Ambiente virtual completo com conteúdos interativos, avaliações adaptativas e trilhas de aprendizado personalizadas para cada aluno.' },
+  { titulo: 'Capacitação de Professores', descricao: 'Programa de formação continuada com suporte pedagógico e certificação em tecnologia educacional.' },
+  { titulo: 'Gestão e Relatórios', descricao: 'Painel com indicadores de desempenho, relatórios de engajamento e ferramentas de acompanhamento para gestores.' },
+]
+
+const MODELO_CRONOGRAMA: CronogramaItem[] = [
+  { etapa: 'Implantação e configuração', duracao: '2 semanas' },
+  { etapa: 'Capacitação da equipe', duracao: '1 semana' },
+  { etapa: 'Período piloto com turmas', duracao: '4 semanas' },
+  { etapa: 'Expansão para todas as turmas', duracao: '2 semanas' },
+  { etapa: 'Acompanhamento e suporte', duracao: 'Contínuo' },
+]
+
+const MODELO_TERMOS = 'Esta proposta tem validade de 30 dias. Os valores apresentados referem-se ao período de vigência do contrato. O pagamento poderá ser parcelado conforme negociação. A implantação inicia após assinatura do contrato e comprovante de pagamento da entrada.'
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 export function ApresentacaoCliente({
   propostaId,
   clienteNome,
@@ -63,6 +91,7 @@ export function ApresentacaoCliente({
   const [solucoes, setSolucoes] = useState<Solucao[]>(initialData.solucoes.length > 0 ? initialData.solucoes : [{ titulo: '', descricao: '' }])
   const [cronograma, setCronograma] = useState<CronogramaItem[]>(initialData.cronograma.length > 0 ? initialData.cronograma : [{ etapa: '', duracao: '' }])
   const [termos, setTermos] = useState(initialData.termos)
+  const [collapsed, setCollapsed] = useState(false)
   const [isPending, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -78,15 +107,17 @@ export function ApresentacaoCliente({
     startTransition(() => salvarApresentacao(propostaId, fd))
   }
 
-  const tituloDisplay = titulo.trim() || 'Sua Proposta'
   const clienteDisplay = clienteNome || 'Cliente'
+  const modeloIntroducao = `Nossa empresa apresenta esta proposta para ${clienteDisplay}, com o objetivo de implementar uma solução tecnológica educacional completa. Desenvolvemos plataformas e recursos que potencializam o ensino, engajam alunos e apoiam gestores pedagógicos com dados e ferramentas modernas.`
 
   return (
     <div className="flex gap-0 h-[calc(100vh-120px)] -mx-4 md:-mx-8 -mt-4 md:-mt-8 overflow-hidden">
 
       {/* ── Painel esquerdo: editor ───────────────────────────────────── */}
-      <div className="w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-slate-700 overflow-y-auto bg-white dark:bg-slate-900">
-        <div className="p-5">
+      <div
+        className={`flex-shrink-0 border-r border-slate-200 dark:border-slate-700 overflow-y-auto bg-white dark:bg-slate-900 transition-all duration-200 ${collapsed ? 'w-0 overflow-hidden' : 'w-[420px]'}`}
+      >
+        <div className="p-5 min-w-[420px]">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Apresentação</h1>
@@ -104,20 +135,21 @@ export function ApresentacaoCliente({
 
             {/* Informações básicas */}
             <Section title="Informações Básicas">
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Título do projeto</Label>
-                  <Input
-                    value={titulo}
-                    onChange={e => setTitulo(e.target.value)}
-                    placeholder="Ex: Transformação Digital Educacional"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Título do projeto</Label>
+                <Input
+                  value={titulo}
+                  onChange={e => setTitulo(e.target.value)}
+                  placeholder="Ex: Transformação Digital Educacional"
+                />
               </div>
             </Section>
 
             {/* Introdução */}
-            <Section title="Introdução">
+            <Section
+              title="Introdução"
+              onUseModel={() => setIntroducao(modeloIntroducao)}
+            >
               <textarea
                 value={introducao}
                 onChange={e => setIntroducao(e.target.value)}
@@ -131,6 +163,7 @@ export function ApresentacaoCliente({
             <Section
               title="Objetivos"
               onAdd={() => setObjetivos(prev => [...prev, ''])}
+              onUseModel={() => setObjetivos(MODELO_OBJETIVOS)}
             >
               <div className="space-y-2">
                 {objetivos.map((obj, i) => (
@@ -158,6 +191,7 @@ export function ApresentacaoCliente({
             <Section
               title="Soluções"
               onAdd={() => setSolucoes(prev => [...prev, { titulo: '', descricao: '' }])}
+              onUseModel={() => setSolucoes(MODELO_SOLUCOES)}
             >
               <div className="space-y-3">
                 {solucoes.map((sol, i) => (
@@ -195,6 +229,7 @@ export function ApresentacaoCliente({
             <Section
               title="Cronograma"
               onAdd={() => setCronograma(prev => [...prev, { etapa: '', duracao: '' }])}
+              onUseModel={() => setCronograma(MODELO_CRONOGRAMA)}
             >
               <div className="space-y-2">
                 {cronograma.map((item, i) => (
@@ -226,7 +261,7 @@ export function ApresentacaoCliente({
             </Section>
 
             {/* Termos */}
-            <Section title="Termos e Condições">
+            <Section title="Termos e Condições" onUseModel={() => setTermos(MODELO_TERMOS)}>
               <textarea
                 value={termos}
                 onChange={e => setTermos(e.target.value)}
@@ -246,7 +281,16 @@ export function ApresentacaoCliente({
       </div>
 
       {/* ── Painel direito: preview ───────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 p-6">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 p-6 relative">
+        {/* Botão colapso */}
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          className="absolute left-2 top-2 z-10 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 hover:text-teal-600 transition-colors"
+          title={collapsed ? 'Abrir editor' : 'Fechar editor'}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+
         <div className="max-w-[794px] mx-auto shadow-xl rounded-lg overflow-hidden">
           <DocumentoApresentacao
             empresaNome={empresaNome}
@@ -274,16 +318,29 @@ export function ApresentacaoCliente({
 function Section({
   title,
   onAdd,
+  onUseModel,
   children,
 }: {
   title: string
   onAdd?: () => void
+  onUseModel?: () => void
   children: React.ReactNode
 }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-teal-600">{title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-teal-600">{title}</h3>
+          {onUseModel && (
+            <button
+              type="button"
+              onClick={onUseModel}
+              className="text-[11px] text-slate-400 hover:text-teal-600 underline-offset-2 hover:underline transition-colors"
+            >
+              usar modelo
+            </button>
+          )}
+        </div>
         {onAdd && (
           <button
             type="button"
@@ -298,4 +355,3 @@ function Section({
     </div>
   )
 }
-

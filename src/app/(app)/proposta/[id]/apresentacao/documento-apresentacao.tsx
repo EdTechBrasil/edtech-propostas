@@ -78,7 +78,7 @@ export function DocumentoApresentacao({
     <div className="documento-apresentacao relative bg-white font-sans text-slate-800 border-l-4 border-teal-600">
 
       {/* ── CABEÇALHO ─────────────────────────────────────────────────── */}
-      <div className="px-10 pt-10 pb-8 border-b border-slate-100">
+      <div className="px-8 pt-7 pb-6 border-b border-slate-100">
 
         {/* Identidade + Data */}
         <div className="flex items-start justify-between mb-8">
@@ -118,7 +118,7 @@ export function DocumentoApresentacao({
 
         {/* Título principal */}
         <div className="mb-6">
-          <h1 className="text-4xl font-black text-slate-900 leading-[1.1] tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 leading-[1.1] tracking-tight">
             Proposta de{' '}
             <span className="text-teal-600">{tituloDisplay}</span>
           </h1>
@@ -145,7 +145,7 @@ export function DocumentoApresentacao({
 
       {/* ── DADOS DO CLIENTE (versão PDF completa) ────────────────────── */}
       {temClienteCompleto && (
-        <div className="px-10 py-4 bg-slate-50 border-b border-slate-100">
+        <div className="px-8 py-3 bg-slate-50 border-b border-slate-100">
           <div className="grid grid-cols-3 gap-x-6 gap-y-2">
             <InfoCampo label="Instituição" value={clienteNome} span={3} />
             {clienteCnpj && <InfoCampo label="CNPJ" value={clienteCnpj} />}
@@ -157,7 +157,7 @@ export function DocumentoApresentacao({
       )}
 
       {/* ── SEÇÕES NARRATIVAS ─────────────────────────────────────────── */}
-      <div className="px-10 py-8 space-y-10">
+      <div className="px-8 py-6 space-y-8">
 
         {/* 01. Introdução */}
         {introducao?.trim() && (
@@ -242,33 +242,31 @@ export function DocumentoApresentacao({
                     <p className="text-sm font-bold text-teal-700">{formatCurrency(pp.totalProduto)}</p>
                   </div>
                   {/* Itens */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs min-w-[440px]">
-                      <thead>
-                        <tr className="text-slate-400 border-b border-slate-100">
-                          <th className="text-left px-4 py-2 font-medium">Item</th>
-                          <th className="text-center px-3 py-2 font-medium w-14">Qtd</th>
-                          <th className="text-right px-4 py-2 font-medium w-28">Unit</th>
-                          <th className="text-right px-4 py-2 font-medium w-28">Total</th>
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr className="text-slate-400 border-b border-slate-100">
+                        <th className="text-left px-2 py-1.5 font-medium">Item</th>
+                        <th className="text-center px-2 py-1.5 font-medium w-10">Qtd</th>
+                        <th className="text-right px-2 py-1.5 font-medium w-20">Unit</th>
+                        <th className="text-right px-2 py-1.5 font-medium w-20">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pp.itens.map((item, j) => (
+                        <tr key={j} className={`border-b border-slate-50 last:border-0 ${item.tipo === 'servico' ? 'bg-blue-50/30' : ''}`}>
+                          <td className="px-2 py-1.5 text-slate-700">
+                            {item.nome}
+                            {item.tipo === 'servico' && (
+                              <span className="ml-1.5 text-[10px] font-medium text-blue-400 bg-blue-50 rounded px-1 py-0.5">serviço</span>
+                            )}
+                          </td>
+                          <td className="px-2 py-1.5 text-center text-slate-500">{item.quantidade}</td>
+                          <td className="px-2 py-1.5 text-right text-slate-500">{formatCurrency(item.valorUnit)}</td>
+                          <td className="px-2 py-1.5 text-right font-semibold text-slate-800">{formatCurrency(item.total)}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {pp.itens.map((item, j) => (
-                          <tr key={j} className={`border-b border-slate-50 last:border-0 ${item.tipo === 'servico' ? 'bg-blue-50/30' : ''}`}>
-                            <td className="px-4 py-2 text-slate-700">
-                              {item.nome}
-                              {item.tipo === 'servico' && (
-                                <span className="ml-2 text-[10px] font-medium text-blue-400 bg-blue-50 rounded px-1.5 py-0.5">serviço</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2 text-center text-slate-500">{item.quantidade}</td>
-                            <td className="px-4 py-2 text-right text-slate-500">{formatCurrency(item.valorUnit)}</td>
-                            <td className="px-4 py-2 text-right font-semibold text-slate-800">{formatCurrency(item.total)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ))}
 
@@ -303,7 +301,7 @@ export function DocumentoApresentacao({
       </div>
 
       {/* ── RODAPÉ ────────────────────────────────────────────────────── */}
-      <div className="px-10 pb-8 pt-5 border-t border-slate-100">
+      <div className="px-8 pb-6 pt-4 border-t border-slate-100">
         <div className="flex items-end justify-between text-xs text-slate-400">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Contato</p>
