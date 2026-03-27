@@ -82,14 +82,8 @@ export function DocumentoApresentacao({
 
         {/* Identidade + Data */}
         <div className="flex items-start justify-between mb-8">
-          <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoUrl || '/logo_edtech.png'} alt={empresaNome} className="h-10 object-contain" />
-            <div>
-              <p className="font-bold text-slate-900 text-sm leading-none tracking-tight">{empresaNome}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5 uppercase tracking-wider">{empresaSubtitulo}</p>
-            </div>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logoUrl || '/logo_edtech.png'} alt={empresaNome} className="h-14 object-contain" />
 
           <div className="text-right">
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Data da Proposta</p>
