@@ -98,18 +98,20 @@ export async function salvarConfiguracaoFinanceira(formData: FormData) {
     .single<{ id: string }>()
 
   if (existente) {
-    await adminClient
+    const { error } = await adminClient
       .from('configuracao_financeira')
       .update({ margem_minima_percent, margem_global_max_percent, desconto_max_percent })
       .eq('id', existente.id)
+    if (error) return { error: error.message }
   } else {
-    await adminClient
+    const { error } = await adminClient
       .from('configuracao_financeira')
       .insert({ margem_minima_percent, margem_global_max_percent, desconto_max_percent, ativo: true })
+    if (error) return { error: error.message }
   }
 
   revalidatePath('/admin/configuracoes')
-  return { success: true }
+  redirect('/admin/configuracoes')
 }
 
 // ── Produtos ──────────────────────────────────────────────────────────────────

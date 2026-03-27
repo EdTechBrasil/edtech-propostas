@@ -12,7 +12,7 @@ export default async function ConfiguracoesFinanceiras() {
 
   const adminClient = createAdminClient()
 
-  const { data: config } = await adminClient
+  const { data: config, error: configError } = await adminClient
     .from('configuracao_financeira')
     .select('*')
     .eq('ativo', true)
@@ -40,6 +40,12 @@ export default async function ConfiguracoesFinanceiras() {
         </div>
       </div>
 
+      {configError && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-6 text-sm text-red-700">
+          Erro ao carregar configuração: {configError.message}
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Parâmetros globais</CardTitle>
@@ -48,7 +54,7 @@ export default async function ConfiguracoesFinanceiras() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={salvarConfiguracaoFinanceira as any} className="space-y-6">
+          <form action={salvarConfiguracaoFinanceira} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="margem_minima_percent">Margem mínima aceitável (%)</Label>
               <p className="text-xs text-slate-400 dark:text-slate-500">
