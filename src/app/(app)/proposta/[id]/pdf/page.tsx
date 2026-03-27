@@ -201,8 +201,8 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* PDF Content (layout técnico — oculto na impressão quando há apresentação) */}
-      <div className={`pdf-content p-8 max-w-4xl mx-auto font-sans text-slate-800${temApresentacao ? ' no-print' : ''}`}>
+      {/* PDF Content (layout técnico — oculto quando há apresentação) */}
+      <div className={`pdf-content p-8 max-w-4xl mx-auto font-sans text-slate-800${temApresentacao ? ' hidden' : ''}`}>
 
         {/* Header */}
         <div className="flex items-start justify-between mb-8 pb-6 border-b-2 border-slate-800">
