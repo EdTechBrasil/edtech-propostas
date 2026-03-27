@@ -14,6 +14,7 @@ const STEPS = [
   { id: 6, label: 'Repasse', path: 'repasse' },
   { id: 7, label: 'Revisão', path: 'revisao' },
   { id: 8, label: 'Cliente', path: 'cliente' },
+  { id: 9, label: 'Apresentação', path: 'apresentacao' },
 ]
 
 function getCurrentStep(pathname: string): number {
@@ -26,7 +27,7 @@ function getCurrentStep(pathname: string): number {
 
 export function StepperNav({
   propostaId,
-  passoMaximo = 8,
+  passoMaximo = 9,
 }: {
   propostaId?: string
   passoMaximo?: number

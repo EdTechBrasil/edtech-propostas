@@ -1301,7 +1301,7 @@ export async function gerarPropostaOrcamento(input: {
   return { propostaId: proposta.id }
 }
 
-// ── Gerar PDF: salva dados + muda status + redireciona ─────────────────────────
+// ── Gerar PDF: salva dados do cliente + muda status + redireciona para apresentação ──
 
 export async function gerarPDFProposta(proposta_id: string, formData: FormData) {
   const supabase = await createClient()
@@ -1322,5 +1322,39 @@ export async function gerarPDFProposta(proposta_id: string, formData: FormData) 
     .eq('id', proposta_id)
 
   await registrarHistorico(proposta_id, user.id, 'GerarPDF', 'PDF gerado')
+  redirect(`/proposta/${proposta_id}/apresentacao`)
+}
+
+// ── Salvar apresentação narrativa + redirecionar para PDF ──────────────────────
+
+export async function salvarApresentacao(proposta_id: string, formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const titulo = formData.get('titulo') as string | null
+  const introducao = formData.get('introducao') as string | null
+  const termos = formData.get('termos') as string | null
+
+  let objetivos: string[] = []
+  let solucoes: { titulo: string; descricao: string }[] = []
+  let cronograma: { etapa: string; duracao: string }[] = []
+
+  try { objetivos = JSON.parse(formData.get('objetivos') as string ?? '[]') } catch { objetivos = [] }
+  try { solucoes = JSON.parse(formData.get('solucoes') as string ?? '[]') } catch { solucoes = [] }
+  try { cronograma = JSON.parse(formData.get('cronograma') as string ?? '[]') } catch { cronograma = [] }
+
+  await supabase
+    .from('propostas')
+    .update({
+      apresentacao_titulo: titulo || null,
+      apresentacao_introducao: introducao || null,
+      apresentacao_objetivos: objetivos,
+      apresentacao_solucoes: solucoes,
+      apresentacao_cronograma: cronograma,
+      apresentacao_termos: termos || null,
+    })
+    .eq('id', proposta_id)
+
   redirect(`/proposta/${proposta_id}/pdf`)
 }
