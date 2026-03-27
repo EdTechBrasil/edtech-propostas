@@ -91,17 +91,17 @@ export async function salvarConfiguracaoFinanceira(formData: FormData) {
 
   const adminClient = createAdminClient()
 
-  const { data: existente } = await adminClient
+  // Tenta atualizar todas as linhas ativas
+  const { count } = await adminClient
     .from('configuracao_financeira')
-    .select('id')
+    .select('id', { count: 'exact', head: true })
     .eq('ativo', true)
-    .single<{ id: string }>()
 
-  if (existente) {
+  if ((count ?? 0) > 0) {
     const { error } = await adminClient
       .from('configuracao_financeira')
       .update({ margem_minima_percent, margem_global_max_percent, desconto_max_percent })
-      .eq('id', existente.id)
+      .eq('ativo', true)
     if (error) return { error: error.message }
   } else {
     const { error } = await adminClient

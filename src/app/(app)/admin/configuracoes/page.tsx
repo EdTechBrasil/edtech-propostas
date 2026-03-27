@@ -12,16 +12,19 @@ export default async function ConfiguracoesFinanceiras() {
 
   const adminClient = createAdminClient()
 
-  const { data: config, error: configError } = await adminClient
+  const { data: configs } = await adminClient
     .from('configuracao_financeira')
     .select('*')
     .eq('ativo', true)
-    .single<{
-      id: string
-      margem_minima_percent: number
-      margem_global_max_percent: number
-      desconto_max_percent: number
-    }>()
+    .order('criado_em', { ascending: false })
+    .limit(1)
+
+  const config = configs?.[0] as {
+    id: string
+    margem_minima_percent: number
+    margem_global_max_percent: number
+    desconto_max_percent: number
+  } | undefined
 
   return (
     <div className="p-4 md:p-8 max-w-2xl">
@@ -40,11 +43,6 @@ export default async function ConfiguracoesFinanceiras() {
         </div>
       </div>
 
-      {configError && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-6 text-sm text-red-700">
-          Erro ao carregar configuração: {configError.message}
-        </div>
-      )}
 
       <Card>
         <CardHeader>
