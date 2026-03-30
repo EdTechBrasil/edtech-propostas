@@ -98,7 +98,12 @@ export function TemplatePdfCliente({ config, propostaExemploId }: { config: Conf
             {logoUrl ? (
               <div className="relative w-40 h-16 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                <img
+                  src={logoUrl}
+                  alt="Logo"
+                  className="max-w-full max-h-full object-contain"
+                  onError={() => setUploadErroLogo('Imagem enviada mas não carregou. Verifique se o bucket "pdf-assets" é público no Supabase.')}
+                />
               </div>
             ) : (
               <div className="w-40 h-16 rounded-md border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-xs text-slate-400">

@@ -406,13 +406,17 @@ export async function uploadLogoPdf(formData: FormData) {
   const adminClient = createAdminClient()
   const buffer = Buffer.from(await file.arrayBuffer())
 
+  // Garante que o bucket existe e é público
+  await adminClient.storage.createBucket('pdf-assets', { public: true })
+
   const { error } = await adminClient.storage
     .from('pdf-assets')
     .upload(filename, buffer, { contentType: file.type, upsert: true })
 
   if (error) return { error: error.message }
 
-  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdf-assets/${filename}`
+  const { data: publicData } = adminClient.storage.from('pdf-assets').getPublicUrl(filename)
+  const url = publicData.publicUrl
 
   // Salva logo_url direto no banco — não depende de clicar "Salvar template"
   const { data: existente } = await adminClient
