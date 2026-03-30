@@ -162,6 +162,33 @@ export function ApresentacaoCliente({
     setTermos('Esta proposta tem validade de 30 dias a partir da data de emissão. Os valores apresentados referem-se ao período de 12 meses de licença. O pagamento poderá ser parcelado em até 12x. A implantação será iniciada após assinatura do contrato e confirmação do pagamento da primeira parcela. Inclui suporte técnico e atualizações da plataforma durante toda a vigência.')
   }
 
+  function preencherGenerico() {
+    setTitulo('Solução EdTech para ' + clienteDisplay)
+    setIntroducao(`É com grande satisfação que apresentamos a ${clienteDisplay} esta proposta de parceria educacional. Nossa solução foi desenvolvida para transformar o ambiente de aprendizagem, integrando tecnologia de ponta ao cotidiano escolar. Acreditamos que a inovação pedagógica é o caminho para preparar alunos para os desafios do século XXI, e estamos prontos para apoiar sua instituição nessa jornada.`)
+    setObjetivos([
+      'Modernizar a infraestrutura tecnológica pedagógica da instituição',
+      'Aumentar o engajamento e o desempenho acadêmico dos alunos',
+      'Oferecer ferramentas de gestão para coordenadores e professores',
+      'Integrar conteúdo digital interativo ao currículo existente',
+      'Capacitar educadores para uso pleno das novas tecnologias',
+    ])
+    setSolucoes([
+      { titulo: 'Plataforma Digital de Aprendizagem', descricao: 'Ambiente virtual completo com conteúdos interativos, videoaulas, avaliações adaptativas e trilhas de aprendizado personalizadas para cada aluno, acessível em qualquer dispositivo.' },
+      { titulo: 'Capacitação Continuada de Professores', descricao: 'Programa estruturado de formação docente com workshops presenciais e online, certificação e suporte pedagógico permanente durante toda a vigência do contrato.' },
+      { titulo: 'Painel de Gestão e Relatórios', descricao: 'Dashboard completo com indicadores de desempenho por turma, relatórios de engajamento, alertas de risco de evasão e dados para tomada de decisão pelos gestores.' },
+      { titulo: 'Suporte Técnico e Implantação', descricao: 'Equipe dedicada para instalação, configuração e acompanhamento durante todo o período, garantindo funcionamento pleno e resolução ágil de qualquer necessidade técnica.' },
+    ])
+    setCronograma([
+      { etapa: 'Reunião de kickoff e levantamento', duracao: '1 semana' },
+      { etapa: 'Implantação e configuração da plataforma', duracao: '2 semanas' },
+      { etapa: 'Capacitação da equipe pedagógica', duracao: '1 semana' },
+      { etapa: 'Projeto piloto com turmas selecionadas', duracao: '4 semanas' },
+      { etapa: 'Expansão para toda a instituição', duracao: '2 semanas' },
+      { etapa: 'Acompanhamento e suporte contínuo', duracao: 'Contínuo' },
+    ])
+    setTermos('Esta proposta tem validade de 30 dias a partir da data de emissão. Os valores apresentados referem-se ao período de 12 meses de licença. O pagamento poderá ser parcelado em até 12x. A implantação será iniciada após assinatura do contrato e confirmação do pagamento da primeira parcela. Inclui suporte técnico e atualizações da plataforma durante toda a vigência.')
+  }
+
   return (
     <div className="flex gap-0 h-[calc(100vh-120px)] -mx-4 md:-mx-8 -mt-4 md:-mt-8 overflow-hidden">
 
@@ -182,14 +209,24 @@ export function ApresentacaoCliente({
               </Button>
             </Link>
           </div>
-          <button
-            type="button"
-            onClick={preencherExemplo}
-            className="w-full mb-5 flex items-center justify-center gap-2 rounded-lg border border-dashed border-teal-300 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-medium py-2 transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Preencher com texto de exemplo
-          </button>
+          <div className="mb-5 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={preencherGenerico}
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium py-2 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Modelo genérico
+            </button>
+            <button
+              type="button"
+              onClick={preencherExemplo}
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-medium py-2 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Modelo AGIR360
+            </button>
+          </div>
 
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
 
