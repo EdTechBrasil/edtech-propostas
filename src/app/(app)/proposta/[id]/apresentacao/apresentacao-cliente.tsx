@@ -343,15 +343,13 @@ export function ApresentacaoCliente({
                       placeholder="Duração"
                       className="w-28"
                     />
-                    {cronograma.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => setCronograma(prev => prev.filter((_, j) => j !== i))}
-                        className="p-2 text-slate-400 hover:text-red-500 rounded flex-shrink-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setCronograma(prev => prev.filter((_, j) => j !== i))}
+                      className="p-2 text-slate-400 hover:text-red-500 rounded flex-shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>
