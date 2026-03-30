@@ -47,9 +47,22 @@ const MODELO_OBJETIVOS = [
 ]
 
 const MODELO_SOLUCOES: Solucao[] = [
-  { titulo: 'Plataforma Digital de Aprendizagem', descricao: 'Ambiente virtual completo com conteúdos interativos, avaliações adaptativas e trilhas de aprendizado personalizadas para cada aluno.' },
-  { titulo: 'Capacitação de Professores', descricao: 'Programa de formação continuada com suporte pedagógico e certificação em tecnologia educacional.' },
-  { titulo: 'Gestão e Relatórios', descricao: 'Painel com indicadores de desempenho, relatórios de engajamento e ferramentas de acompanhamento para gestores.' },
+  {
+    titulo: 'A – Aprender',
+    descricao: 'Reúne soluções didáticas, projetos educacionais e instrumentos pedagógicos voltados à efetivação do currículo e ao desenvolvimento das competências e habilidades dos estudantes. Compõem esse eixo propostas como o Sistema de Ensino e os projetos com foco em sustentabilidade, fortalecendo a coerência pedagógica da rede e ampliando as oportunidades de aprendizagem em sintonia com as demandas contemporâneas da educação pública.',
+  },
+  {
+    titulo: 'G – Gestão',
+    descricao: 'Compreende a estrutura de acompanhamento da execução educacional por meio de uma plataforma orientada ao ciclo PDCA, permitindo ao Município monitorar metas, planos de ação, indicadores, prazos e evidências de execução. Contribui para dar maior disciplina à rotina gerencial da rede, favorecendo o alinhamento entre planejamento, execução, verificação e correção de rota.',
+  },
+  {
+    titulo: 'I – Inteligência',
+    descricao: 'Traduz o compromisso da solução com o uso qualificado das informações da rede municipal. Por meio da integração e análise de dados relevantes, esse eixo permite identificar prioridades, fragilidades, riscos e oportunidades de melhoria, apoiando decisões mais assertivas por parte dos gestores.',
+  },
+  {
+    titulo: 'R – Resultados',
+    descricao: 'Consolida aprendizagem, gestão e inteligência em melhoria educacional mensurável e sustentável. A formação continuada de professores, gestores e equipes técnicas assume papel fundamental, assegurando a apropriação da metodologia, o uso qualificado dos recursos disponibilizados e a execução consistente das ações planejadas.',
+  },
 ]
 
 const MODELO_CRONOGRAMA: CronogramaItem[] = [
@@ -108,23 +121,35 @@ export function ApresentacaoCliente({
   }
 
   const clienteDisplay = clienteNome || 'Cliente'
-  const modeloIntroducao = `Nossa empresa apresenta esta proposta para ${clienteDisplay}, com o objetivo de implementar uma solução tecnológica educacional completa. Desenvolvemos plataformas e recursos que potencializam o ensino, engajam alunos e apoiam gestores pedagógicos com dados e ferramentas modernas.`
+  const modeloIntroducao = `A presente proposta comercial tem por objeto a disponibilização, ao Município de [NOME DO MUNICÍPIO]/[UF], por meio da [NOME DA SECRETARIA], do Ecossistema AGIR360, concebido como uma solução integrada voltada à melhoria da aprendizagem, ao fortalecimento da gestão educacional e à qualificação da tomada de decisão na rede municipal de ensino. Trata-se de uma proposta estruturada para apoiar o município na organização de sua política educacional a partir de uma lógica sistêmica, em que currículo, prática pedagógica, gestão, análise de dados e acompanhamento institucional atuam de forma articulada e complementar.\n\nAssim, o que se propõe ao Município de [NOME DO MUNICÍPIO] não é a aquisição de elementos isolados, mas a implementação de uma solução integrada de caráter metodológico, técnico e educacional, estruturada para promover coerência entre ensino, gestão, acompanhamento e resultado. O Ecossistema AGIR360 organiza a atuação da rede municipal em torno de um modelo contínuo de melhoria, no qual as ações pedagógicas e gerenciais passam a compor uma estratégia única, orientada por evidências e voltada à aprendizagem do aluno como finalidade central.`
 
   function preencherExemplo() {
-    setTitulo('Solução EdTech para ' + clienteDisplay)
-    setIntroducao(`É com grande satisfação que apresentamos a ${clienteDisplay} esta proposta de parceria educacional. Nossa solução foi desenvolvida para transformar o ambiente de aprendizagem, integrando tecnologia de ponta ao cotidiano escolar. Acreditamos que a inovação pedagógica é o caminho para preparar alunos para os desafios do século XXI, e estamos prontos para apoiar sua instituição nessa jornada.`)
+    setTitulo('Ecossistema AGIR360')
+    setIntroducao(`A presente proposta comercial tem por objeto a disponibilização, ao Município de [NOME DO MUNICÍPIO]/[UF], por meio da [NOME DA SECRETARIA], do Ecossistema AGIR360, concebido como uma solução integrada voltada à melhoria da aprendizagem, ao fortalecimento da gestão educacional e à qualificação da tomada de decisão na rede municipal de ensino. Trata-se de uma proposta estruturada para apoiar o município na organização de sua política educacional a partir de uma lógica sistêmica, em que currículo, prática pedagógica, gestão, análise de dados e acompanhamento institucional atuam de forma articulada e complementar.\n\nAssim, o que se propõe ao Município de [NOME DO MUNICÍPIO] não é a aquisição de elementos isolados, mas a implementação de uma solução integrada de caráter metodológico, técnico e educacional, estruturada para promover coerência entre ensino, gestão, acompanhamento e resultado. O Ecossistema AGIR360 organiza a atuação da rede municipal em torno de um modelo contínuo de melhoria, no qual as ações pedagógicas e gerenciais passam a compor uma estratégia única, orientada por evidências e voltada à aprendizagem do aluno como finalidade central.`)
     setObjetivos([
-      'Modernizar a infraestrutura tecnológica pedagógica da instituição',
-      'Aumentar o engajamento e o desempenho acadêmico dos alunos',
-      'Oferecer ferramentas de gestão para coordenadores e professores',
-      'Integrar conteúdo digital interativo ao currículo existente',
-      'Capacitar educadores para uso pleno das novas tecnologias',
+      'Melhorar os indicadores de aprendizagem da rede municipal de ensino',
+      'Fortalecer a gestão educacional com base em evidências e ciclo PDCA',
+      'Qualificar a tomada de decisão por meio de análise de dados integrada',
+      'Promover formação continuada de professores, gestores e equipes técnicas',
+      'Implementar solução sistêmica articulando currículo, gestão e resultados',
     ])
     setSolucoes([
-      { titulo: 'Plataforma Digital de Aprendizagem', descricao: 'Ambiente virtual completo com conteúdos interativos, videoaulas, avaliações adaptativas e trilhas de aprendizado personalizadas para cada aluno, acessível em qualquer dispositivo.' },
-      { titulo: 'Capacitação Continuada de Professores', descricao: 'Programa estruturado de formação docente com workshops presenciais e online, certificação e suporte pedagógico permanente durante toda a vigência do contrato.' },
-      { titulo: 'Painel de Gestão e Relatórios', descricao: 'Dashboard completo com indicadores de desempenho por turma, relatórios de engajamento, alertas de risco de evasão e dados para tomada de decisão pelos gestores.' },
-      { titulo: 'Suporte Técnico e Implantação', descricao: 'Equipe dedicada para instalação, configuração e acompanhamento durante todo o período, garantindo funcionamento pleno e resolução ágil de qualquer necessidade técnica.' },
+      {
+        titulo: 'A – Aprender',
+        descricao: 'Reúne soluções didáticas, projetos educacionais e instrumentos pedagógicos voltados à efetivação do currículo e ao desenvolvimento das competências e habilidades dos estudantes. Compõem esse eixo propostas como o Sistema de Ensino e os projetos com foco em sustentabilidade, fortalecendo a coerência pedagógica da rede e ampliando as oportunidades de aprendizagem em sintonia com as demandas contemporâneas da educação pública.',
+      },
+      {
+        titulo: 'G – Gestão',
+        descricao: 'Compreende a estrutura de acompanhamento da execução educacional por meio de uma plataforma orientada ao ciclo PDCA, permitindo ao Município monitorar metas, planos de ação, indicadores, prazos e evidências de execução. Contribui para dar maior disciplina à rotina gerencial da rede, favorecendo o alinhamento entre planejamento, execução, verificação e correção de rota.',
+      },
+      {
+        titulo: 'I – Inteligência',
+        descricao: 'Traduz o compromisso da solução com o uso qualificado das informações da rede municipal. Por meio da integração e análise de dados relevantes, esse eixo permite identificar prioridades, fragilidades, riscos e oportunidades de melhoria, apoiando decisões mais assertivas por parte dos gestores.',
+      },
+      {
+        titulo: 'R – Resultados',
+        descricao: 'Consolida aprendizagem, gestão e inteligência em melhoria educacional mensurável e sustentável. A formação continuada de professores, gestores e equipes técnicas assume papel fundamental, assegurando a apropriação da metodologia, o uso qualificado dos recursos disponibilizados e a execução consistente das ações planejadas.',
+      },
     ])
     setCronograma([
       { etapa: 'Reunião de kickoff e levantamento', duracao: '1 semana' },

@@ -38,6 +38,17 @@ type DocumentoApresentacaoProps = {
   dataValidade?: string
 }
 
+// ── Cores por letra de eixo AGIR ──────────────────────────────────────────────
+
+const EIXO_CORES: Record<string, {
+  bg: string; border: string; badge: string; titulo: string; desc: string
+}> = {
+  A: { bg: 'bg-teal-50',   border: 'border-teal-200',   badge: 'bg-teal-600',   titulo: 'text-teal-900',   desc: 'text-teal-700'   },
+  G: { bg: 'bg-blue-50',   border: 'border-blue-200',   badge: 'bg-blue-600',   titulo: 'text-blue-900',   desc: 'text-blue-700'   },
+  I: { bg: 'bg-violet-50', border: 'border-violet-200', badge: 'bg-violet-600', titulo: 'text-violet-900', desc: 'text-violet-700' },
+  R: { bg: 'bg-amber-50',  border: 'border-amber-200',  badge: 'bg-amber-500',  titulo: 'text-amber-900',  desc: 'text-amber-700'  },
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function DocumentoApresentacao({
@@ -63,7 +74,11 @@ export function DocumentoApresentacao({
   const tituloDisplay = titulo.trim() || 'Proposta Comercial'
   const clienteDisplay = clienteNome.trim() || 'Cliente'
   const temObjetivos = (objetivos ?? []).filter(o => o.trim()).length > 0
-  const temSolucoes = (solucoes ?? []).filter(s => s.titulo.trim()).length > 0
+  const solucoesValidas = (solucoes ?? []).filter(s => s.titulo.trim())
+  const temSolucoes = solucoesValidas.length > 0
+  const isAgir360 = ['A', 'G', 'I', 'R'].every(
+    (letra, i) => solucoesValidas[i]?.titulo.trim().toUpperCase().startsWith(letra)
+  )
   const temCronograma = (cronograma ?? []).filter(c => c.etapa.trim()).length > 0
   const temInvestimento = (investimentoProdutos ?? []).length > 0 && (totalLiquido ?? 0) > 0
   const temClienteCompleto = !!clienteCnpj
@@ -145,7 +160,11 @@ export function DocumentoApresentacao({
         {/* 01. Introdução */}
         {introducao?.trim() && (
           <Secao numero={nextSection()} titulo="Introdução">
-            <p className="text-sm text-slate-600 leading-relaxed">{introducao}</p>
+            <div className="space-y-3">
+              {introducao.split('\n\n').map((para, i) => (
+                <p key={i} className="text-sm text-slate-600 leading-relaxed">{para.trim()}</p>
+              ))}
+            </div>
           </Secao>
         )}
 
@@ -167,24 +186,58 @@ export function DocumentoApresentacao({
           </Secao>
         )}
 
-        {/* 03. Nossa Solução */}
+        {/* 03. Nossa Solução / Ecossistema AGIR360 */}
         {temSolucoes && (
-          <Secao numero={nextSection()} titulo="Nossa Solução">
-            <div className="space-y-4">
-              {(solucoes ?? []).filter(s => s.titulo.trim()).map((sol, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                    {i + 1}
-                  </div>
-                  <div className="pt-0.5">
-                    <p className="text-sm font-semibold text-slate-900">{sol.titulo}</p>
-                    {sol.descricao?.trim() && (
-                      <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{sol.descricao}</p>
-                    )}
-                  </div>
+          <Secao numero={nextSection()} titulo={isAgir360 ? 'Ecossistema AGIR360' : 'Nossa Solução'}>
+            {isAgir360 ? (
+              <div className="space-y-3">
+                {/* Badges AGIR */}
+                <div className="flex items-center gap-1.5 mb-1">
+                  {['A', 'G', 'I', 'R'].map(l => {
+                    const c = EIXO_CORES[l]
+                    return (
+                      <span key={l} className={`w-7 h-7 rounded-md ${c.badge} text-white text-sm font-black flex items-center justify-center shadow-sm`}>
+                        {l}
+                      </span>
+                    )
+                  })}
+                  <span className="text-xs font-semibold text-slate-400 ml-1 tracking-wider uppercase">360°</span>
                 </div>
-              ))}
-            </div>
+                {solucoesValidas.map((sol, i) => {
+                  const letra = sol.titulo.trim().charAt(0).toUpperCase()
+                  const cores = EIXO_CORES[letra] ?? EIXO_CORES['A']
+                  return (
+                    <div key={i} className={`rounded-xl border ${cores.border} ${cores.bg} px-4 py-3 flex items-start gap-3`}>
+                      <div className={`flex-shrink-0 w-9 h-9 rounded-lg ${cores.badge} flex items-center justify-center text-white text-lg font-black shadow-sm`}>
+                        {letra}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-bold ${cores.titulo} leading-snug`}>{sol.titulo}</p>
+                        {sol.descricao?.trim() && (
+                          <p className={`text-xs ${cores.desc} mt-1 leading-relaxed`}>{sol.descricao}</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {solucoesValidas.map((sol, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                      {i + 1}
+                    </div>
+                    <div className="pt-0.5">
+                      <p className="text-sm font-semibold text-slate-900">{sol.titulo}</p>
+                      {sol.descricao?.trim() && (
+                        <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{sol.descricao}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Secao>
         )}
 
