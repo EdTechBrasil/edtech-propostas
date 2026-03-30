@@ -162,7 +162,7 @@ export function DocumentoApresentacao({
           <Secao numero={nextSection()} titulo="Introdução">
             <div className="space-y-3">
               {introducao.split('\n\n').map((para, i) => (
-                <p key={i} className="text-sm text-slate-600 leading-relaxed">{para.trim()}</p>
+                <p key={i} className="text-sm text-slate-600 leading-relaxed text-justify">{para.trim()}</p>
               ))}
             </div>
           </Secao>
@@ -214,7 +214,7 @@ export function DocumentoApresentacao({
                       <div>
                         <p className={`text-sm font-bold ${cores.titulo} leading-snug`}>{sol.titulo}</p>
                         {sol.descricao?.trim() && (
-                          <p className={`text-xs ${cores.desc} mt-1 leading-relaxed`}>{sol.descricao}</p>
+                          <p className={`text-xs ${cores.desc} mt-1 leading-relaxed text-justify`}>{sol.descricao}</p>
                         )}
                       </div>
                     </div>
@@ -231,7 +231,7 @@ export function DocumentoApresentacao({
                     <div className="pt-0.5">
                       <p className="text-sm font-semibold text-slate-900">{sol.titulo}</p>
                       {sol.descricao?.trim() && (
-                        <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{sol.descricao}</p>
+                        <p className="text-sm text-slate-500 mt-0.5 leading-relaxed text-justify">{sol.descricao}</p>
                       )}
                     </div>
                   </div>
@@ -330,7 +330,7 @@ export function DocumentoApresentacao({
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Termos e Condições</p>
-              <p className="text-sm text-slate-500 leading-relaxed">{termos}</p>
+              <p className="text-sm text-slate-500 leading-relaxed text-justify">{termos}</p>
             </div>
           </div>
         )}
