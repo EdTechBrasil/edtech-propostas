@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
-import { salvarApresentacao } from '@/lib/actions/proposta'
+import { salvarApresentacao, uploadLogoProposta } from '@/lib/actions/proposta'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Plus, Trash2, FileText, ArrowLeft, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react'
+import { Loader2, Plus, Trash2, FileText, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Upload, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { DocumentoApresentacao } from './documento-apresentacao'
 
@@ -104,9 +104,29 @@ export function ApresentacaoCliente({
   const [solucoes, setSolucoes] = useState<Solucao[]>(initialData.solucoes.length > 0 ? initialData.solucoes : [{ titulo: '', descricao: '' }])
   const [cronograma, setCronograma] = useState<CronogramaItem[]>(initialData.cronograma.length > 0 ? initialData.cronograma : [{ etapa: '', duracao: '' }])
   const [termos, setTermos] = useState(initialData.termos)
+  const [logoAtual, setLogoAtual] = useState<string | null>(logoUrl)
+  const [uploadandoLogo, setUploadandoLogo] = useState(false)
+  const [erroLogo, setErroLogo] = useState('')
   const [collapsed, setCollapsed] = useState(false)
   const [isPending, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
+  const logoFileRef = useRef<HTMLInputElement>(null)
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadandoLogo(true)
+    setErroLogo('')
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await uploadLogoProposta(propostaId, fd)
+    setUploadandoLogo(false)
+    if (res && 'url' in res && res.url) {
+      setLogoAtual(res.url)
+    } else if (res && 'error' in res) {
+      setErroLogo(res.error ?? 'Erro ao enviar logo')
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -117,6 +137,7 @@ export function ApresentacaoCliente({
     fd.set('solucoes', JSON.stringify(solucoes.filter(s => s.titulo.trim())))
     fd.set('cronograma', JSON.stringify(cronograma.filter(c => c.etapa.trim())))
     fd.set('termos', termos)
+    fd.set('logo_url', logoAtual ?? '')
     startTransition(() => salvarApresentacao(propostaId, fd))
   }
 
@@ -229,6 +250,46 @@ export function ApresentacaoCliente({
           </div>
 
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Logo da proposta */}
+            <Section title="Logo da Proposta">
+              <div className="flex items-center gap-3">
+                {logoAtual ? (
+                  <div className="w-32 h-12 rounded border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={logoAtual} alt="Logo" className="max-w-full max-h-full object-contain"
+                      onError={() => setErroLogo('URL inválida. Reenvie a imagem.')} />
+                  </div>
+                ) : (
+                  <div className="w-32 h-12 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-xs text-slate-400">
+                    Sem logo
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => logoFileRef.current?.click()}
+                    disabled={uploadandoLogo}
+                    className="flex items-center gap-1.5 text-xs font-medium text-teal-700 border border-teal-300 rounded-md px-3 py-1.5 hover:bg-teal-50 transition-colors disabled:opacity-50"
+                  >
+                    {uploadandoLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    {uploadandoLogo ? 'Enviando…' : logoAtual ? 'Trocar' : 'Enviar logo'}
+                  </button>
+                  {logoAtual && (
+                    <button type="button" onClick={() => setLogoAtual(null)}
+                      className="text-xs text-slate-400 hover:text-red-500 text-left">
+                      Remover
+                    </button>
+                  )}
+                  {erroLogo && (
+                    <p className="text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />{erroLogo}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <input ref={logoFileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+            </Section>
 
             {/* Informações básicas */}
             <Section title="Informações Básicas">
@@ -390,7 +451,7 @@ export function ApresentacaoCliente({
           <DocumentoApresentacao
             empresaNome={empresaNome}
             empresaSubtitulo={empresaSubtitulo}
-            logoUrl={logoUrl}
+            logoUrl={logoAtual}
             dataEmissao={dataEmissao}
             titulo={titulo}
             clienteNome={clienteNome}

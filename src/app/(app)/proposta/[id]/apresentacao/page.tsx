@@ -16,6 +16,7 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
       .from('propostas')
       .select(`
         id, status,
+        id, status, logo_url,
         cliente_nome_instituicao, validade_proposta, criado_em,
         apresentacao_titulo, apresentacao_introducao,
         apresentacao_objetivos, apresentacao_solucoes,
@@ -94,7 +95,7 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
       dataEmissao={dataEmissao}
       empresaNome={configPdf?.empresa_nome ?? 'EdTech Brasil'}
       empresaSubtitulo={configPdf?.proposta_subtitulo ?? 'Tecnologia Educacional'}
-      logoUrl={configPdf?.logo_url ?? null}
+      logoUrl={proposta.logo_url ?? configPdf?.logo_url ?? null}
       investimentoProdutos={investimentoProdutos}
       totalLiquido={financeiro?.receita_liquida ?? 0}
       initialData={{

@@ -1335,6 +1335,7 @@ export async function salvarApresentacao(proposta_id: string, formData: FormData
   const titulo = formData.get('titulo') as string | null
   const introducao = formData.get('introducao') as string | null
   const termos = formData.get('termos') as string | null
+  const logo_url = (formData.get('logo_url') as string) || null
 
   let objetivos: string[] = []
   let solucoes: { titulo: string; descricao: string }[] = []
@@ -1353,8 +1354,40 @@ export async function salvarApresentacao(proposta_id: string, formData: FormData
       apresentacao_solucoes: solucoes,
       apresentacao_cronograma: cronograma,
       apresentacao_termos: termos || null,
+      logo_url,
     })
     .eq('id', proposta_id)
 
   redirect(`/proposta/${proposta_id}/pdf`)
+}
+
+export async function uploadLogoProposta(proposta_id: string, formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const file = formData.get('file') as File
+  if (!file || file.size === 0) return { error: 'Nenhum arquivo enviado' }
+
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const adminClient = createAdminClient()
+
+  const ext = file.name.split('.').pop()
+  const filename = `logo-proposta-${proposta_id}-${Date.now()}.${ext}`
+  const buffer = Buffer.from(await file.arrayBuffer())
+
+  await adminClient.storage.createBucket('pdf-assets', { public: true })
+
+  const { error } = await adminClient.storage
+    .from('pdf-assets')
+    .upload(filename, buffer, { contentType: file.type, upsert: true })
+
+  if (error) return { error: error.message }
+
+  const { data: publicData } = adminClient.storage.from('pdf-assets').getPublicUrl(filename)
+  const url = publicData.publicUrl
+
+  await supabase.from('propostas').update({ logo_url: url }).eq('id', proposta_id)
+
+  return { success: true, url }
 }
