@@ -94,9 +94,20 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
     (pp.produto as any)?.nome?.toLowerCase().includes('primeiro')
   )
 
+  // Deduplica componentes por produto_componente_id (evita duplicatas no display)
+  function deduplicarComps(comps: any[]) {
+    const seen = new Map<string, any>()
+    for (const c of comps) {
+      const key = c.componente?.id ?? c.id
+      const prev = seen.get(key)
+      if (!prev || c.quantidade > prev.quantidade) seen.set(key, c)
+    }
+    return Array.from(seen.values())
+  }
+
   const produtosOrdenados = (produtosProposta ?? []).map(pp => ({
     ...pp,
-    componentes: [...(pp.componentes as any[])].sort(
+    componentes: deduplicarComps([...(pp.componentes as any[])]).sort(
       (a, b) => (a.componente?.ordem ?? 0) - (b.componente?.ordem ?? 0)
     ),
     servicos: [...(pp.servicos as any[])].sort(

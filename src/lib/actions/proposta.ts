@@ -681,18 +681,28 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     .eq('ativo', true)
 
   if (componentes && componentes.length > 0) {
-    await supabase.from('proposta_componentes').insert(
-      componentes.map((c: any) => ({
-        proposta_id,
-        proposta_produto_id: pp.id,
-        produto_componente_id: c.id,
-        quantidade: qtdSugerida(c.tipo_calculo, undefined, c.categoria),
-        valor_venda_unit: c.valor_venda_base,
-        custo_interno_unit: c.custo_interno_base,
-        desconto_percent: 0,
-        obrigatorio: c.obrigatorio,
-      }))
-    )
+    // Verificar quais produto_componente_id já existem para evitar duplicatas
+    const { data: existentes } = await supabase
+      .from('proposta_componentes')
+      .select('produto_componente_id')
+      .eq('proposta_produto_id', pp.id)
+    const existentesIds = new Set((existentes ?? []).map((e: any) => e.produto_componente_id))
+
+    const novos = componentes.filter((c: any) => !existentesIds.has(c.id))
+    if (novos.length > 0) {
+      await supabase.from('proposta_componentes').insert(
+        novos.map((c: any) => ({
+          proposta_id,
+          proposta_produto_id: pp.id,
+          produto_componente_id: c.id,
+          quantidade: qtdSugerida(c.tipo_calculo, undefined, c.categoria),
+          valor_venda_unit: c.valor_venda_base,
+          custo_interno_unit: c.custo_interno_base,
+          desconto_percent: 0,
+          obrigatorio: c.obrigatorio,
+        }))
+      )
+    }
   }
 
   // Adiciona serviços (todos, não apenas obrigatórios)

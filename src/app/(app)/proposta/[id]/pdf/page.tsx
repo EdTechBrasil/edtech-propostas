@@ -55,7 +55,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         desconto_percent,
         produto:produtos(nome, descricao),
         componentes:proposta_componentes(
-          id, quantidade, valor_venda_unit, desconto_percent, obrigatorio,
+          id, produto_componente_id, quantidade, valor_venda_unit, desconto_percent, obrigatorio,
           componente:produto_componentes(nome, categoria)
         ),
         servicos:proposta_servicos(
@@ -101,11 +101,22 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
   }
 
   // Monta dados de investimento para o DocumentoApresentacao
+  // Deduplica componentes por produto_componente_id (mantém o de maior quantidade em caso de duplicata)
+  function deduplicarComps(comps: any[]) {
+    const seen = new Map<string, any>()
+    for (const c of comps) {
+      const key = c.produto_componente_id ?? c.id
+      const prev = seen.get(key)
+      if (!prev || c.quantidade > prev.quantidade) seen.set(key, c)
+    }
+    return Array.from(seen.values())
+  }
+
   const investimentoProdutos = (produtos ?? [])
     .map((pp: any) => {
       const fator = 1 - (pp.desconto_percent ?? 0) / 100
       const itens = [
-        ...(pp.componentes ?? []).filter((c: any) => c.quantidade > 0).map((c: any) => ({
+        ...deduplicarComps(pp.componentes ?? []).filter((c: any) => c.quantidade > 0).map((c: any) => ({
           nome: c.componente?.nome ?? '',
           categoria: c.componente?.categoria ?? '',
           quantidade: c.quantidade,
@@ -398,7 +409,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {(pp.componentes ?? []).filter((c: any) => c.quantidade > 0).map((c: any) => {
+                    {deduplicarComps(pp.componentes ?? []).filter((c: any) => c.quantidade > 0).map((c: any) => {
                       const total = c.quantidade * c.valor_venda_unit * (1 - (c.desconto_percent ?? 0) / 100)
                       return (
                         <tr key={c.id}>
