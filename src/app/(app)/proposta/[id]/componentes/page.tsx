@@ -94,11 +94,11 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
     (pp.produto as any)?.nome?.toLowerCase().includes('primeiro')
   )
 
-  // Deduplica componentes por produto_componente_id (evita duplicatas no display)
+  // Deduplica componentes por nome (evita duplicatas no display)
   function deduplicarComps(comps: any[]) {
     const seen = new Map<string, any>()
     for (const c of comps) {
-      const key = c.componente?.id ?? c.id
+      const key = (c.componente?.nome ?? c.componente?.id ?? c.id).toLowerCase()
       const prev = seen.get(key)
       if (!prev || c.quantidade > prev.quantidade) seen.set(key, c)
     }

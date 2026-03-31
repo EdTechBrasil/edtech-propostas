@@ -101,11 +101,11 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
   }
 
   // Monta dados de investimento para o DocumentoApresentacao
-  // Deduplica componentes por produto_componente_id (mantém o de maior quantidade em caso de duplicata)
+  // Deduplica componentes por nome (mantém o de maior quantidade em caso de duplicata)
   function deduplicarComps(comps: any[]) {
     const seen = new Map<string, any>()
     for (const c of comps) {
-      const key = c.produto_componente_id ?? c.id
+      const key = (c.componente?.nome ?? c.produto_componente_id ?? c.id).toLowerCase()
       const prev = seen.get(key)
       if (!prev || c.quantidade > prev.quantidade) seen.set(key, c)
     }
