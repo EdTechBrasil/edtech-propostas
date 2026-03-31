@@ -71,13 +71,14 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
 
   if (!proposta) notFound()
 
-  const temMPC      = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Primeiro'))
-  const temCoding   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Coding'))
-  const temEdtechIA = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Inteligência Artificial'))
-  const temCriaCode   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Cria+Code'))
-  const temCodigoIA   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('O Código IA'))
+  const temMPC          = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Primeiro'))
+  const temCoding       = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Coding'))
+  const temEdtechIA     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Inteligência Artificial'))
+  const temCriaCode     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Cria+Code'))
+  const temCodigoIA     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('O Código IA'))
+  const temCuriosamente = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Curiosamente'))
 
-  const SERIES_PRODUCT_NAMES = ['Primeiro', 'Coding', 'Cria+Code', 'Inteligência Artificial', 'O Código IA']
+  const SERIES_PRODUCT_NAMES = ['Primeiro', 'Coding', 'Cria+Code', 'Inteligência Artificial', 'O Código IA', 'Curiosamente']
   const mpcProd      = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Primeiro'))
   const criaCodeProd = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Cria+Code') || (p.produto as any)?.nome?.includes('O Código IA'))
   const flatProds = (prods ?? [])
@@ -100,6 +101,28 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       }
     })
 
+  // Curiosamente: busca componentes com nome e quantidade para pré-popular G1–G5
+  const curiosamenteProd = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Curiosamente'))
+  let curiosamentePp: { ppId: string; grupos: { num: number; alunosCompId: string | null; profCompId: string | null; alunosQty: number; profQty: number }[] } | null = null
+  if (curiosamenteProd) {
+    const { data: ccComps } = await supabase
+      .from('proposta_componentes')
+      .select('id, quantidade, componente:produto_componentes(nome)')
+      .eq('proposta_produto_id', (curiosamenteProd as any).id)
+    const grupos = [1, 2, 3, 4, 5].map(num => {
+      const alunosComp = (ccComps ?? []).find(c => (c.componente as any)?.nome?.includes(`Aluno G${num}`))
+      const profComp   = (ccComps ?? []).find(c => (c.componente as any)?.nome?.includes(`Prof G${num}`))
+      return {
+        num,
+        alunosCompId: (alunosComp as any)?.id ?? null,
+        profCompId:   (profComp as any)?.id   ?? null,
+        alunosQty:    (alunosComp as any)?.quantidade ?? 0,
+        profQty:      (profComp as any)?.quantidade   ?? 0,
+      }
+    }).filter(g => g.alunosCompId || g.profCompId)
+    curiosamentePp = { ppId: (curiosamenteProd as any).id, grupos }
+  }
+
   const servicoPresencial = (allServicos ?? []).find(s =>
     (s.servico as any)?.nome?.toLowerCase().includes('presencial')) ?? null
   const servicoEAD = (allServicos ?? []).find(s =>
@@ -120,12 +143,14 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       temCoding={temCoding}
       temEdtechIA={temEdtechIA}
       temCriaCode={temCriaCode || temCodigoIA}
+      temCuriosamente={temCuriosamente}
       servicosFormacao={servicosFormacao}
       mpcPpId={(mpcProd as any)?.id}
       mpcNumEscolas={(mpcProd as any)?.num_escolas ?? 0}
       criaCodePpId={(criaCodeProd as any)?.id}
       criaCodeNumAlunos={(criaCodeProd as any)?.num_alunos ?? 0}
       flatProds={flatProds}
+      curiosamentePp={curiosamentePp}
     />
   )
 }

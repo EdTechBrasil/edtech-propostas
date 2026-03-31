@@ -476,6 +476,22 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     })
   )
 
+  // Curiosamente: salva quantidade diretamente em cada proposta_componente (Aluno/Prof por grupo)
+  // Feito APÓS a recalculação geral para não ser sobrescrito
+  const curiosamenteComps: Record<string, number> = {}
+  for (const [key, val] of formData.entries()) {
+    if (key.startsWith('curiosamente_comp_')) {
+      curiosamenteComps[key.replace('curiosamente_comp_', '')] = Number(val) || 0
+    }
+  }
+  if (Object.keys(curiosamenteComps).length > 0) {
+    await Promise.all(
+      Object.entries(curiosamenteComps).map(([compId, qty]) =>
+        supabase.from('proposta_componentes').update({ quantidade: qty }).eq('id', compId)
+      )
+    )
+  }
+
   // Atualiza horas de formação/assessoria (MPC)
   const formacaoUpdates: any[] = []
   const presId = formData.get('formacao_presencial_id') as string | null

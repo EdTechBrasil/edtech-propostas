@@ -109,24 +109,28 @@ export function PublicoCliente({
   temCoding,
   temEdtechIA,
   temCriaCode,
+  temCuriosamente = false,
   servicosFormacao,
   mpcPpId,
   mpcNumEscolas = 0,
   criaCodePpId,
   criaCodeNumAlunos = 0,
   flatProds = [],
+  curiosamentePp = null,
 }: {
   proposta: Proposta
   temMPC: boolean
   temCoding: boolean
   temEdtechIA: boolean
   temCriaCode: boolean
+  temCuriosamente?: boolean
   servicosFormacao: { presencial: ServicoFormacao | null; ead: ServicoFormacao | null; assessoria: ServicoFormacao | null }
   mpcPpId?: string
   mpcNumEscolas?: number
   criaCodePpId?: string
   criaCodeNumAlunos?: number
   flatProds?: { pp_id: string; nome: string; num_escolas: number; num_alunos: number; tipoPublico: 'PorAluno' | 'PorEscola' }[]
+  curiosamentePp?: { ppId: string; grupos: { num: number; alunosCompId: string | null; profCompId: string | null; alunosQty: number; profQty: number }[] } | null
 }) {
   const action = atualizarPublico.bind(null, proposta.id)
 
@@ -182,7 +186,7 @@ export function PublicoCliente({
   const turmas = numProf > 0 ? Math.ceil(numProf / 50) : 0
   const temFormacao = servicosFormacao.presencial || servicosFormacao.ead || servicosFormacao.assessoria
   const hasSeriesMode = temMPC || temCoding || temCriaCode
-  const hasAnySpecialMode = hasSeriesMode || temEdtechIA
+  const hasAnySpecialMode = hasSeriesMode || temEdtechIA || temCuriosamente
   // Escolas ficam dentro do card de cada produto quando MPC ou flat prods estão presentes
   const needsPerProductEscola = (temMPC && !!mpcPpId) || flatProds.length > 0
 
@@ -619,6 +623,49 @@ export function PublicoCliente({
                         <p className="text-xs text-slate-500">96 págs × R$ 2,50 = <strong>R$ 240,00</strong>/livro por pessoa</p>
                       </div>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Curiosamente Section */}
+            {temCuriosamente && curiosamentePp && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Curiosamente — Grupos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2 text-xs font-medium text-slate-500 px-1">
+                      <span>Grupo</span>
+                      <span>Alunos</span>
+                      <span>Professores</span>
+                    </div>
+                    {curiosamentePp.grupos.map(g => (
+                      <div key={g.num} className="grid grid-cols-3 gap-2 items-center">
+                        <span className="text-sm font-medium text-slate-700">G{g.num}</span>
+                        {g.alunosCompId ? (
+                          <Input
+                            name={`curiosamente_comp_${g.alunosCompId}`}
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            className="h-8"
+                            defaultValue={g.alunosQty || ''}
+                          />
+                        ) : <span />}
+                        {g.profCompId ? (
+                          <Input
+                            name={`curiosamente_comp_${g.profCompId}`}
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            className="h-8"
+                            defaultValue={g.profQty || ''}
+                          />
+                        ) : <span />}
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
