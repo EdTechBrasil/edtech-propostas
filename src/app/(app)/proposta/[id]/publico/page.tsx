@@ -76,15 +76,15 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
   const temEdtechIA     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Inteligência Artificial'))
   const temCriaCode     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Cria+Code'))
   const temCodigoIA     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('O Código IA'))
-  const temCuriosamente = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Curiosamente'))
+  const temCuriosamente = (prods ?? []).some(p => (p.produto as any)?.nome?.toLowerCase().includes('curiosamente'))
 
-  const SERIES_PRODUCT_NAMES = ['Primeiro', 'Coding', 'Cria+Code', 'Inteligência Artificial', 'O Código IA', 'Curiosamente']
+  const SERIES_PRODUCT_NAMES_LOWER = ['primeiro', 'coding', 'cria+code', 'inteligência artificial', 'o código ia', 'curiosamente']
   const mpcProd      = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Primeiro'))
   const criaCodeProd = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Cria+Code') || (p.produto as any)?.nome?.includes('O Código IA'))
   const flatProds = (prods ?? [])
     .filter(p => {
-      const nome: string = (p.produto as any)?.nome ?? ''
-      return !SERIES_PRODUCT_NAMES.some(n => nome.includes(n))
+      const nome: string = ((p.produto as any)?.nome ?? '').toLowerCase()
+      return !SERIES_PRODUCT_NAMES_LOWER.some(n => nome.includes(n))
     })
     .map(p => {
       const comps: any[] = (p as any).componentes ?? []
@@ -102,7 +102,7 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
     })
 
   // Curiosamente: busca componentes com nome e quantidade para pré-popular G1–G5
-  const curiosamenteProd = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Curiosamente'))
+  const curiosamenteProd = (prods ?? []).find(p => (p.produto as any)?.nome?.toLowerCase().includes('curiosamente'))
   let curiosamentePp: { ppId: string; grupos: { num: number; alunosCompId: string | null; profCompId: string | null; alunosQty: number; profQty: number }[] } | null = null
   if (curiosamenteProd) {
     const { data: ccComps } = await supabase
@@ -110,8 +110,8 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       .select('id, quantidade, componente:produto_componentes(nome)')
       .eq('proposta_produto_id', (curiosamenteProd as any).id)
     const grupos = [1, 2, 3, 4, 5].map(num => {
-      const alunosComp = (ccComps ?? []).find(c => (c.componente as any)?.nome?.includes(`Aluno G${num}`))
-      const profComp   = (ccComps ?? []).find(c => (c.componente as any)?.nome?.includes(`Prof G${num}`))
+      const alunosComp = (ccComps ?? []).find(c => (c.componente as any)?.nome?.toLowerCase().includes(`aluno g${num}`))
+      const profComp   = (ccComps ?? []).find(c => (c.componente as any)?.nome?.toLowerCase().includes(`prof g${num}`))
       return {
         num,
         alunosCompId: (alunosComp as any)?.id ?? null,
