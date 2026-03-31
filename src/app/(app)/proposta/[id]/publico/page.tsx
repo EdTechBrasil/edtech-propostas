@@ -71,56 +71,83 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
 
   if (!proposta) notFound()
 
-  const temMPC          = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Primeiro'))
-  const temCoding       = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Coding'))
-  const temEdtechIA     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Inteligência Artificial'))
-  const temCriaCode     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Cria+Code'))
-  const temCodigoIA     = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('O Código IA'))
-  const temCuriosamente = (prods ?? []).some(p => (p.produto as any)?.nome?.toLowerCase().includes('curiosamente'))
+  const temMPC      = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Primeiro'))
+  const temCoding   = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Coding'))
+  const temEdtechIA = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Inteligência Artificial'))
+  const temCriaCode = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('Cria+Code'))
+  const temCodigoIA = (prods ?? []).some(p => (p.produto as any)?.nome?.includes('O Código IA'))
 
-  const SERIES_PRODUCT_NAMES_LOWER = ['primeiro', 'coding', 'cria+code', 'inteligência artificial', 'o código ia', 'curiosamente']
+  // Produtos com séries fixas — excluídos da detecção automática
+  const SERIES_NAMES_LOWER = ['primeiro', 'coding', 'cria+code', 'inteligência artificial', 'o código ia']
+
   const mpcProd      = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Primeiro'))
   const criaCodeProd = (prods ?? []).find(p => (p.produto as any)?.nome?.includes('Cria+Code') || (p.produto as any)?.nome?.includes('O Código IA'))
-  const flatProds = (prods ?? [])
-    .filter(p => {
-      const nome: string = ((p.produto as any)?.nome ?? '').toLowerCase()
-      return !SERIES_PRODUCT_NAMES_LOWER.some(n => nome.includes(n))
-    })
-    .map(p => {
-      const comps: any[] = (p as any).componentes ?? []
-      const tipoCalcs: string[] = comps.map((c: any) => c.componente?.tipo_calculo ?? '')
+
+  // Produtos restantes — detectar automaticamente se são per-group ou flat
+  const remainingProds = (prods ?? []).filter(p => {
+    const nome = ((p.produto as any)?.nome ?? '').toLowerCase()
+    return !SERIES_NAMES_LOWER.some(n => nome.includes(n))
+  })
+
+  // Buscar componentes de todos os produtos restantes de uma vez
+  const remainingIds = remainingProds.map(p => (p as any).id)
+  const { data: remainingComps } = remainingIds.length > 0
+    ? await supabase
+        .from('proposta_componentes')
+        .select('id, quantidade, proposta_produto_id, componente:produto_componentes(nome)')
+        .in('proposta_produto_id', remainingIds)
+    : { data: [] }
+
+  type PerGroupGrupo = { num: number; label: string; alunosCompId: string | null; profCompId: string | null; alunosQty: number; profQty: number }
+  type PerGroupProd = { ppId: string; nome: string; grupos: PerGroupGrupo[] }
+
+  const perGroupProds: PerGroupProd[] = []
+  const flatProds: { pp_id: string; nome: string; num_escolas: number; num_alunos: number; tipoPublico: 'PorAluno' | 'PorEscola' }[] = []
+
+  for (const pp of remainingProds) {
+    const ppId = (pp as any).id
+    const nomeProd: string = (pp.produto as any)?.nome ?? ''
+    const comps = (remainingComps ?? []).filter((c: any) => c.proposta_produto_id === ppId)
+
+    // Detectar padrão per-group: componentes com "aluno"/"aluna" + número E "prof"/"professor" + número
+    const grupos: PerGroupGrupo[] = []
+    for (let num = 1; num <= 9; num++) {
+      const re = new RegExp(`\\b${num}\\b`)
+      const alunosComp = comps.find((c: any) => {
+        const n: string = ((c.componente as any)?.nome ?? '').toLowerCase()
+        return (n.includes('aluno') || n.includes('aluna')) && re.test(n)
+      })
+      const profComp = comps.find((c: any) => {
+        const n: string = ((c.componente as any)?.nome ?? '').toLowerCase()
+        return n.includes('prof') && re.test(n)
+      })
+      if (alunosComp || profComp) {
+        grupos.push({
+          num,
+          label: `${num}º`,
+          alunosCompId: (alunosComp as any)?.id ?? null,
+          profCompId:   (profComp as any)?.id   ?? null,
+          alunosQty:    (alunosComp as any)?.quantidade ?? 0,
+          profQty:      (profComp as any)?.quantidade   ?? 0,
+        })
+      }
+    }
+
+    if (grupos.length > 0) {
+      perGroupProds.push({ ppId, nome: nomeProd, grupos })
+    } else {
+      const tipoCalcs: string[] = ((pp as any).componentes ?? []).map((c: any) => c.componente?.tipo_calculo ?? '')
       const isPorAluno = tipoCalcs.some(tc => tc === 'PorAluno' || tc === 'PorProfessor')
       const isPorEscola = tipoCalcs.some(tc => tc === 'PorEscola' || tc === 'PorEscolaXKit')
       const tipoPublico: 'PorAluno' | 'PorEscola' = (!isPorEscola && isPorAluno) ? 'PorAluno' : 'PorEscola'
-      return {
-        pp_id: (p as any).id,
-        nome: (p.produto as any)?.nome ?? '',
-        num_escolas: (p as any).num_escolas ?? 0,
-        num_alunos: (p as any).num_alunos ?? 0,
+      flatProds.push({
+        pp_id: ppId,
+        nome: nomeProd,
+        num_escolas: (pp as any).num_escolas ?? 0,
+        num_alunos: (pp as any).num_alunos ?? 0,
         tipoPublico,
-      }
-    })
-
-  // Curiosamente: busca componentes com nome e quantidade para pré-popular G1–G5
-  const curiosamenteProd = (prods ?? []).find(p => (p.produto as any)?.nome?.toLowerCase().includes('curiosamente'))
-  let curiosamentePp: { ppId: string; grupos: { num: number; alunosCompId: string | null; profCompId: string | null; alunosQty: number; profQty: number }[] } | null = null
-  if (curiosamenteProd) {
-    const { data: ccComps } = await supabase
-      .from('proposta_componentes')
-      .select('id, quantidade, componente:produto_componentes(nome)')
-      .eq('proposta_produto_id', (curiosamenteProd as any).id)
-    const grupos = [1, 2, 3, 4, 5].map(num => {
-      const alunosComp = (ccComps ?? []).find(c => (c.componente as any)?.nome?.toLowerCase().includes(`aluno g${num}`))
-      const profComp   = (ccComps ?? []).find(c => (c.componente as any)?.nome?.toLowerCase().includes(`prof g${num}`))
-      return {
-        num,
-        alunosCompId: (alunosComp as any)?.id ?? null,
-        profCompId:   (profComp as any)?.id   ?? null,
-        alunosQty:    (alunosComp as any)?.quantidade ?? 0,
-        profQty:      (profComp as any)?.quantidade   ?? 0,
-      }
-    }).filter(g => g.alunosCompId || g.profCompId)
-    curiosamentePp = { ppId: (curiosamenteProd as any).id, grupos }
+      })
+    }
   }
 
   const servicoPresencial = (allServicos ?? []).find(s =>
@@ -143,14 +170,13 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
       temCoding={temCoding}
       temEdtechIA={temEdtechIA}
       temCriaCode={temCriaCode || temCodigoIA}
-      temCuriosamente={temCuriosamente}
       servicosFormacao={servicosFormacao}
       mpcPpId={(mpcProd as any)?.id}
       mpcNumEscolas={(mpcProd as any)?.num_escolas ?? 0}
       criaCodePpId={(criaCodeProd as any)?.id}
       criaCodeNumAlunos={(criaCodeProd as any)?.num_alunos ?? 0}
       flatProds={flatProds}
-      curiosamentePp={curiosamentePp}
+      perGroupProds={perGroupProds}
     />
   )
 }
