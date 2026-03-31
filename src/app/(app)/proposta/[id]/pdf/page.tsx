@@ -87,18 +87,32 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
     ? proposta.validade_proposta.slice(0, 10).split('-').reverse().join('/')
     : '—'
 
-  // Total receita bruta por produto (soma componentes + serviços)
+  // Total receita bruta por produto (apenas componentes — serviços vão em seção própria)
   function totalProduto(pp: any): number {
-    const comp = (pp.componentes ?? []).reduce(
+    return deduplicarComps(pp.componentes ?? []).reduce(
       (acc: number, c: any) => acc + c.quantidade * c.valor_venda_unit * (1 - (c.desconto_percent ?? 0) / 100),
       0
-    )
-    const serv = (pp.servicos ?? []).reduce(
-      (acc: number, s: any) => acc + s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100),
-      0
-    )
-    return (comp + serv) * (1 - (pp.desconto_percent ?? 0) / 100)
+    ) * (1 - (pp.desconto_percent ?? 0) / 100)
   }
+
+  // Agrega todos os serviços de formação de todos os produtos (proposta-level)
+  const todosServicos = (produtos ?? []).flatMap((pp: any) =>
+    (pp.servicos ?? []).filter((s: any) => s.quantidade > 0)
+  )
+  // Deduplica por nome de serviço (caso apareça em mais de um produto)
+  const servicosDeduplicados = (() => {
+    const seen = new Map<string, any>()
+    for (const s of todosServicos) {
+      const key = (s.servico?.nome ?? '').toLowerCase()
+      const prev = seen.get(key)
+      if (!prev || s.quantidade > prev.quantidade) seen.set(key, s)
+    }
+    return Array.from(seen.values())
+  })()
+  const totalServicos = servicosDeduplicados.reduce(
+    (acc, s) => acc + s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100),
+    0
+  )
 
   // Monta dados de investimento para o DocumentoApresentacao
   // Deduplica componentes por nome (mantém o de maior quantidade em caso de duplicata)
@@ -124,7 +138,8 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
           total: c.quantidade * c.valor_venda_unit * (1 - (c.desconto_percent ?? 0) / 100) * fator,
           tipo: 'componente' as const,
         })),
-        ...(pp.servicos ?? []).filter((s: any) => s.quantidade > 0).map((s: any) => ({
+        // Serviços excluídos aqui — exibidos em seção dedicada
+        ...[].map((s: any) => ({
           nome: s.servico?.nome ?? '',
           categoria: 'Serviço',
           quantidade: s.quantidade,
@@ -201,7 +216,21 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
             solucoes={(proposta.apresentacao_solucoes as any[]) ?? undefined}
             cronograma={(proposta.apresentacao_cronograma as any[]) ?? undefined}
             termos={proposta.apresentacao_termos ?? undefined}
-            investimentoProdutos={investimentoProdutos}
+            investimentoProdutos={[
+              ...investimentoProdutos,
+              ...(servicosDeduplicados.length > 0 ? [{
+                nome: 'Formação e Assessoria',
+                itens: servicosDeduplicados.map((s: any) => ({
+                  nome: s.servico?.nome ?? '',
+                  categoria: 'Serviço',
+                  quantidade: s.quantidade,
+                  valorUnit: s.valor_venda_unit,
+                  total: s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100),
+                  tipo: 'servico' as const,
+                })),
+                totalProduto: totalServicos,
+              }] : []),
+            ]}
             totalLiquido={financeiro?.receita_liquida ?? 0}
             clienteCnpj={proposta.cliente_cnpj ?? undefined}
             clienteResponsavel={proposta.cliente_responsavel ?? undefined}
@@ -425,15 +454,36 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
                         </tr>
                       )
                     })}
-                    {(pp.servicos ?? []).filter((s: any) => s.quantidade > 0).map((s: any) => {
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+
+          {/* Serviços de Formação e Assessoria */}
+          {servicosDeduplicados.length > 0 && (
+            <div className="mt-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-semibold text-slate-900">Formação e Assessoria</p>
+                  <p className="text-sm font-bold text-slate-700">{formatCurrency(totalServicos)}</p>
+                </div>
+                <table className="w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
+                  <thead>
+                    <tr className="bg-slate-100 text-xs text-slate-500">
+                      <th className="text-left px-3 py-2 font-medium">Item</th>
+                      <th className="text-center px-3 py-2 font-medium w-16">Qtd</th>
+                      <th className="text-right px-3 py-2 font-medium w-28">Unit</th>
+                      <th className="text-right px-3 py-2 font-medium w-28">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {servicosDeduplicados.map((s: any) => {
                       const total = s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100)
                       return (
-                        <tr key={s.id} className="bg-blue-50/40">
-                          <td className="px-3 py-2 text-slate-700">
-                            {s.servico?.nome}
-                            <span className="ml-2 text-xs text-blue-400">serviço</span>
-                          </td>
-                          <td className="px-3 py-2 text-center text-slate-500">{s.quantidade}</td>
+                        <tr key={s.id}>
+                          <td className="px-3 py-2 text-slate-700">{s.servico?.nome}</td>
+                          <td className="px-3 py-2 text-center text-slate-500">{s.quantidade}h</td>
                           <td className="px-3 py-2 text-right">{formatCurrency(s.valor_venda_unit)}</td>
                           <td className="px-3 py-2 text-right font-medium">{formatCurrency(total)}</td>
                         </tr>
@@ -442,8 +492,8 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
                   </tbody>
                 </table>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Financial summary */}
