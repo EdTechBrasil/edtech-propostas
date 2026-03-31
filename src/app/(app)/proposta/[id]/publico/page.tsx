@@ -112,7 +112,8 @@ export default async function PublicoPage({ params }: { params: Promise<{ id: st
     // Detectar padrão per-group: componentes com "aluno"/"aluna" + número E "prof"/"professor" + número
     const grupos: PerGroupGrupo[] = []
     for (let num = 1; num <= 9; num++) {
-      const re = new RegExp(`\\b${num}\\b`)
+      // Detecta "G1", "G 1", "1 Ano", " 1 ", etc.
+      const re = new RegExp(`(?:g\\s*${num}|(?:^|\\s)${num}(?:\\s|$))`, 'i')
       const alunosComp = comps.find((c: any) => {
         const n: string = ((c.componente as any)?.nome ?? '').toLowerCase()
         return (n.includes('aluno') || n.includes('aluna')) && re.test(n)
