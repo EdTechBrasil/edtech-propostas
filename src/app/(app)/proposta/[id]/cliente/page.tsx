@@ -38,7 +38,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dados do Cliente</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Preencha os dados obrigatórios para geração do PDF</p>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Preencha os dados do cliente para geração do PDF</p>
       </div>
 
       {bloqueado && (
@@ -50,79 +50,71 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
       <Card>
         <CardHeader>
           <CardTitle>Informações da instituição</CardTitle>
-          <CardDescription>Todos os campos são obrigatórios para gerar o PDF.</CardDescription>
+          <CardDescription>Preencha os dados do cliente para gerar o PDF.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={actionSalvar} className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="nome_instituicao">Nome da instituição *</Label>
+                <Label htmlFor="nome_instituicao">Nome da instituição</Label>
                 <Input
                   id="nome_instituicao"
                   name="nome_instituicao"
                   placeholder="Secretaria Municipal de Educação de..."
                   defaultValue={proposta.cliente_nome_instituicao ?? ''}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cnpj">CNPJ *</Label>
+                <Label htmlFor="cnpj">CNPJ</Label>
                 <Input
                   id="cnpj"
                   name="cnpj"
                   placeholder="00.000.000/0000-00"
                   defaultValue={proposta.cliente_cnpj ?? ''}
-                  pattern="\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}"
-                  title="Formato: 00.000.000/0000-00"
                   maxLength={18}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cidade">Cidade *</Label>
+                <Label htmlFor="cidade">Cidade</Label>
                 <Input
                   id="cidade"
                   name="cidade"
                   placeholder="São Paulo — SP"
                   defaultValue={proposta.cliente_cidade ?? ''}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="responsavel">Responsável *</Label>
+                <Label htmlFor="responsavel">Responsável</Label>
                 <Input
                   id="responsavel"
                   name="responsavel"
                   placeholder="Nome do responsável"
                   defaultValue={proposta.cliente_responsavel ?? ''}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail *</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   placeholder="contato@prefeitura.gov.br"
                   defaultValue={proposta.cliente_email ?? ''}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="validade">Validade da proposta *</Label>
+                <Label htmlFor="validade">Validade da proposta</Label>
                 <Input
                   id="validade"
                   name="validade"
                   type="date"
                   defaultValue={proposta.validade_proposta ?? ''}
                   min={hoje}
-                  required
                 />
               </div>
             </div>
