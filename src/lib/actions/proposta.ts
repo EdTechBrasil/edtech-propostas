@@ -693,18 +693,41 @@ export async function adicionarProduto(proposta_id: string, produto_id: string) 
     .eq('ativo', true)
 
   if (servicos && servicos.length > 0) {
-    await supabase.from('proposta_servicos').insert(
-      servicos.map((s: any) => ({
-        proposta_id,
-        proposta_produto_id: pp.id,
-        produto_servico_id: s.id,
-        quantidade: qtdSugerida(s.tipo_calculo, s.nome),
-        valor_venda_unit: s.valor_venda_base,
-        custo_interno_unit: s.custo_interno_base,
-        desconto_percent: 0,
-        obrigatorio: s.obrigatorio,
-      }))
-    )
+    // Serviços de formação são proposta-level: verificar se já existem antes de adicionar
+    const { data: servicosExistentes } = await supabase
+      .from('proposta_servicos')
+      .select('servico:produto_servicos(nome)')
+      .eq('proposta_id', proposta_id)
+    const nomesFormacaoExistentes = (servicosExistentes ?? [])
+      .map(s => ((s as any).servico?.nome ?? '').toLowerCase())
+      .filter(n => n.includes('presencial') || n.includes('ead') || n.includes('assessoria'))
+
+    const servicosToInsert = servicos.filter((s: any) => {
+      const nome = (s.nome ?? '').toLowerCase()
+      const isFormacao = nome.includes('presencial') || nome.includes('ead') || nome.includes('assessoria')
+      if (!isFormacao) return true
+      // Pular se já existe serviço de formação do mesmo tipo na proposta
+      return !nomesFormacaoExistentes.some(n =>
+        (nome.includes('presencial') && n.includes('presencial')) ||
+        (nome.includes('ead') && n.includes('ead')) ||
+        (nome.includes('assessoria') && n.includes('assessoria'))
+      )
+    })
+
+    if (servicosToInsert.length > 0) {
+      await supabase.from('proposta_servicos').insert(
+        servicosToInsert.map((s: any) => ({
+          proposta_id,
+          proposta_produto_id: pp.id,
+          produto_servico_id: s.id,
+          quantidade: qtdSugerida(s.tipo_calculo, s.nome),
+          valor_venda_unit: s.valor_venda_base,
+          custo_interno_unit: s.custo_interno_base,
+          desconto_percent: 0,
+          obrigatorio: s.obrigatorio,
+        }))
+      )
+    }
   }
 
   await registrarHistorico(proposta_id, user.id, 'AddProduto', `Produto ID: ${produto_id}`)
@@ -716,6 +739,38 @@ export async function removerProduto(proposta_produto_id: string, proposta_id: s
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
+
+  // Antes de deletar, verificar se este produto "possui" serviços de formação
+  // Se sim, reatribuir para outro produto para não perder os dados do Público
+  const { data: servicosDoProduto } = await supabase
+    .from('proposta_servicos')
+    .select('id, servico:produto_servicos(nome)')
+    .eq('proposta_produto_id', proposta_produto_id)
+
+  const idsFormacao = (servicosDoProduto ?? [])
+    .filter(s => {
+      const nome = ((s as any).servico?.nome ?? '').toLowerCase()
+      return nome.includes('presencial') || nome.includes('ead') || nome.includes('assessoria')
+    })
+    .map(s => s.id)
+
+  if (idsFormacao.length > 0) {
+    const { data: outroProduto } = await supabase
+      .from('proposta_produtos')
+      .select('id')
+      .eq('proposta_id', proposta_id)
+      .neq('id', proposta_produto_id)
+      .limit(1)
+      .single()
+
+    if (outroProduto) {
+      await supabase
+        .from('proposta_servicos')
+        .update({ proposta_produto_id: outroProduto.id })
+        .in('id', idsFormacao)
+    }
+    // Se não há outro produto, CASCADE deleta os serviços — aceitável
+  }
 
   await supabase
     .from('proposta_produtos')
