@@ -17,6 +17,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
     { data: financeiro },
     { data: produtos },
     { data: configPdf },
+    { data: allServicos },
   ] = await Promise.all([
     supabase
       .from('propostas')
@@ -78,6 +79,11 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         css_customizado: string | null
         template_pdf_url: string | null
       }>(),
+    supabase
+      .from('proposta_servicos')
+      .select('id, quantidade, valor_venda_unit, desconto_percent, servico:produto_servicos(nome)')
+      .eq('proposta_id', id)
+      .gt('quantidade', 0),
   ])
 
   if (!proposta || proposta.status !== 'Pronta_pdf') notFound()
@@ -95,17 +101,13 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
     ) * (1 - (pp.desconto_percent ?? 0) / 100)
   }
 
-  // Agrega todos os serviços de formação de todos os produtos (proposta-level)
-  const todosServicos = (produtos ?? []).flatMap((pp: any) =>
-    (pp.servicos ?? []).filter((s: any) => s.quantidade > 0)
-  )
-  // Deduplica por nome de serviço (caso apareça em mais de um produto)
+  // Serviços buscados diretamente — deduplica por nome
   const servicosDeduplicados = (() => {
     const seen = new Map<string, any>()
-    for (const s of todosServicos) {
-      const key = (s.servico?.nome ?? '').toLowerCase()
+    for (const s of (allServicos ?? [])) {
+      const key = ((s as any).servico?.nome ?? '').toLowerCase()
       const prev = seen.get(key)
-      if (!prev || s.quantidade > prev.quantidade) seen.set(key, s)
+      if (!prev || (s as any).quantidade > (prev as any).quantidade) seen.set(key, s)
     }
     return Array.from(seen.values())
   })()
