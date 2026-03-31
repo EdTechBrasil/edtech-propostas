@@ -323,6 +323,7 @@ export function ComponentesCliente({
   const [kitsInput, setKitsInput] = useState(String(numKits))
   const [, startKitsTransition] = useTransition()
   const [, startReorderTransition] = useTransition()
+  const [isPendingSave, startSaveTransition] = useTransition()
 
   const sensors = useSensors(useSensor(PointerSensor))
 
@@ -763,16 +764,38 @@ export function ComponentesCliente({
                   ← Anterior
                 </Button>
 
-                <div className="flex gap-1">
-                  {produtosValidos.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentIndex(i)}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        i === safeIndex ? 'bg-primary' : 'bg-slate-200 hover:bg-slate-300'
-                      }`}
-                    />
-                  ))}
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isPendingSave}
+                    onClick={() => {
+                      startSaveTransition(async () => {
+                        await Promise.all([
+                          ...visibleComponentes.map(c =>
+                            atualizarComponente(c.id, propostaId, items[c.id]?.qtd ?? c.quantidade, items[c.id]?.valor ?? c.valor_venda_unit)
+                          ),
+                          ...pp.servicos.map(s =>
+                            atualizarServico(s.id, propostaId, items[s.id]?.qtd ?? s.quantidade, items[s.id]?.valor ?? s.valor_venda_unit)
+                          ),
+                        ])
+                      })
+                    }}
+                  >
+                    {isPendingSave ? 'Salvando...' : 'Salvar'}
+                  </Button>
+
+                  <div className="flex gap-1">
+                    {produtosValidos.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentIndex(i)}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          i === safeIndex ? 'bg-primary' : 'bg-slate-200 hover:bg-slate-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 {safeIndex < produtosValidos.length - 1 ? (
