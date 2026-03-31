@@ -1162,6 +1162,31 @@ export async function cancelarProposta(proposta_id: string) {
 
 // ── Deletar proposta ──────────────────────────────────────────────────────────
 
+export async function deletarPropostasLote(ids: string[]) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('perfil')
+    .eq('id', user.id)
+    .single<{ perfil: string }>()
+
+  const podeGestorADM = usuario?.perfil === 'Gestor' || usuario?.perfil === 'ADM'
+
+  // Se não for gestor/ADM, só pode deletar as suas próprias
+  let query = supabase.from('propostas').delete().in('id', ids)
+  if (!podeGestorADM) {
+    query = query.eq('criado_por_usuario_id', user.id)
+  }
+  await query
+
+  revalidatePath('/propostas')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
 export async function deletarProposta(proposta_id: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

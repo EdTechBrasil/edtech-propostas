@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/format'
-import { duplicarProposta, cancelarProposta, deletarProposta, reordenarPropostas } from '@/lib/actions/proposta'
+import { duplicarProposta, cancelarProposta, deletarProposta, deletarPropostasLote, reordenarPropostas } from '@/lib/actions/proposta'
 import { linkProposta } from '@/lib/constants'
 import {
   Dialog, DialogContent, DialogDescription,
@@ -79,9 +79,13 @@ function StatusBadge({ status }: { status: string }) {
 function SortableRow({
   proposta: p,
   podeVerGestor,
+  selected,
+  onSelect,
 }: {
   proposta: Proposta
   podeVerGestor: boolean
+  selected: boolean
+  onSelect: (id: string, checked: boolean) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
 
@@ -100,6 +104,15 @@ function SortableRow({
           {...attributes}
           {...listeners}
           className="opacity-0 group-hover:opacity-100"
+        />
+      </td>
+      <td className="px-2 py-4 w-8">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={e => onSelect(p.id, e.target.checked)}
+          className="w-4 h-4 rounded accent-indigo-600 cursor-pointer"
+          aria-label="Selecionar proposta"
         />
       </td>
       <td className="px-4 py-4">
@@ -189,6 +202,10 @@ export function PropostasCliente({
   const [busca, setBusca] = useState('')
   const [items, setItems] = useState(propostas)
   const [, startTransition] = useTransition()
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [deletandoLote, setDeletandoLote] = useState(false)
+  const [confirmLote, setConfirmLote] = useState(false)
+  const router = useRouter()
 
   const podeVerGestor = usuario.perfil === 'Gestor' || usuario.perfil === 'ADM'
 
@@ -204,6 +221,27 @@ export function PropostasCliente({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
+
+  function toggleSelect(id: string, checked: boolean) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      checked ? next.add(id) : next.delete(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll(checked: boolean) {
+    setSelected(checked ? new Set(filtradas.map(p => p.id)) : new Set())
+  }
+
+  async function handleDeletarLote() {
+    setDeletandoLote(true)
+    await deletarPropostasLote(Array.from(selected))
+    setSelected(new Set())
+    setConfirmLote(false)
+    setDeletandoLote(false)
+    router.refresh()
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -241,6 +279,27 @@ export function PropostasCliente({
           </Button>
         </Link>
       </div>
+
+      {/* Barra de ações em lote */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+          <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300 flex-1">
+            {selected.size} proposta{selected.size > 1 ? 's' : ''} selecionada{selected.size > 1 ? 's' : ''}
+          </span>
+          <Button variant="outline" size="sm" onClick={() => setSelected(new Set())}>
+            Limpar seleção
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-2"
+            onClick={() => setConfirmLote(true)}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Deletar selecionadas
+          </Button>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
@@ -283,6 +342,15 @@ export function PropostasCliente({
             <thead className="border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th scope="col" className="w-8 px-2 py-3" />
+                <th scope="col" className="w-8 px-2 py-3">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded accent-indigo-600 cursor-pointer"
+                    checked={filtradas.length > 0 && filtradas.every(p => selected.has(p.id))}
+                    onChange={e => toggleSelectAll(e.target.checked)}
+                    aria-label="Selecionar todas"
+                  />
+                </th>
                 <th scope="col" className="text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-4 py-3">
                   Número
                 </th>
@@ -318,6 +386,8 @@ export function PropostasCliente({
                       key={p.id}
                       proposta={p}
                       podeVerGestor={podeVerGestor}
+                      selected={selected.has(p.id)}
+                      onSelect={toggleSelect}
                     />
                   ))}
                 </tbody>
@@ -326,6 +396,29 @@ export function PropostasCliente({
           </table>
         )}
       </div>
+      {/* Dialog confirmação deletar em lote */}
+      <Dialog open={confirmLote} onOpenChange={setConfirmLote}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deletar {selected.size} proposta{selected.size > 1 ? 's' : ''}?</DialogTitle>
+            <DialogDescription>
+              Esta ação é <strong>irreversível</strong>. Todas as propostas selecionadas e seus dados serão permanentemente excluídos.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmLote(false)}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeletarLote}
+              disabled={deletandoLote}
+              className="gap-2"
+            >
+              {deletandoLote && <Loader2 className="w-4 h-4 animate-spin" />}
+              Deletar permanentemente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
