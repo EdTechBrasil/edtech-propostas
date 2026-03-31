@@ -1160,6 +1160,38 @@ export async function cancelarProposta(proposta_id: string) {
   return { success: true }
 }
 
+// ── Deletar proposta ──────────────────────────────────────────────────────────
+
+export async function deletarProposta(proposta_id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { data: proposta } = await supabase
+    .from('propostas')
+    .select('criado_por_usuario_id')
+    .eq('id', proposta_id)
+    .single<{ criado_por_usuario_id: string }>()
+
+  if (!proposta) return { error: 'Proposta não encontrada' }
+
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('perfil')
+    .eq('id', user.id)
+    .single<{ perfil: string }>()
+
+  const podeGestorADM = usuario?.perfil === 'Gestor' || usuario?.perfil === 'ADM'
+  const ehCriador = proposta.criado_por_usuario_id === user.id
+  if (!podeGestorADM && !ehCriador) return { error: 'Sem permissão' }
+
+  await supabase.from('propostas').delete().eq('id', proposta_id)
+
+  revalidatePath('/propostas')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
 // ── Reordenar produtos da proposta (drag-and-drop) ────────────────────────────
 
 export async function reordenarProdutos(updates: { id: string; ordem: number }[]) {

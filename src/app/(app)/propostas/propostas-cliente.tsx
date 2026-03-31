@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/format'
-import { duplicarProposta, cancelarProposta, reordenarPropostas } from '@/lib/actions/proposta'
+import { duplicarProposta, cancelarProposta, deletarProposta, reordenarPropostas } from '@/lib/actions/proposta'
 import { linkProposta } from '@/lib/constants'
 import {
   Dialog, DialogContent, DialogDescription,
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   FilePlus, FileText, Clock, CheckCircle2, XCircle, PenLine, Eye,
-  History, Copy, Loader2, Search,
+  History, Copy, Loader2, Search, Trash2,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DragHandle } from '@/components/ui/drag-handle'
@@ -150,6 +150,8 @@ function SortableRow({
             {p.status !== 'Pronta_pdf' && p.status !== 'Cancelada' && (
               <CancelarBtn propostaId={p.id} />
             )}
+
+            <DeletarBtn propostaId={p.id} />
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -388,6 +390,70 @@ function CancelarBtn({ propostaId }: { propostaId: string }) {
             >
               {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Confirmar cancelamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+function DeletarBtn({ propostaId }: { propostaId: string }) {
+  const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [erro, setErro] = useState('')
+  const router = useRouter()
+
+  function handleDeletar() {
+    setErro('')
+    startTransition(async () => {
+      const result = await deletarProposta(propostaId)
+      if ('error' in result) {
+        setErro(result.error ?? 'Erro ao deletar')
+        return
+      }
+      setOpen(false)
+      router.refresh()
+    })
+  }
+
+  return (
+    <>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
+              onClick={() => setOpen(true)}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Deletar</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deletar proposta</DialogTitle>
+            <DialogDescription>
+              Esta ação é <strong>irreversível</strong>. A proposta e todos os seus dados serão permanentemente excluídos.
+            </DialogDescription>
+          </DialogHeader>
+          {erro && <p className="text-sm text-destructive px-1">{erro}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeletar}
+              disabled={isPending}
+              className="gap-2"
+            >
+              {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              Deletar permanentemente
             </Button>
           </DialogFooter>
         </DialogContent>
