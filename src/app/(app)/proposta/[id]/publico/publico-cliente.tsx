@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { atualizarPublico } from '@/lib/actions/proposta'
+import { atualizarPublico, salvarPublico } from '@/lib/actions/proposta'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -134,6 +134,7 @@ export function PublicoCliente({
   perGroupProds?: PerGroupProd[]
 }) {
   const action = atualizarPublico.bind(null, proposta.id)
+  const salvar = salvarPublico.bind(null, proposta.id)
 
   const [checked, setChecked] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(ALL_SERIES.map(s => [s.key, alunosField(proposta, s.key) > 0]))
@@ -384,6 +385,9 @@ export function PublicoCliente({
                       <input type="hidden" name="livros_guia" value="1" />
                     </>
                   )}
+                  <div className="flex justify-end mt-4">
+                    <Button type="submit" formAction={salvar} variant="outline" size="sm">Salvar</Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -480,6 +484,9 @@ export function PublicoCliente({
                       </div>
                     </>
                   )}
+                  <div className="flex justify-end mt-4">
+                    <Button type="submit" formAction={salvar} variant="outline" size="sm">Salvar</Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -562,7 +569,9 @@ export function PublicoCliente({
                       </div>
                     ))}
                   </div>
-
+                  <div className="flex justify-end mt-4">
+                    <Button type="submit" formAction={salvar} variant="outline" size="sm">Salvar</Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -625,6 +634,9 @@ export function PublicoCliente({
                       </div>
                     </div>
                   </div>
+                  <div className="flex justify-end mt-4">
+                    <Button type="submit" formAction={salvar} variant="outline" size="sm">Salvar</Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -668,6 +680,9 @@ export function PublicoCliente({
                       </div>
                     ))}
                   </div>
+                  <div className="flex justify-end mt-4">
+                    <Button type="submit" formAction={salvar} variant="outline" size="sm">Salvar</Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -705,6 +720,9 @@ export function PublicoCliente({
                       />
                     </div>
                   )}
+                  <div className="flex justify-end mt-4">
+                    <Button type="submit" formAction={salvar} variant="outline" size="sm">Salvar</Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -782,6 +800,9 @@ export function PublicoCliente({
                       )}
                     </div>
                   )}
+                  <div className="flex justify-end mt-4">
+                    <Button type="submit" formAction={salvar} variant="outline" size="sm">Salvar</Button>
+                  </div>
                 </CardContent>
               </Card>
             )}

@@ -118,7 +118,7 @@ export async function criarProposta(formData: FormData) {
 
 // ── Step 2: Público ───────────────────────────────────────────────────────────
 
-export async function atualizarPublico(proposta_id: string, formData: FormData) {
+async function _processarDadosPublico(proposta_id: string, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -449,9 +449,8 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
           .map(c => {
             const tc = c.componente?.tipo_calculo ?? 'Fixo'
             const cat = c.componente?.categoria ?? ''
-            const compNome: string = (c.componente?.nome ?? '').toLowerCase()
-            // Cria+Code: Guia do Professor tem 2 volumes por professor
-            const multGuiaCriaCode = isCriaCode && tc === 'PorProfessor' && compNome.includes('guia') ? 2 : 1
+            // Cria+Code: todos componentes PorProfessor têm 2 volumes por professor
+            const multGuiaCriaCode = isCriaCode && tc === 'PorProfessor' ? 2 : 1
             const qty = TAPETE_TYPES.has(tc)
               ? (seriesList.includes(TAPETE_KEYS[tc]) ? TAPETE_MULT[tc] * num_kits : 0)
               : cat === 'Kit' && tc === 'Fixo'
@@ -518,8 +517,16 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
   if (formacaoUpdates.length > 0) await Promise.all(formacaoUpdates)
 
   await registrarHistorico(proposta_id, user.id, 'MudancaOrcamento', publico_descricao)
+}
 
+export async function atualizarPublico(proposta_id: string, formData: FormData) {
+  await _processarDadosPublico(proposta_id, formData)
   redirect(`/proposta/${proposta_id}/componentes`)
+}
+
+export async function salvarPublico(proposta_id: string, formData: FormData) {
+  await _processarDadosPublico(proposta_id, formData)
+  revalidatePath(`/proposta/${proposta_id}/publico`)
 }
 
 // ── Kits por Escola (configurado no card de Componentes) ─────────────────────
