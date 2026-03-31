@@ -10,7 +10,7 @@ import { TAPETE_TYPES, TAPETE_KEYS, TAPETE_MULT } from '@/lib/constants'
 
 type CompRow = {
   id: string
-  componente: { tipo_calculo: string; categoria: string } | null
+  componente: { nome: string; tipo_calculo: string; categoria: string } | null
 }
 
 type ServRow = {
@@ -406,7 +406,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
     .select(`
       id, num_escolas, num_alunos,
       produto:produtos(nome),
-      componentes:proposta_componentes(id, componente:produto_componentes(tipo_calculo, categoria)),
+      componentes:proposta_componentes(id, componente:produto_componentes(nome, tipo_calculo, categoria)),
       servicos:proposta_servicos(id, servico:produto_servicos(tipo_calculo))
     `)
     .eq('proposta_id', proposta_id)
@@ -449,6 +449,9 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
           .map(c => {
             const tc = c.componente?.tipo_calculo ?? 'Fixo'
             const cat = c.componente?.categoria ?? ''
+            const compNome: string = (c.componente?.nome ?? '').toLowerCase()
+            // Cria+Code: Guia do Professor tem 2 volumes por professor
+            const multGuiaCriaCode = isCriaCode && tc === 'PorProfessor' && compNome.includes('guia') ? 2 : 1
             const qty = TAPETE_TYPES.has(tc)
               ? (seriesList.includes(TAPETE_KEYS[tc]) ? TAPETE_MULT[tc] * num_kits : 0)
               : cat === 'Kit' && tc === 'Fixo'
@@ -461,7 +464,7 @@ export async function atualizarPublico(proposta_id: string, formData: FormData) 
               ? (localNumAlunos + num_professores) * num_livros_praticas
               : tc === 'PorProfessorXTema'
               ? (hasSeriesData && localTotalProfXTema > 0 ? localTotalProfXTema * num_livros_guia : num_professores * num_temas * num_livros_guia)
-              : calcQtd(tc, num_professores, localNumAlunos, ppEsc, num_temas, num_kits)
+              : calcQtd(tc, num_professores, localNumAlunos, ppEsc, num_temas, num_kits) * multGuiaCriaCode
             return supabase.from('proposta_componentes').update({ quantidade: qty }).eq('id', c.id)
           }),
         ...servs
