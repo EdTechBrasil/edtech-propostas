@@ -947,12 +947,12 @@ export async function atualizarDadosCliente(proposta_id: string, formData: FormD
   await supabase
     .from('propostas')
     .update({
-      cliente_nome_instituicao: formData.get('nome_instituicao') as string,
-      cliente_cnpj: formData.get('cnpj') as string,
-      cliente_responsavel: formData.get('responsavel') as string,
-      cliente_email: formData.get('email') as string,
-      cliente_cidade: formData.get('cidade') as string,
-      validade_proposta: formData.get('validade') as string,
+      cliente_nome_instituicao: (formData.get('nome_instituicao') as string) || null,
+      cliente_cnpj: (formData.get('cnpj') as string) || null,
+      cliente_responsavel: (formData.get('responsavel') as string) || null,
+      cliente_email: (formData.get('email') as string) || null,
+      cliente_cidade: (formData.get('cidade') as string) || null,
+      validade_proposta: (formData.get('validade') as string) || null,
       status: 'Em_revisao',
     })
     .eq('id', proposta_id)
@@ -1436,15 +1436,17 @@ export async function gerarPDFProposta(proposta_id: string, formData: FormData) 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const validade = (formData.get('validade') as string) || null
+
   await supabase
     .from('propostas')
     .update({
-      cliente_nome_instituicao: formData.get('nome_instituicao') as string,
-      cliente_cnpj: formData.get('cnpj') as string,
-      cliente_responsavel: formData.get('responsavel') as string,
-      cliente_email: formData.get('email') as string,
-      cliente_cidade: formData.get('cidade') as string,
-      validade_proposta: formData.get('validade') as string,
+      cliente_nome_instituicao: (formData.get('nome_instituicao') as string) || null,
+      cliente_cnpj: (formData.get('cnpj') as string) || null,
+      cliente_responsavel: (formData.get('responsavel') as string) || null,
+      cliente_email: (formData.get('email') as string) || null,
+      cliente_cidade: (formData.get('cidade') as string) || null,
+      validade_proposta: validade,
       status: 'Pronta_pdf',
     })
     .eq('id', proposta_id)
