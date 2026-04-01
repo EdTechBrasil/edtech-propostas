@@ -169,28 +169,34 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
       <style>{`
         @media print {
           body * { visibility: hidden; }
-          .pdf-content, .pdf-content * { visibility: visible; }
           .documento-apresentacao, .documento-apresentacao * { visibility: visible; }
-          .pdf-content {
-            position: absolute; left: 0; top: 0; width: 100%;
-            box-sizing: border-box; padding: 15mm 18mm;
-          }
+          .pdf-content, .pdf-content * { visibility: visible; }
           .documento-apresentacao {
             position: absolute; left: 0; top: 0; width: 100%;
-            box-sizing: border-box; padding: 12mm 16mm;
+          }
+          .pdf-content {
+            position: absolute; left: 0; top: 0; width: 100%;
+            box-sizing: border-box;
           }
           .no-print { display: none !important; }
-          /* Evita corte de texto no meio de blocos */
-          p, li, tr, h1, h2, h3, h4, blockquote, .documento-apresentacao > div {
+          /* Header de seção nunca fica isolado no fim da página */
+          .docap-secao-header {
+            break-after: avoid !important;
+            page-break-after: avoid !important;
+          }
+          /* Cards de produto no Investimento não quebram ao meio */
+          .docap-product-card {
             break-inside: avoid;
             page-break-inside: avoid;
           }
-          /* Mantém cabeçalhos com o parágrafo seguinte */
-          h1, h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
+          /* Tabelas inteiras */
+          table { break-inside: avoid; page-break-inside: avoid; }
+          /* Evita linhas órfãs/viúvas em parágrafos */
+          p, li { orphans: 3; widows: 3; }
         }
         @page {
           size: A4;
-          margin: 0;
+          margin: 10mm 16mm;
         }
       `}</style>
       {configPdf?.css_customizado && (

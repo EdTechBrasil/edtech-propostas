@@ -155,14 +155,14 @@ export function DocumentoApresentacao({
       )}
 
       {/* ── SEÇÕES NARRATIVAS ─────────────────────────────────────────── */}
-      <div className="px-8 py-6 space-y-8">
+      <div className="px-8 py-8 space-y-10">
 
         {/* 01. Introdução */}
         {introducao?.trim() && (
           <Secao numero={nextSection()} titulo="Introdução">
             {introducao.trimStart().startsWith('<') ? (
               <div
-                className="text-sm text-slate-600 leading-relaxed text-justify [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_u]:underline"
+                className="text-sm text-slate-600 leading-relaxed text-justify [&_p]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_u]:underline"
                 dangerouslySetInnerHTML={{ __html: introducao }}
               />
             ) : (
@@ -278,34 +278,34 @@ export function DocumentoApresentacao({
           <Secao numero={nextSection()} titulo="Investimento">
             <div className="space-y-5">
               {(investimentoProdutos ?? []).map((pp, i) => (
-                <div key={i} className="rounded-lg overflow-hidden border border-slate-200">
+                <div key={i} className="docap-product-card rounded-lg overflow-hidden border border-slate-200">
                   {/* Cabeçalho do produto */}
-                  <div className="flex items-center justify-between bg-teal-50 px-4 py-2.5 border-b border-teal-100">
+                  <div className="flex items-center justify-between bg-teal-50 px-4 py-3 border-b border-teal-100">
                     <p className="text-sm font-semibold text-teal-800">{pp.nome}</p>
                     <p className="text-sm font-bold text-teal-700">{formatCurrency(pp.totalProduto)}</p>
                   </div>
                   {/* Itens */}
-                  <table className="w-full text-[11px]">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr className="text-slate-400 border-b border-slate-100">
-                        <th className="text-left px-2 py-1.5 font-medium">Item</th>
-                        <th className="text-center px-2 py-1.5 font-medium w-10">Qtd</th>
-                        <th className="text-right px-2 py-1.5 font-medium w-20">Unit</th>
-                        <th className="text-right px-2 py-1.5 font-medium w-20">Total</th>
+                        <th className="text-left px-3 py-2 font-medium">Item</th>
+                        <th className="text-center px-3 py-2 font-medium w-14">Qtd</th>
+                        <th className="text-right px-3 py-2 font-medium w-24">Unit</th>
+                        <th className="text-right px-3 py-2 font-medium w-24">Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {pp.itens.map((item, j) => (
                         <tr key={j} className={`border-b border-slate-50 last:border-0 ${item.tipo === 'servico' ? 'bg-blue-50/30' : ''}`}>
-                          <td className="px-2 py-1.5 text-slate-700">
+                          <td className="px-3 py-2 text-slate-700">
                             {item.nome}
                             {item.tipo === 'servico' && (
                               <span className="ml-1.5 text-[10px] font-medium text-blue-400 bg-blue-50 rounded px-1 py-0.5">serviço</span>
                             )}
                           </td>
-                          <td className="px-2 py-1.5 text-center text-slate-500">{item.quantidade}</td>
-                          <td className="px-2 py-1.5 text-right text-slate-500">{formatCurrency(item.valorUnit)}</td>
-                          <td className="px-2 py-1.5 text-right font-semibold text-slate-800">{formatCurrency(item.total)}</td>
+                          <td className="px-3 py-2 text-center text-slate-500">{item.quantidade}</td>
+                          <td className="px-3 py-2 text-right text-slate-500">{formatCurrency(item.valorUnit)}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-slate-800">{formatCurrency(item.total)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -339,7 +339,7 @@ export function DocumentoApresentacao({
               <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Termos e Condições</p>
               {termos.trimStart().startsWith('<') ? (
                 <div
-                  className="text-sm text-slate-500 leading-relaxed text-justify [&_p]:mb-1.5 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_u]:underline"
+                  className="text-sm text-slate-500 leading-relaxed text-justify [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_u]:underline"
                   dangerouslySetInnerHTML={{ __html: termos }}
                 />
               ) : (
@@ -386,7 +386,7 @@ function Secao({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
+      <div className="docap-secao-header flex items-center gap-3 mb-4">
         <span className="text-xs font-black text-teal-600 tracking-widest uppercase">{numero}.</span>
         <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">{titulo}</span>
         <div className="flex-1 h-px bg-teal-100" />
