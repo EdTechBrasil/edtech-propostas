@@ -105,11 +105,21 @@ export default async function ComponentesPage({ params }: { params: Promise<{ id
     return Array.from(seen.values())
   }
 
+  // Ordena por: 1) campo ordem; 2) ano extraído do nome; 3) Aluno antes de Professor
+  function sortComp(a: any, b: any): number {
+    const ordemDiff = (a.componente?.ordem ?? 0) - (b.componente?.ordem ?? 0)
+    if (ordemDiff !== 0) return ordemDiff
+    const nomeA = (a.componente?.nome ?? '').toLowerCase()
+    const nomeB = (b.componente?.nome ?? '').toLowerCase()
+    const anoA = parseInt(nomeA.match(/(\d+)/)?.[1] ?? '0')
+    const anoB = parseInt(nomeB.match(/(\d+)/)?.[1] ?? '0')
+    if (anoA !== anoB) return anoA - anoB
+    return (nomeA.includes('professor') ? 1 : 0) - (nomeB.includes('professor') ? 1 : 0)
+  }
+
   const produtosOrdenados = (produtosProposta ?? []).map(pp => ({
     ...pp,
-    componentes: deduplicarComps([...(pp.componentes as any[])]).sort(
-      (a, b) => (a.componente?.ordem ?? 0) - (b.componente?.ordem ?? 0)
-    ),
+    componentes: deduplicarComps([...(pp.componentes as any[])]).sort(sortComp),
     servicos: [...(pp.servicos as any[])].sort(
       (a, b) => (a.servico?.ordem ?? 0) - (b.servico?.ordem ?? 0)
     ),

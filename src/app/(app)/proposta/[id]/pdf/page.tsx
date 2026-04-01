@@ -125,7 +125,14 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
       const prev = seen.get(key)
       if (!prev || c.quantidade > prev.quantidade) seen.set(key, c)
     }
-    return Array.from(seen.values())
+    return Array.from(seen.values()).sort((a, b) => {
+      const nomeA = (a.componente?.nome ?? '').toLowerCase()
+      const nomeB = (b.componente?.nome ?? '').toLowerCase()
+      const anoA = parseInt(nomeA.match(/(\d+)/)?.[1] ?? '0')
+      const anoB = parseInt(nomeB.match(/(\d+)/)?.[1] ?? '0')
+      if (anoA !== anoB) return anoA - anoB
+      return (nomeA.includes('professor') ? 1 : 0) - (nomeB.includes('professor') ? 1 : 0)
+    })
   }
 
   const investimentoProdutos = (produtos ?? [])
