@@ -1,13 +1,22 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Underline from '@tiptap/extension-underline'
 import { salvarApresentacao, uploadLogoProposta } from '@/lib/actions/proposta'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Plus, Trash2, FileText, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Upload, AlertCircle } from 'lucide-react'
+import { Loader2, Plus, Trash2, FileText, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Upload, AlertCircle, Bold, Italic, Underline as UnderlineIcon } from 'lucide-react'
 import Link from 'next/link'
 import { DocumentoApresentacao } from './documento-apresentacao'
+
+function toHtml(text: string): string {
+  if (!text.trim()) return ''
+  if (text.trimStart().startsWith('<')) return text
+  return text.split('\n\n').filter(p => p.trim()).map(p => `<p>${p.trim()}</p>`).join('')
+}
 
 type Solucao = { titulo: string; descricao: string }
 type CronogramaItem = { etapa: string; duracao: string }
@@ -99,7 +108,13 @@ export function ApresentacaoCliente({
   initialData: InitialData
 }) {
   const [titulo, setTitulo] = useState(initialData.titulo)
-  const [introducao, setIntroducao] = useState(initialData.introducao)
+  const [introducao, setIntroducao] = useState(toHtml(initialData.introducao))
+  const introEditor = useEditor({
+    extensions: [StarterKit, Underline],
+    content: toHtml(initialData.introducao),
+    onUpdate: ({ editor }) => setIntroducao(editor.getHTML()),
+    immediatelyRender: false,
+  })
   const [objetivos, setObjetivos] = useState<string[]>(initialData.objetivos.length > 0 ? initialData.objetivos : [''])
   const [solucoes, setSolucoes] = useState<Solucao[]>(initialData.solucoes.length > 0 ? initialData.solucoes : [{ titulo: '', descricao: '' }])
   const [cronograma, setCronograma] = useState<CronogramaItem[]>(initialData.cronograma.length > 0 ? initialData.cronograma : [{ etapa: '', duracao: '' }])
@@ -146,7 +161,9 @@ export function ApresentacaoCliente({
 
   function preencherExemplo() {
     setTitulo('Ecossistema AGIR360')
-    setIntroducao(`A presente proposta comercial tem por objeto a disponibilização, ao Município de [NOME DO MUNICÍPIO]/[UF], por meio da [NOME DA SECRETARIA], do Ecossistema AGIR360, concebido como uma solução integrada voltada à melhoria da aprendizagem, ao fortalecimento da gestão educacional e à qualificação da tomada de decisão na rede municipal de ensino. Trata-se de uma proposta estruturada para apoiar o município na organização de sua política educacional a partir de uma lógica sistêmica, em que currículo, prática pedagógica, gestão, análise de dados e acompanhamento institucional atuam de forma articulada e complementar.\n\nAssim, o que se propõe ao Município de [NOME DO MUNICÍPIO] não é a aquisição de elementos isolados, mas a implementação de uma solução integrada de caráter metodológico, técnico e educacional, estruturada para promover coerência entre ensino, gestão, acompanhamento e resultado. O Ecossistema AGIR360 organiza a atuação da rede municipal em torno de um modelo contínuo de melhoria, no qual as ações pedagógicas e gerenciais passam a compor uma estratégia única, orientada por evidências e voltada à aprendizagem do aluno como finalidade central.`)
+    const htmlIntro = toHtml(`A presente proposta comercial tem por objeto a disponibilização, ao Município de [NOME DO MUNICÍPIO]/[UF], por meio da [NOME DA SECRETARIA], do Ecossistema AGIR360, concebido como uma solução integrada voltada à melhoria da aprendizagem, ao fortalecimento da gestão educacional e à qualificação da tomada de decisão na rede municipal de ensino. Trata-se de uma proposta estruturada para apoiar o município na organização de sua política educacional a partir de uma lógica sistêmica, em que currículo, prática pedagógica, gestão, análise de dados e acompanhamento institucional atuam de forma articulada e complementar.\n\nAssim, o que se propõe ao Município de [NOME DO MUNICÍPIO] não é a aquisição de elementos isolados, mas a implementação de uma solução integrada de caráter metodológico, técnico e educacional, estruturada para promover coerência entre ensino, gestão, acompanhamento e resultado. O Ecossistema AGIR360 organiza a atuação da rede municipal em torno de um modelo contínuo de melhoria, no qual as ações pedagógicas e gerenciais passam a compor uma estratégia única, orientada por evidências e voltada à aprendizagem do aluno como finalidade central.`)
+    setIntroducao(htmlIntro)
+    introEditor?.commands.setContent(htmlIntro)
     setObjetivos([
       'Melhorar os indicadores de aprendizagem da rede municipal de ensino',
       'Fortalecer a gestão educacional com base em evidências e ciclo PDCA',
@@ -185,7 +202,9 @@ export function ApresentacaoCliente({
 
   function preencherGenerico() {
     setTitulo('Solução EdTech para ' + clienteDisplay)
-    setIntroducao(`É com grande satisfação que apresentamos a ${clienteDisplay} esta proposta de parceria educacional. Nossa solução foi desenvolvida para transformar o ambiente de aprendizagem, integrando tecnologia de ponta ao cotidiano escolar. Acreditamos que a inovação pedagógica é o caminho para preparar alunos para os desafios do século XXI, e estamos prontos para apoiar sua instituição nessa jornada.`)
+    const htmlIntro = toHtml(`É com grande satisfação que apresentamos a ${clienteDisplay} esta proposta de parceria educacional. Nossa solução foi desenvolvida para transformar o ambiente de aprendizagem, integrando tecnologia de ponta ao cotidiano escolar. Acreditamos que a inovação pedagógica é o caminho para preparar alunos para os desafios do século XXI, e estamos prontos para apoiar sua instituição nessa jornada.`)
+    setIntroducao(htmlIntro)
+    introEditor?.commands.setContent(htmlIntro)
     setObjetivos([
       'Modernizar a infraestrutura tecnológica pedagógica da instituição',
       'Aumentar o engajamento e o desempenho acadêmico dos alunos',
@@ -306,15 +325,35 @@ export function ApresentacaoCliente({
             {/* Introdução */}
             <Section
               title="Introdução"
-              onUseModel={() => setIntroducao(modeloIntroducao)}
+              onUseModel={() => {
+                const html = toHtml(modeloIntroducao)
+                setIntroducao(html)
+                introEditor?.commands.setContent(html)
+              }}
             >
-              <textarea
-                value={introducao}
-                onChange={e => setIntroducao(e.target.value)}
-                placeholder="Descreva a proposta de valor para o cliente..."
-                rows={4}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              />
+              <div className="rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 text-sm overflow-hidden">
+                <div className="flex items-center gap-0.5 border-b border-input px-2 py-1 bg-slate-50">
+                  <button type="button" onClick={() => introEditor?.chain().focus().toggleBold().run()}
+                    className={`p-1.5 rounded hover:bg-slate-200 transition-colors ${introEditor?.isActive('bold') ? 'bg-slate-200 text-slate-900' : 'text-slate-500'}`}
+                    title="Negrito">
+                    <Bold className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" onClick={() => introEditor?.chain().focus().toggleItalic().run()}
+                    className={`p-1.5 rounded hover:bg-slate-200 transition-colors ${introEditor?.isActive('italic') ? 'bg-slate-200 text-slate-900' : 'text-slate-500'}`}
+                    title="Itálico">
+                    <Italic className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" onClick={() => introEditor?.chain().focus().toggleUnderline().run()}
+                    className={`p-1.5 rounded hover:bg-slate-200 transition-colors ${introEditor?.isActive('underline') ? 'bg-slate-200 text-slate-900' : 'text-slate-500'}`}
+                    title="Sublinhado">
+                    <UnderlineIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <EditorContent
+                  editor={introEditor}
+                  className="px-3 py-2 min-h-[96px] [&_.ProseMirror]:outline-none [&_.ProseMirror_p]:mb-2 [&_.ProseMirror_p:last-child]:mb-0"
+                />
+              </div>
             </Section>
 
             {/* Objetivos */}

@@ -160,11 +160,18 @@ export function DocumentoApresentacao({
         {/* 01. Introdução */}
         {introducao?.trim() && (
           <Secao numero={nextSection()} titulo="Introdução">
-            <div className="space-y-3">
-              {introducao.split('\n\n').map((para, i) => (
-                <p key={i} className="text-sm text-slate-600 leading-relaxed text-justify">{para.trim()}</p>
-              ))}
-            </div>
+            {introducao.trimStart().startsWith('<') ? (
+              <div
+                className="text-sm text-slate-600 leading-relaxed text-justify [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_u]:underline"
+                dangerouslySetInnerHTML={{ __html: introducao }}
+              />
+            ) : (
+              <div className="space-y-3">
+                {introducao.split('\n\n').map((para, i) => (
+                  <p key={i} className="text-sm text-slate-600 leading-relaxed text-justify">{para.trim()}</p>
+                ))}
+              </div>
+            )}
           </Secao>
         )}
 

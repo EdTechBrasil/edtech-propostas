@@ -11,6 +11,7 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
     { data: financeiro },
     { data: produtos },
     { data: configPdf },
+    { data: allServicos },
   ] = await Promise.all([
     supabase
       .from('propostas')
@@ -38,10 +39,6 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
         componentes:proposta_componentes(
           id, quantidade, valor_venda_unit, desconto_percent,
           componente:produto_componentes(nome, categoria)
-        ),
-        servicos:proposta_servicos(
-          id, quantidade, valor_venda_unit, desconto_percent,
-          servico:produto_servicos(nome)
         )
       `)
       .eq('proposta_id', id)
@@ -51,16 +48,32 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
       .select('empresa_nome, logo_url, proposta_subtitulo')
       .eq('ativo', true)
       .single<any>(),
+    supabase
+      .from('proposta_servicos')
+      .select('id, quantidade, valor_venda_unit, desconto_percent, servico:produto_servicos(nome)')
+      .eq('proposta_id', id)
+      .gt('quantidade', 0),
   ])
 
   if (!proposta) notFound()
 
-  // Monta dados completos de investimento por produto
-  const investimentoProdutos = (produtos ?? [])
-    .map((pp: any) => {
-      const fatorProd = 1 - (pp.desconto_percent ?? 0) / 100
-      const itens = [
-        ...(pp.componentes ?? [])
+  // Deduplica serviços por nome (mantém maior quantidade)
+  const servicosDeduplicados = (() => {
+    const seen = new Map<string, any>()
+    for (const s of (allServicos ?? []) as any[]) {
+      const key = (s.servico?.nome ?? '').toLowerCase()
+      const prev = seen.get(key)
+      if (!prev || s.quantidade > prev.quantidade) seen.set(key, s)
+    }
+    return Array.from(seen.values())
+  })()
+
+  // Monta dados de investimento — serviços em seção separada no final
+  const investimentoProdutos = [
+    ...(produtos ?? [])
+      .map((pp: any) => {
+        const fatorProd = 1 - (pp.desconto_percent ?? 0) / 100
+        const itens = (pp.componentes ?? [])
           .filter((c: any) => c.quantidade > 0)
           .map((c: any) => ({
             nome: c.componente?.nome ?? '',
@@ -69,22 +82,27 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
             valorUnit: c.valor_venda_unit,
             total: c.quantidade * c.valor_venda_unit * (1 - (c.desconto_percent ?? 0) / 100) * fatorProd,
             tipo: 'componente' as const,
-          })),
-        ...(pp.servicos ?? [])
-          .filter((s: any) => s.quantidade > 0)
-          .map((s: any) => ({
-            nome: s.servico?.nome ?? '',
-            categoria: 'Serviço',
-            quantidade: s.quantidade,
-            valorUnit: s.valor_venda_unit,
-            total: s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100) * fatorProd,
-            tipo: 'servico' as const,
-          })),
-      ]
-      const totalProduto = itens.reduce((acc, i) => acc + i.total, 0)
-      return { nome: pp.produto?.nome ?? '', itens, totalProduto }
-    })
-    .filter((pp: any) => pp.totalProduto > 0)
+          }))
+        const totalProduto = itens.reduce((acc: number, i: any) => acc + i.total, 0)
+        return { nome: pp.produto?.nome ?? '', itens, totalProduto }
+      })
+      .filter((pp: any) => pp.totalProduto > 0),
+    ...(servicosDeduplicados.length > 0 ? [{
+      nome: 'Formação e Assessoria',
+      itens: servicosDeduplicados.map((s: any) => ({
+        nome: s.servico?.nome ?? '',
+        categoria: 'Serviço',
+        quantidade: s.quantidade,
+        valorUnit: s.valor_venda_unit,
+        total: s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100),
+        tipo: 'servico' as const,
+      })),
+      totalProduto: servicosDeduplicados.reduce(
+        (acc: number, s: any) => acc + s.quantidade * s.valor_venda_unit * (1 - (s.desconto_percent ?? 0) / 100),
+        0
+      ),
+    }] : []),
+  ]
 
   const dataEmissao = new Date(proposta.criado_em ?? Date.now()).toLocaleDateString('pt-BR')
 
