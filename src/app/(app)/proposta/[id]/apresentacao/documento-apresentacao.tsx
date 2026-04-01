@@ -337,7 +337,14 @@ export function DocumentoApresentacao({
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Termos e Condições</p>
-              <p className="text-sm text-slate-500 leading-relaxed text-justify">{termos}</p>
+              {termos.trimStart().startsWith('<') ? (
+                <div
+                  className="text-sm text-slate-500 leading-relaxed text-justify [&_p]:mb-1.5 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_u]:underline"
+                  dangerouslySetInnerHTML={{ __html: termos }}
+                />
+              ) : (
+                <p className="text-sm text-slate-500 leading-relaxed text-justify">{termos}</p>
+              )}
             </div>
           </div>
         )}

@@ -118,7 +118,13 @@ export function ApresentacaoCliente({
   const [objetivos, setObjetivos] = useState<string[]>(initialData.objetivos.length > 0 ? initialData.objetivos : [''])
   const [solucoes, setSolucoes] = useState<Solucao[]>(initialData.solucoes.length > 0 ? initialData.solucoes : [{ titulo: '', descricao: '' }])
   const [cronograma, setCronograma] = useState<CronogramaItem[]>(initialData.cronograma.length > 0 ? initialData.cronograma : [{ etapa: '', duracao: '' }])
-  const [termos, setTermos] = useState(initialData.termos)
+  const [termos, setTermos] = useState(toHtml(initialData.termos))
+  const termosEditor = useEditor({
+    extensions: [StarterKit, Underline],
+    content: toHtml(initialData.termos),
+    onUpdate: ({ editor }) => setTermos(editor.getHTML()),
+    immediatelyRender: false,
+  })
   const [logoAtual, setLogoAtual] = useState<string | null>(logoUrl)
   const [uploadandoLogo, setUploadandoLogo] = useState(false)
   const [erroLogo, setErroLogo] = useState('')
@@ -456,14 +462,34 @@ export function ApresentacaoCliente({
             </Section>
 
             {/* Termos */}
-            <Section title="Termos e Condições" onUseModel={() => setTermos(MODELO_TERMOS)}>
-              <textarea
-                value={termos}
-                onChange={e => setTermos(e.target.value)}
-                placeholder="Ex: Esta proposta tem validade de 15 dias. O pagamento pode ser parcelado em até 10x..."
-                rows={3}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              />
+            <Section title="Termos e Condições" onUseModel={() => {
+              const html = toHtml(MODELO_TERMOS)
+              setTermos(html)
+              termosEditor?.commands.setContent(html)
+            }}>
+              <div className="rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 text-sm overflow-hidden">
+                <div className="flex items-center gap-0.5 border-b border-input px-2 py-1 bg-slate-50">
+                  <button type="button" onClick={() => termosEditor?.chain().focus().toggleBold().run()}
+                    className={`p-1.5 rounded hover:bg-slate-200 transition-colors ${termosEditor?.isActive('bold') ? 'bg-slate-200 text-slate-900' : 'text-slate-500'}`}
+                    title="Negrito">
+                    <Bold className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" onClick={() => termosEditor?.chain().focus().toggleItalic().run()}
+                    className={`p-1.5 rounded hover:bg-slate-200 transition-colors ${termosEditor?.isActive('italic') ? 'bg-slate-200 text-slate-900' : 'text-slate-500'}`}
+                    title="Itálico">
+                    <Italic className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" onClick={() => termosEditor?.chain().focus().toggleUnderline().run()}
+                    className={`p-1.5 rounded hover:bg-slate-200 transition-colors ${termosEditor?.isActive('underline') ? 'bg-slate-200 text-slate-900' : 'text-slate-500'}`}
+                    title="Sublinhado">
+                    <UnderlineIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <EditorContent
+                  editor={termosEditor}
+                  className="px-3 py-2 min-h-[72px] [&_.ProseMirror]:outline-none [&_.ProseMirror_p]:mb-2 [&_.ProseMirror_p:last-child]:mb-0"
+                />
+              </div>
             </Section>
 
             <Button type="submit" disabled={isPending} className="w-full gap-2">
