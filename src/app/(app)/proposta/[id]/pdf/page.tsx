@@ -171,13 +171,13 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
           body * { visibility: hidden; }
           .pdf-content, .pdf-content * { visibility: visible; }
           .documento-apresentacao, .documento-apresentacao * { visibility: visible; }
-          .pdf-content { position: absolute; left: 0; top: 0; width: 100%; }
+          .pdf-content { position: absolute; left: 0; top: 0; width: 100%; box-sizing: border-box; padding: 15mm 18mm; }
           .documento-apresentacao { position: absolute; left: 0; top: 0; width: 100%; }
           .no-print { display: none !important; }
         }
         @page {
           size: A4;
-          margin: 15mm 18mm;
+          margin: 0;
         }
       `}</style>
       {configPdf?.css_customizado && (
