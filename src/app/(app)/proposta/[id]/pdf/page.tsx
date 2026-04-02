@@ -66,7 +66,8 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         )
       `)
       .eq('proposta_id', id)
-      .order('ordem', { ascending: true }),
+      .order('ordem', { ascending: true })
+      .order('criado_em', { ascending: true }),
     supabase
       .from('configuracao_pdf')
       .select('empresa_nome, proposta_titulo, proposta_subtitulo, logo_url, rodape_condicoes, css_customizado, template_pdf_url')

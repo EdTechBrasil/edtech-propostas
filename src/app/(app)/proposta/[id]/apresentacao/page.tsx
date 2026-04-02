@@ -41,7 +41,8 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
         )
       `)
       .eq('proposta_id', id)
-      .order('ordem', { ascending: true }),
+      .order('ordem', { ascending: true })
+      .order('criado_em', { ascending: true }),
     supabase
       .from('configuracao_pdf')
       .select('empresa_nome, logo_url, proposta_subtitulo')
