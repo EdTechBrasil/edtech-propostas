@@ -28,6 +28,7 @@ import { CSS } from '@dnd-kit/utilities'
 type Proposta = {
   id: string
   orcamento_alvo: number
+  valor_total: number
   status: string
   criado_em: string
   cliente_nome_instituicao: string | null
@@ -138,7 +139,7 @@ function SortableRow({
       </td>
       <td className="px-4 py-4">
         <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          {formatCurrency(p.orcamento_alvo)}
+          {formatCurrency(p.valor_total || p.orcamento_alvo)}
         </span>
       </td>
       <td className="px-4 py-4">
