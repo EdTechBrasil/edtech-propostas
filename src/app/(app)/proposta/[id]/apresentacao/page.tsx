@@ -106,6 +106,9 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
 
   const dataEmissao = new Date(proposta.criado_em ?? Date.now()).toLocaleDateString('pt-BR')
 
+  // Calcula total diretamente dos produtos já consultados (evita depender da view proposta_financeiro)
+  const totalLiquidoCalculado = investimentoProdutos.reduce((acc, pp) => acc + pp.totalProduto, 0)
+
   return (
     <ApresentacaoCliente
       propostaId={id}
@@ -115,7 +118,7 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
       empresaSubtitulo={configPdf?.proposta_subtitulo ?? 'Tecnologia Educacional'}
       logoUrl={proposta.logo_url ?? configPdf?.logo_url ?? null}
       investimentoProdutos={investimentoProdutos}
-      totalLiquido={financeiro?.receita_liquida ?? 0}
+      totalLiquido={totalLiquidoCalculado || (financeiro?.receita_liquida ?? 0)}
       initialData={{
         titulo: proposta.apresentacao_titulo ?? '',
         introducao: proposta.apresentacao_introducao ?? '',
