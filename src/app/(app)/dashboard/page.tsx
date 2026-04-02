@@ -37,9 +37,20 @@ export default async function DashboardPage() {
 
   const { data: propostas } = await query
 
+  const propostaIds = (propostas ?? []).map((p: any) => p.id)
+  const { data: financeiros } = propostaIds.length > 0
+    ? await supabase
+        .from('proposta_financeiro')
+        .select('proposta_id, receita_liquida')
+        .in('proposta_id', propostaIds)
+    : { data: [] }
+
+  const financeiroMap = new Map((financeiros ?? []).map((f: any) => [f.proposta_id, f.receita_liquida ?? 0]))
+
   const propostasFormatadas = (propostas ?? []).map((p: any) => ({
     id: p.id,
     orcamento_alvo: p.orcamento_alvo,
+    valor_total: financeiroMap.get(p.id) ?? 0,
     status: p.status,
     criado_em: p.criado_em,
     cliente_nome_instituicao: p.cliente_nome_instituicao,

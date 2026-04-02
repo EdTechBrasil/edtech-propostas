@@ -10,6 +10,7 @@ import {
 type Proposta = {
   id: string
   orcamento_alvo: number
+  valor_total: number
   status: string
   criado_em: string
   cliente_nome_instituicao: string | null
@@ -74,7 +75,7 @@ function BarChartMensal({ propostas }: { propostas: Proposta[] }) {
     ...m,
     valor: propostas
       .filter(p => p.status !== 'Cancelada' && p.criado_em.startsWith(m.key))
-      .reduce((sum, p) => sum + p.orcamento_alvo, 0),
+      .reduce((sum, p) => sum + p.valor_total || p.orcamento_alvo, 0),
   }))
 
   const maxVal = Math.max(...data.map(d => d.valor), 1)
@@ -159,7 +160,7 @@ function AtividadeRecente({ propostas }: { propostas: Proposta[] }) {
                 <p className="text-xs text-slate-400 font-mono">{p.id.slice(0, 8).toUpperCase()}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(p.orcamento_alvo)}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(p.valor_total || p.orcamento_alvo)}</p>
                 <p className="text-xs text-slate-400">{formatDataCurta(p.criado_em)}</p>
               </div>
             </Link>
@@ -180,7 +181,7 @@ export function DashboardCliente({
   // Stats para summary cards
   const volumeTotal = propostas
     .filter(p => p.status !== 'Cancelada')
-    .reduce((s, p) => s + p.orcamento_alvo, 0)
+    .reduce((s, p) => s + p.valor_total || p.orcamento_alvo, 0)
   const aprovadas = propostas.filter(p => p.status === 'Pronta_pdf' || p.status === 'Aprovada_excecao').length
   const aguardando = propostas.filter(p => p.status === 'Aguardando_aprovacao').length
 
@@ -191,10 +192,10 @@ export function DashboardCliente({
   const mesAnteriorKey = `${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth() + 1).padStart(2, '0')}`
   const volAtual = propostas
     .filter(p => p.status !== 'Cancelada' && p.criado_em.startsWith(mesAtualKey))
-    .reduce((s, p) => s + p.orcamento_alvo, 0)
+    .reduce((s, p) => s + p.valor_total || p.orcamento_alvo, 0)
   const volAnterior = propostas
     .filter(p => p.status !== 'Cancelada' && p.criado_em.startsWith(mesAnteriorKey))
-    .reduce((s, p) => s + p.orcamento_alvo, 0)
+    .reduce((s, p) => s + p.valor_total || p.orcamento_alvo, 0)
   const volumeBadge = volAnterior > 0 ? {
     text: `${volAtual >= volAnterior ? '+' : ''}${Math.round(((volAtual - volAnterior) / volAnterior) * 100)}%`,
     positive: volAtual >= volAnterior,
