@@ -16,7 +16,6 @@ export default async function ApresentacaoPage({ params }: { params: Promise<{ i
     supabase
       .from('propostas')
       .select(`
-        id, status,
         id, status, logo_url,
         cliente_nome_instituicao, validade_proposta, criado_em,
         apresentacao_titulo, apresentacao_introducao,

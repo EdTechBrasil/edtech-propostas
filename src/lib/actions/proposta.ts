@@ -973,12 +973,11 @@ export async function atualizarDadosCliente(proposta_id: string, formData: FormD
       cliente_email: (formData.get('email') as string) || null,
       cliente_cidade: (formData.get('cidade') as string) || null,
       validade_proposta: (formData.get('validade') as string) || null,
-      status: 'Em_revisao',
     })
     .eq('id', proposta_id)
 
   await registrarHistorico(proposta_id, user.id, 'AtualizarCliente', formData.get('nome_instituicao') as string)
-  redirect(`/proposta/${proposta_id}/revisao`)
+  redirect(`/proposta/${proposta_id}/cliente`)
 }
 
 // ── Comentários ───────────────────────────────────────────────────────────────
@@ -1015,7 +1014,10 @@ export async function duplicarProposta(proposta_id: string) {
       num_temas_pre_i, num_temas_pre_ii, num_temas_ano1, num_temas_ano2, num_temas_ano3,
       num_alunos_ano4, num_alunos_ano5, num_alunos_ano6, num_alunos_ano7, num_alunos_ano8, num_alunos_ano9,
       num_temas_ano4, num_temas_ano5, num_temas_ano6, num_temas_ano7, num_temas_ano8, num_temas_ano9,
-      num_livros_conceitos, num_livros_praticas, num_livros_guia
+      num_livros_conceitos, num_livros_praticas, num_livros_guia,
+      logo_url,
+      apresentacao_titulo, apresentacao_introducao, apresentacao_objetivos,
+      apresentacao_solucoes, apresentacao_cronograma, apresentacao_termos
     `)
     .eq('id', proposta_id)
     .single<any>()
@@ -1063,6 +1065,13 @@ export async function duplicarProposta(proposta_id: string) {
       num_livros_conceitos: original.num_livros_conceitos,
       num_livros_praticas: original.num_livros_praticas,
       num_livros_guia: original.num_livros_guia,
+      logo_url: original.logo_url,
+      apresentacao_titulo: original.apresentacao_titulo,
+      apresentacao_introducao: original.apresentacao_introducao,
+      apresentacao_objetivos: original.apresentacao_objetivos,
+      apresentacao_solucoes: original.apresentacao_solucoes,
+      apresentacao_cronograma: original.apresentacao_cronograma,
+      apresentacao_termos: original.apresentacao_termos,
       status: 'Rascunho',
     })
     .select('id')

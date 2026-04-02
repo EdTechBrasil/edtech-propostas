@@ -114,7 +114,6 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                   name="validade"
                   type="date"
                   defaultValue={proposta.validade_proposta ?? ''}
-                  min={hoje}
                 />
               </div>
             </div>

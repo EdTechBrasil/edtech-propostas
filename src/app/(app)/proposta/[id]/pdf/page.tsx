@@ -36,6 +36,7 @@ export default async function PDFPage({ params }: { params: Promise<{ id: string
         num_temas_ano1, num_temas_ano2, num_temas_ano3,
         num_temas_ano4, num_temas_ano5, num_temas_ano6,
         num_temas_ano7, num_temas_ano8, num_temas_ano9,
+        logo_url,
         cliente_nome_instituicao, cliente_cnpj,
         cliente_responsavel, cliente_email, cliente_cidade,
         validade_proposta, criado_em,

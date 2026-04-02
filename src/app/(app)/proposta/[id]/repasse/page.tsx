@@ -18,9 +18,9 @@ export default async function RepassePage({ params }: { params: Promise<{ id: st
       .single<{ id: string; repasse_tipo: string; repasse_valor: number }>(),
     supabase
       .from('proposta_financeiro')
-      .select('receita_bruta')
+      .select('receita_liquida')
       .eq('proposta_id', id)
-      .single<{ receita_bruta: number }>(),
+      .single<{ receita_liquida: number }>(),
   ])
 
   if (!proposta) notFound()
@@ -54,7 +54,7 @@ export default async function RepassePage({ params }: { params: Promise<{ id: st
             <RepasseCliente
               tipoInicial={proposta.repasse_tipo}
               valorInicial={proposta.repasse_valor}
-              receitaBruta={financeiro?.receita_bruta ?? 0}
+              receitaLiquida={financeiro?.receita_liquida ?? 0}
             />
             <div className="flex justify-between mt-6">
               <Link href={`/proposta/${id}/descontos`}>

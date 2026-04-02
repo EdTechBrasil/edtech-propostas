@@ -11,7 +11,7 @@ const TIPOS = [
   { value: 'Percentual', label: 'Percentual (%)', desc: 'Percentual sobre a receita líquida' },
 ]
 
-export function RepasseCliente({ tipoInicial, valorInicial, receitaBruta }: { tipoInicial: string; valorInicial: number; receitaBruta: number }) {
+export function RepasseCliente({ tipoInicial, valorInicial, receitaLiquida }: { tipoInicial: string; valorInicial: number; receitaLiquida: number }) {
   const [tipo, setTipo] = useState(tipoInicial || 'Nenhum')
 
   return (
@@ -55,7 +55,7 @@ export function RepasseCliente({ tipoInicial, valorInicial, receitaBruta }: { ti
               name="repasse_valor"
               type="number"
               min="0"
-              max={tipo === 'Percentual' ? 100 : receitaBruta > 0 ? receitaBruta : undefined}
+              max={tipo === 'Percentual' ? 100 : receitaLiquida > 0 ? receitaLiquida : undefined}
               step={tipo === 'Fixo' ? '0.01' : '0.1'}
               defaultValue={valorInicial}
               className="text-right"
