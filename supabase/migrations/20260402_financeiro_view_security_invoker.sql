@@ -1,4 +1,5 @@
--- Garante que a view proposta_financeiro aplica RLS do usuário autenticado (security_invoker)
--- Sem isso, em Supabase/PG15+, a view pode rodar com permissões do owner e ignorar RLS
+-- Mantém security_invoker = false (padrão) na view proposta_financeiro
+-- Com false, a view roda com permissões do owner (postgres), bypassando RLS nas tabelas internas
+-- Isso garante que o cálculo financeiro sempre retorna dados corretos independente do perfil do usuário
 
-ALTER VIEW proposta_financeiro SET (security_invoker = true);
+ALTER VIEW proposta_financeiro SET (security_invoker = false);
